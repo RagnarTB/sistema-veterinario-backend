@@ -1,5 +1,8 @@
 package com.veterinaria.servicios;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -49,6 +52,65 @@ public class CitaServicio {
         respuesta.setPacienteId(paciente.getId());
         return respuesta;
 
+    }
+
+    public List<CitaResponseDTO> listar() {
+        List<Cita> citas = citaRepositorio.findAll();
+        return citas.stream().map(cita -> new CitaResponseDTO(
+                cita.getId(),
+                cita.getFecha(),
+                cita.getHora(),
+                cita.getMotivo(),
+                cita.getEstado(),
+                cita.getPaciente().getId()))
+                .collect(Collectors.toList());
+    }
+
+    public CitaResponseDTO buscarPorId(Long id) {
+        return citaRepositorio.findById(id)
+                .map(cita -> new CitaResponseDTO(
+                        cita.getId(),
+                        cita.getFecha(),
+                        cita.getHora(),
+                        cita.getMotivo(),
+                        cita.getEstado(),
+                        cita.getPaciente().getId()))
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cita no encontrada con ID: " + id));
+    }
+
+    public CitaResponseDTO actualizar(Long id, CitaRequestDTO dto) {
+        Cita citaDb = citaRepositorio.findById(id)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cita no encontrada con ID: " + id));
+
+        Paciente paciente = pacienteRepositorio.findById(dto.getPacienteId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No se puede actualizar la cita, paciente no encontrado : " + dto.getPacienteId())
+
+                );
+
+        citaDb.setFecha(dto.getFecha());
+        citaDb.setHora(dto.getHora());
+        citaDb.setMotivo(dto.getMotivo());
+        citaDb.setPaciente(paciente);
+
+        Cita citaGuardada = citaRepositorio.save(citaDb);
+
+        return new CitaResponseDTO(
+                citaGuardada.getId(),
+                citaGuardada.getFecha(),
+                citaGuardada.getHora(),
+                citaGuardada.getMotivo(),
+                citaGuardada.getEstado(),
+                citaGuardada.getPaciente().getId());
+    }
+
+    public void eliminar(Long id) {
+        Cita citaDb = citaRepositorio.findById(id)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cita no encontrada con ID: " + id));
+        citaRepositorio.delete(citaDb);
     }
 
 }
