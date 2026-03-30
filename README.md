@@ -211,6 +211,14 @@ Uso de la anotación:
 
 ---
 
+## Relación Uno a Uno (1:1) - Cita y Atención Médica
+
+- Una Cita genera una única Atención Médica.
+- Lado fuerte (`AtencionMedica`): Usa `@OneToOne` y `@JoinColumn(name = "cita_id")`.
+- Lado inverso (`Cita`): Usa `@OneToOne(mappedBy = "cita", cascade = CascadeType.ALL)`.
+
+---
+
 ## Regla de Arquitectura para Relaciones en DTOs
 
 Por seguridad, nunca se envían objetos completos relacionados desde el frontend.
@@ -257,8 +265,7 @@ Estado actual del desarrollo:
 
 - [x] Módulo 1: Setup y Arquitectura Base  
 - [x] Módulo 2: Gestión de Pacientes y Clientes (CRUD y relaciones)  
-
-- [ ] Módulo 3: Citas y Atención Médica (pendiente)  
+- [x] Módulo 3: Citas y Atención Médica   
 - [ ] Módulo 4: Punto de Venta (POS) e Inventario (pendiente)  
 - [ ] Módulo 5: Seguridad y Autenticación JWT (pendiente)  
 - [ ] Módulo 6: Frontend (Angular) (pendiente)  
