@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+// IMPORTANTE: Importamos el Contexto de Seguridad
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -12,19 +14,23 @@ import com.veterinaria.dtos.AtencionMedicaResponseDTO;
 import com.veterinaria.modelos.AtencionMedica;
 import com.veterinaria.modelos.Cita;
 import com.veterinaria.modelos.EstadoCita;
+import com.veterinaria.modelos.Usuario;
 import com.veterinaria.respositorios.AtencionMedicaRepositorio;
 import com.veterinaria.respositorios.CitaRepositorio;
+import com.veterinaria.respositorios.UsuarioRepositorio;
 
 @Service
 public class AtencionMedicaServicio {
 
     private AtencionMedicaRepositorio atencionMedicaRepositorio;
     private CitaRepositorio citaRepositorio;
+    private final UsuarioRepositorio usuarioRepositorio;
 
     public AtencionMedicaServicio(AtencionMedicaRepositorio atencionMedicaRepositorio,
-            CitaRepositorio citaRepositorio) {
+            CitaRepositorio citaRepositorio, UsuarioRepositorio usuarioRepositorio) {
         this.atencionMedicaRepositorio = atencionMedicaRepositorio;
         this.citaRepositorio = citaRepositorio;
+        this.usuarioRepositorio = usuarioRepositorio;
     }
 
     // CREATE
@@ -33,11 +39,19 @@ public class AtencionMedicaServicio {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "No se puede crear la atencion medica, cita no encontrada: " + dto.getCitaId()));
 
+        // Obtenemos el email del doctor directamente del Token JWT que
+        // usó para entrar
+        String emailDoctorAutenticado = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // Buscamos a ese doctor en la base de datos
+        Usuario doctor = usuarioRepositorio.findByEmail(emailDoctorAutenticado)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no válido"));
+
         AtencionMedica atencionMedica = new AtencionMedica();
 
         // CORRECCIÓN 1: Pasamos el objeto, no el ID
         atencionMedica.setCita(cita);
-
+        atencionMedica.setVeterinario(doctor);
         atencionMedica.setDiagnostico(dto.getDiagnostico());
         atencionMedica.setFrecuenciaCardiaca(dto.getFrecuenciaCardiaca());
         atencionMedica.setPeso(dto.getPeso());
@@ -77,6 +91,8 @@ public class AtencionMedicaServicio {
 
         // Actualizamos solo los datos médicos (generalmente la Cita ID no cambia una
         // vez atendida)
+        // No actualizamos al doctor, porque el que creó la primera vez es el
+        // responsable
         atencionDb.setDiagnostico(dto.getDiagnostico());
         atencionDb.setFrecuenciaCardiaca(dto.getFrecuenciaCardiaca());
         atencionDb.setPeso(dto.getPeso());
@@ -109,6 +125,10 @@ public class AtencionMedicaServicio {
         dto.setResumenIaCliente(entidad.getResumenIaCliente());
         // CORRECCIÓN 2: Incluimos el ID de la cita en la respuesta
         dto.setCitaId(entidad.getCita().getId());
+        // AQUI: Enviamos el ID del doctor al Frontend
+        if (entidad.getVeterinario() != null) {
+            dto.setVeterinarioId(entidad.getVeterinario().getId());
+        }
         return dto;
     }
 }

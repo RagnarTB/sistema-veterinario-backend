@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -30,4 +31,8 @@ public class AtencionMedica {
     @OneToOne
     @JoinColumn(name = "cita_id")
     private Cita cita;
+
+    @ManyToOne
+    @JoinColumn(name = "veterinario_id")
+    private Usuario veterinario;
 }

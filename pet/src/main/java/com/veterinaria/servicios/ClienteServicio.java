@@ -31,6 +31,7 @@ public class ClienteServicio {
         cliente.setApellido(dto.getApellido());
         cliente.setTelefono(dto.getTelefono());
         cliente.setDni(dto.getDni());
+        cliente.setEmail(dto.getEmail());
 
         Cliente clienteGuardado = clienteRepositorio.save(cliente);
 
@@ -40,6 +41,7 @@ public class ClienteServicio {
         respuesta.setApellido(clienteGuardado.getApellido());
         respuesta.setTelefono(clienteGuardado.getTelefono());
         respuesta.setDni(clienteGuardado.getDni());
+        respuesta.setEmail(clienteGuardado.getEmail());
 
         return respuesta;
 
@@ -49,7 +51,7 @@ public class ClienteServicio {
         List<Cliente> clientes = clienteRepositorio.findAll();
 
         return clientes.stream().map(cliente -> new ClienteResponseDTO(cliente.getId(), cliente.getNombre(),
-                cliente.getApellido(), cliente.getTelefono(), cliente.getDni())).toList();
+                cliente.getApellido(), cliente.getTelefono(), cliente.getDni(), cliente.getEmail())).toList();
 
     }
 
@@ -60,7 +62,7 @@ public class ClienteServicio {
                         cliente.getNombre(),
                         cliente.getApellido(),
                         cliente.getTelefono(),
-                        cliente.getDni()))
+                        cliente.getDni(), cliente.getEmail()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Cliente no encontrado con ID: " + id));
 
@@ -74,6 +76,7 @@ public class ClienteServicio {
         clientedb.setApellido(dto.getApellido());
         clientedb.setTelefono(dto.getTelefono());
         clientedb.setDni(dto.getDni());
+        clientedb.setEmail(dto.getEmail());
 
         Cliente clienteGuardado = clienteRepositorio.save(clientedb);
 
@@ -82,7 +85,8 @@ public class ClienteServicio {
                 clienteGuardado.getNombre(),
                 clienteGuardado.getApellido(),
                 clienteGuardado.getTelefono(),
-                clienteGuardado.getDni()
+                clienteGuardado.getDni(),
+                clienteGuardado.getEmail()
 
         );
     }
