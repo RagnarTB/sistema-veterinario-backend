@@ -17,5 +17,6 @@ public class AtencionMedicaResponseDTO {
     private Integer frecuenciaCardiaca;
     private String resumenIaCliente;
     private Long citaId;
+    private Long veterinarioId;
 
 }

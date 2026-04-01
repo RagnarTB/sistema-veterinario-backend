@@ -7,7 +7,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -38,5 +40,10 @@ public class Cliente {
     private List<Paciente> pacientes;// cascade = CascadeType.ALL, orphanRemoval = true: Significa que si eliminas a
                                      // un Cliente de la base de datos, automáticamente se eliminarán todas sus
                                      // mascotas para no dejar "perritos huérfanos" en el sistema sin dueño.
+
+    private String email;
+    @OneToOne
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
 
 }
