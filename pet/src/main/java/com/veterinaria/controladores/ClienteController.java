@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -41,8 +43,8 @@ public class ClienteController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<ClienteResponseDTO>> listarClientes() {
-        List<ClienteResponseDTO> clientes = clienteServicio.listarTodos();
+    public ResponseEntity<Page<ClienteResponseDTO>> listarClientes(Pageable pageable) {
+        Page<ClienteResponseDTO> clientes = clienteServicio.listarTodos(pageable);
 
         return ResponseEntity.ok(clientes);
     }

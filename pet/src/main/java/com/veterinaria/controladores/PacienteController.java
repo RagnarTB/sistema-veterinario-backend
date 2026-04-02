@@ -6,7 +6,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,9 +45,9 @@ public class PacienteController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PacienteResponseDTO>> listarPacientes() {
+    public ResponseEntity<Page<PacienteResponseDTO>> listarPacientes(Pageable pageable) {
         // 1. Le pedimos la lista ya procesada (DTOs) al servicio
-        List<PacienteResponseDTO> pacientes = pacienteServicio.listarTodos();
+        Page<PacienteResponseDTO> pacientes = pacienteServicio.listarTodos(pageable);
 
         // 2. La devolvemos envuelta en nuestro ticket de éxito (200 OK)
         return ResponseEntity.ok(pacientes);

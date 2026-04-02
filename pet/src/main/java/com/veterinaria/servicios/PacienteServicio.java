@@ -1,10 +1,5 @@
 package com.veterinaria.servicios;
-
-import java.util.List;
-import java.util.Optional;
-
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -14,8 +9,8 @@ import com.veterinaria.modelos.Cliente;
 import com.veterinaria.modelos.Paciente;
 import com.veterinaria.respositorios.ClienteRepositorio;
 import com.veterinaria.respositorios.PacienteRepositorio;
-
-import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class PacienteServicio {
@@ -62,15 +57,18 @@ public class PacienteServicio {
                 return respuesta;
         }
 
-        public List<PacienteResponseDTO> listarTodos() {
-                // 1. Obtenemos todas las entidades de la base de datos
-                List<Paciente> pacientes = pacienteRepositorio.findAll();
-                // 2. Transformamos la lista de Entidades a una lista de DTOs
-                return pacientes.stream()
-                                .map(paciente -> new PacienteResponseDTO(paciente.getId(), paciente.getNombre(),
-                                                paciente.getEspecie(), paciente.getRaza(),
-                                                paciente.getCliente().getId()))
-                                .toList();
+        public Page<PacienteResponseDTO> listarTodos(Pageable pageable) {
+                // JpaRepository ya tiene un findAll que acepta Pageable por defecto, ¡es
+                // mágico!
+                Page<Paciente> paginaDePacientes = pacienteRepositorio.findAll(pageable);
+
+                // Convertimos la página de Entidades a una página de DTOs
+                return paginaDePacientes.map(paciente -> new PacienteResponseDTO(
+                                paciente.getId(),
+                                paciente.getNombre(),
+                                paciente.getEspecie(),
+                                paciente.getRaza(),
+                                paciente.getCliente().getId()));
         }
 
         public PacienteResponseDTO buscarPorId(Long id) {

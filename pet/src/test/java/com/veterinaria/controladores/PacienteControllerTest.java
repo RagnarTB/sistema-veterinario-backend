@@ -2,102 +2,117 @@ package com.veterinaria.controladores;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.security.test.context.support.WithMockUser; // ¡La llave maestra!
+
 import com.veterinaria.servicios.PacienteServicio;
+import com.veterinaria.dtos.PacienteResponseDTO;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
-@WebMvcTest(controllers = PacienteController.class, excludeAutoConfiguration = { SecurityAutoConfiguration.class }) // Le
-                                                                                                                    // //
-                                                                                                                    // controlador
+@SpringBootTest // Levantamos TODA la aplicación (adiós errores de beans faltantes)
+@AutoConfigureMockMvc // Encendemos el simulador de peticiones HTTP
 class PacienteControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc; // Herramienta para simular peticiones HTTP
+        @Autowired
+        private MockMvc mockMvc;
 
-    @MockBean // <- ¡Esta es la magia! Crea un servicio simulado para el test
-    private PacienteServicio pacienteServicio;
+        // Solo "simulamos" el servicio para que el controlador no toque la base de
+        // datos real en esta prueba
+        @MockBean
+        private PacienteServicio pacienteServicio;
 
-    @Test
-    void debeCrearPacienteYRetornarEstadoCorrecto() throws Exception {
-        // 1. Preparar los datos (Simulamos el JSON que enviaría Angular)
-        String pacienteJson = """
-                {
-                    "nombre": "Firulais",
-                    "especie": "Perro",
-                    "raza": "Mestizo",
-                    "clienteId": 1
-                }
-                """;
+        @Test
+        @WithMockUser // Le susurra a Spring: "Déjalo pasar, este usuario ya está autenticado"
+        void debeCrearPacienteYRetornarEstadoCorrecto() throws Exception {
+                String pacienteJson = """
+                                {
+                                    "nombre": "Firulais",
+                                    "especie": "Perro",
+                                    "raza": "Mestizo",
+                                    "clienteId": 1
+                                }
+                                """;
 
-        // 2. Ejecutar la acción y 3. Verificar el resultado
-        mockMvc.perform(post("/api/pacientes")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(pacienteJson))
-                .andExpect(status().isCreated());
-    }
+                mockMvc.perform(post("/api/pacientes")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(pacienteJson))
+                                .andExpect(status().isCreated());
+        }
 
-    @Test
-    void debeRetornarBadRequestCuandoElNombreEstaVacio() throws Exception {
-        String pacienteInvalidoJson = """
-                        {
-                "nombre":"",
-                "especie": "Perro",
-                "raza":"Mestizo"}
-                        """;
-        mockMvc.perform(post("/api/pacientes")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(pacienteInvalidoJson))
-                .andExpect(status().isBadRequest());
-    }
+        @Test
+        @WithMockUser
+        void debeRetornarBadRequestCuandoElNombreEstaVacio() throws Exception {
+                String pacienteInvalidoJson = """
+                                        {
+                                "nombre":"",
+                                "especie": "Perro",
+                                "raza":"Mestizo"}
+                                        """;
+                mockMvc.perform(post("/api/pacientes")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(pacienteInvalidoJson))
+                                .andExpect(status().isBadRequest());
+        }
 
-    @Test
-    void debeObtenerListaDePacientesYRetornarEstadoCorrecto() throws Exception {
-        // Ejecutar la petición GET a la ruta /api/pacientes y verificar
-        mockMvc.perform(get("/api/pacientes")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()); // ¿Qué código esperamos aquí?
-    }
+        // --- ¡NUESTRO FLAMANTE TEST DE PAGINACIÓN! ---
+        @Test
+        @WithMockUser
+        void debeObtenerPaginaDePacientesYRetornarEstadoOk() throws Exception {
+                PacienteResponseDTO pacienteMock = new PacienteResponseDTO(1L, "Firulais", "Perro", "Mestizo", 1L);
+                Page<PacienteResponseDTO> paginaMock = new PageImpl<>(List.of(pacienteMock));
 
-    @Test
-    void debeObtenerPacientePorIdYRetornarEstadoOk() throws Exception {
-        // Simulamos que buscamos al paciente con ID 1
-        mockMvc.perform(get("/api/pacientes/1")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-    }
+                when(pacienteServicio.listarTodos(any())).thenReturn(paginaMock);
 
-    @Test
-    void debeActualizarPacienteYRetornarEstadoOk() throws Exception {
-        // 1. Preparamos los nuevos datos corregidos
-        String pacienteActualizadoJson = """
-                {
-                    "nombre": "Firulais Corregido",
-                    "especie": "Perro",
-                    "raza": "Mestizo",
-                    "clienteId": 1
-                }
-                """;
+                mockMvc.perform(get("/api/pacientes?page=0&size=10")
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content").isArray())
+                                .andExpect(jsonPath("$.totalElements").value(1));
+        }
 
-        // 2. Ejecutamos un PUT a la URL del paciente 1
-        mockMvc.perform(put("/api/pacientes/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(pacienteActualizadoJson))
-                .andExpect(status().isOk()); // Esperamos un 200 OK
-    }
+        @Test
+        @WithMockUser
+        void debeObtenerPacientePorIdYRetornarEstadoOk() throws Exception {
+                mockMvc.perform(get("/api/pacientes/1")
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void debeEliminarPacienteYRetornarEstadoNoContent() throws Exception {
-        // Ejecutamos la petición DELETE a la URL del paciente 1
-        mockMvc.perform(delete("/api/pacientes/1"))
-                .andExpect(status().isNoContent()); // Esperamos un 204 No Content
-    }
+        @Test
+        @WithMockUser
+        void debeActualizarPacienteYRetornarEstadoOk() throws Exception {
+                String pacienteActualizadoJson = """
+                                {
+                                    "nombre": "Firulais Corregido",
+                                    "especie": "Perro",
+                                    "raza": "Mestizo",
+                                    "clienteId": 1
+                                }
+                                """;
+
+                mockMvc.perform(put("/api/pacientes/1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(pacienteActualizadoJson))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        @WithMockUser
+        void debeEliminarPacienteYRetornarEstadoNoContent() throws Exception {
+                mockMvc.perform(delete("/api/pacientes/1"))
+                                .andExpect(status().isNoContent());
+        }
 }
