@@ -268,6 +268,38 @@ Aplicamos el principio de seguridad donde el Backend nunca confía en los IDs en
 - En la creación de una `AtencionMedica`, el `veterinario_id` **no se recibe en el JSON**.
 - En su lugar, interceptamos la identidad del médico en pleno vuelo extrayendo su email directamente del Token JWT activo (`SecurityContextHolder.getContext().getAuthentication().getName()`). Esto evita la suplantación de identidad entre empleados.
 
+## 7.4 Problema con test
+En este proyecto aplicamos **TDD (Test-Driven Development)**. Sin embargo, al tener un sistema protegido con JWT, descubrimos un desafío arquitectónico: aislar los controladores para las pruebas unitarias.
+
+**El Problema:**
+Usar `@WebMvcTest` es como intentar arrancar el volante de un coche sin tener el motor. Corta el "Contexto" de Spring. Nuestro filtro de seguridad (`JwtAuthenticationFilter`) necesita conexión a la Base de Datos para verificar usuarios. Al cortarlo, las pruebas colapsan con errores de *ApplicationContext failure*.
+
+**Nuestra Solución (Test de Integración en Memoria):**
+En lugar de pelear engañando a Spring Security parche por parche, usamos `@SpringBootTest` combinado con `@AutoConfigureMockMvc`. 
+* **¿Qué hace?** Levanta *todo* el "coche" (la aplicación entera) en memoria de forma ultrarrápida (gracias a la BD H2).
+* **El atajo de Seguridad:** Para no tener que generar un Token JWT real en cada prueba, usamos la anotación mágica `@WithMockUser`. Esto le "susurra" a Spring: *"Déjalo pasar, confía en mí, es un usuario logueado"*.
+
+**Ejemplo de implementación:**
+
+@SpringBootTest // Levanta el contexto completo
+@AutoConfigureMockMvc(addFilters = false) // Habilita el simulador HTTP
+class PacienteControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean // Evita que toquemos la base de datos real
+    private PacienteServicio pacienteServicio;
+
+    @Test
+    @WithMockUser // Magia: Autenticación simulada
+    void debeObtenerPaginaDePacientes() throws Exception {
+        // ... configuración del mock ...
+        
+        mockMvc.perform(get("/api/pacientes?page=0&size=10"))
+                .andExpect(status().isOk());
+    }
+}
 
 # 8. Mapa de Ruta del Proyecto
 

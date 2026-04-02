@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.coyote.Response;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
 import com.veterinaria.dtos.ClienteRequestDTO;
 import com.veterinaria.dtos.ClienteResponseDTO;
 import com.veterinaria.dtos.PacienteResponseDTO;
@@ -47,11 +48,11 @@ public class ClienteServicio {
 
     }
 
-    public List<ClienteResponseDTO> listarTodos() {
-        List<Cliente> clientes = clienteRepositorio.findAll();
+    public Page<ClienteResponseDTO> listarTodos(Pageable pageable) {
+        Page<Cliente> paginaDeClientes = clienteRepositorio.findAll(pageable);
 
-        return clientes.stream().map(cliente -> new ClienteResponseDTO(cliente.getId(), cliente.getNombre(),
-                cliente.getApellido(), cliente.getTelefono(), cliente.getDni(), cliente.getEmail())).toList();
+        return paginaDeClientes.map(cliente -> new ClienteResponseDTO(cliente.getId(), cliente.getNombre(),
+                cliente.getApellido(), cliente.getTelefono(), cliente.getDni(), cliente.getEmail()));
 
     }
 
