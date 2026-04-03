@@ -1,19 +1,31 @@
 package com.veterinaria.controladores;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.springframework.http.MediaType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-
 import com.veterinaria.servicios.CitaServicio;
+import com.veterinaria.dtos.CitaRequestDTO;
+import com.veterinaria.dtos.CitaResponseDTO; // Importante
+import com.veterinaria.modelos.Enums.EstadoCita; // Importante
 
-@WebMvcTest(controllers = CitaController.class, excludeAutoConfiguration = { SecurityAutoConfiguration.class })
-public class CitaControllerTest {
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+
+@SpringBootTest
+@AutoConfigureMockMvc(addFilters = false)
+class CitaControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -21,20 +33,44 @@ public class CitaControllerTest {
     @MockBean
     private CitaServicio citaServicio;
 
-    @Test // segun la iso 8601 se debe poner la fecha y hora en el siguiente formato
-    void debeCrearCitaYRetornarEstadoCorrecto() throws Exception {
-        String citaJson = """
+    @Test
+    @WithMockUser(roles = "RECEPCIONISTA")
+    void debeCrearCitaGrupalYRetornarEstadoCorrecto() throws Exception {
+
+        String citaGrupalJson = """
                 {
-                    "fecha" : "2025-03-25",
-                    "hora" : "14:30:00",
-                    "motivo": "tiene temperatura alta",
-                    "pacienteId": 1
-                    }
+                    "fecha" : "2026-10-15",
+                    "horaInicio" : "10:00:00",
+                    "servicioId": 1,
+                    "veterinarioId": 2,
+                    "motivo": "Primera vacuna para la camada de gatitos",
+                    "pacienteIds": [1, 2, 3, 4]
+                }
                 """;
+
+        // 1. Configuramos el Mock para que devuelva un DTO válido
+        CitaResponseDTO respuestaMock = new CitaResponseDTO(
+                1L,
+                LocalDate.of(2026, 10, 15),
+                LocalTime.of(10, 0),
+                LocalTime.of(10, 30),
+                "Vacunación",
+                2L,
+                "Primera vacuna para la camada de gatitos",
+                EstadoCita.AGENDADA,
+                List.of(1L, 2L, 3L, 4L));
+
+        when(citaServicio.guardar(any(CitaRequestDTO.class))).thenReturn(respuestaMock);
+
+        // 2. Ejecutamos y verificamos no solo el estado, sino también el contenido
         mockMvc.perform(post("/api/citas")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(citaJson))
-                .andExpect(status().isCreated());
+                .content(citaGrupalJson))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.servicioNombre").value("Vacunación"))
+                .andExpect(jsonPath("$.estado").value("AGENDADA"))
+                .andExpect(jsonPath("$.pacienteIds").isArray())
+                .andExpect(jsonPath("$.pacienteIds[0]").value(1));
     }
-
 }

@@ -1,314 +1,368 @@
-# 1. Arquitectura Base y Base de Datos
 
-Definimos el Diagrama Entidad-Relación (E-R) enfocado en 4 pilares, usando bases de datos relacionales:
+# Sistema Veterinario API REST
+
+## 1. Arquitectura Base y Diseño del Sistema
+
+El proyecto está construido bajo una **arquitectura RESTful multicapa** con separación estricta de responsabilidades, diseñada para **escalabilidad, mantenibilidad y seguridad**.
+
+### Stack Tecnológico
+- **Backend**: Spring Boot
+- **Persistencia**: Spring Data JPA + Hibernate
+- **Base de datos de pruebas**: H2 en memoria
+- **Base de datos producción**: PostgreSQL
+- **Seguridad**: Spring Security + JWT
+- **Testing**: JUnit 5 + MockMvc + Mockito
+- **Metodología**: TDD (Test-Driven Development)
+
+### Módulos Implementados
+Actualmente el sistema ya cuenta con estos módulos funcionales:
+
+**Seguridad y autenticación**
+- Usuario
+- Rol
+- JWT
+- Registro/Login
+
+**Gestión clínica**
+- Cliente
+- Paciente
+- Especie
+- Cita
+- Atención médica
+- Servicios médicos
+
+**Horarios y agenda**
+- Horarios veterinarios
+- Días bloqueados
+
+**Punto de venta (POS)**
+- Producto
+- Venta
+- Detalle venta
+- Caja diaria
+- Movimientos de caja
+- Apertura y cierre
+
+## 2. Arquitectura por Capas (Vertical Slice)
+
+Cada módulo sigue el patrón: **Controlador → Servicio → Repositorio → Entidad**
+
+### 2.1 Controladores
+Exponen endpoints REST limpios y desacoplados.
+
+**Ejemplos implementados:**
+```
+- /api/pacientes
+- /api/citas  
+- /api/ventas
+- /api/caja
+- /api/auth
+```
+
+**Responsabilidades:**
+- Validar entrada con `@Valid`
+- Definir códigos HTTP correctos
+- Delegar lógica al servicio
+- Aplicar seguridad por roles con `@PreAuthorize`
+
+### 2.2 Servicios
+Aquí vive la **lógica de negocio real** del sistema.
+
+**¿Por qué?**
+La lógica no debe vivir en controladores ni repositorios porque:
+- Facilita testing
+- Mejora mantenibilidad
+- Evita duplicación
+- Protege reglas críticas del negocio
+
+**Ejemplos reales implementados:**
+- Cálculo de totales de venta
+- Validación de stock
+- Cálculo de disponibilidad de citas
+- Cierre de caja
+- Auditoría por usuario autenticado
+- Bloqueo de agenda por días no laborables
+
+### 2.3 Repositorios
+Persistencia desacoplada usando `JpaRepository`.
+
+**Beneficios:**
+- CRUD automático
+- Paginación
+- Consultas derivadas
+- Menor código boilerplate
+
+### 2.4 DTOs (Seguridad y Contratos API)
+Toda la API trabaja con **DTOs**.
+
+**¿Por qué usamos DTOs?**
+Porque evita:
+- Exponer entidades
+- Ciclos infinitos en JSON
+- Fuga de datos sensibles
+- Acoplamiento frontend ↔ base de datos
+
+**Tipos implementados:**
+- `RequestDTO`
+- `ResponseDTO`
+- DTOs especializados:
+  - `AuthResponseDTO`
+  - `SlotDisponibilidadDTO`
+  - `CierreCajaResponseDTO`
+
+## 3. CRUD Empresarial Implementado
+
+El patrón CRUD ya está implementado en múltiples módulos:
+
+| Módulo            | Estado       |
+|-------------------|--------------|
+| Pacientes         |[x]Implementado |
+| Clientes          |[x]Implementado |
+| Productos         |[x]Implementado |
+| Citas             |[x]Implementado |
+| Atención médica   |[x]Implementado |
+| Servicios médicos |[x]Implementado |
+| Especies          |[x]Implementado |
+
+**Cada recurso sigue estándar REST:**
+```
+POST   /api/recurso
+GET    /api/recurso
+GET    /api/recurso/{id}
+PUT    /api/recurso/{id}
+DELETE /api/recurso/{id}
+```
+
+**Lógica aplicada:**
+1. Validación de entrada
+2. Conversión DTO → Entidad
+3. Persistencia
+4. Conversión Entidad → DTO
+5. Respuesta HTTP correcta
+
+**Características avanzadas implementadas:**
+- Paginación con `Pageable`
+- Respuestas tipo `Page<ResponseDTO>`
+- Búsqueda individual
+- Actualización completa
+- Eliminación segura
+
+## 4. Modelo Relacional y Relaciones JPA
+
+La base de datos ya modela **relaciones reales del dominio veterinario**.
+
+### Cliente → Paciente (1:N)
+**Un cliente puede registrar múltiples mascotas.**
+
+**Lógica:**
+El frontend solo envía:
+- `clienteId`
+- `especieId`
+
+El backend resuelve asociaciones reales.
+
+**¿Por qué?**
+Evita que el frontend manipule objetos completos y reduce errores.
+
+### Cita → Atención Médica (1:1)
+**Una cita genera una única atención clínica.**
+
+**Beneficios:**
+- Trazabilidad clínica
+- Auditoría médica
+- Continuidad del historial
+
+### Venta → DetalleVenta → Producto
+**Estructura real de ticket POS.**
+
+**Diseño:**
+- `Venta`: cabecera
+- `DetalleVenta`: líneas
+- `Producto`: catálogo + stock
+
+**Lógica implementada:**
+Cada detalle guarda:
+- Precio unitario histórico
+- Cantidad
+- Subtotal
+
+Esto evita que cambios futuros de precio alteren ventas antiguas.
+
+## 5. Lógica de Negocio Avanzada
+
+### 5.1 Motor de Disponibilidad de Citas
+**Endpoint implementado:** `GET /api/citas/disponibilidad`
+
+**Qué hace:**
+Calcula horarios disponibles considerando:
+- Horario del veterinario
+- Duración del servicio
+- Citas ya ocupadas
+- Días bloqueados
+- Fecha solicitada
+
+**¿Por qué esta lógica es importante?**
+Evita:
+- Sobreposición de citas
+- Citas en días cerrados
+- Horas fuera de turno
+- Colisiones entre servicios
+
+**Esto lo convierte en una agenda inteligente real.**
+
+### 5.2 Gestión de Estados de Cita
+**Endpoint implementado:** `PATCH /api/citas/{id}/estado`
+
+**Estados soportados:**
+- `PENDIENTE`
+- `CONFIRMADA`
+- `CANCELADA`
+- `ATENDIDA`
+
+**Lógica:** Permite trazabilidad operacional de recepción y médicos.
+
+### 5.3 Caja Diaria
+**Endpoints implementados:**
+```
+POST /api/caja/abrir
+PUT  /api/caja/cerrar
+```
+
+**Lógica de negocio:**
+El cierre resume:
+- Monto apertura
+- Ingresos POS
+- Movimientos
+- Total final
+
+**¿Por qué es importante?**
+Profesionaliza el sistema para operación real en clínica.
+
+### 5.4 Días Bloqueados y Horarios Veterinarios
+**Días bloqueados:** Permite registrar feriados, mantenimiento, días no laborables, vacaciones.
+
+**Horarios:** Define turnos por veterinario (hora inicio, hora fin, disponibilidad).
+
+Esto alimenta directamente el motor de citas.
+
+## 6. Seguridad JWT + Roles (RBAC)
+
+### JWT Stateless
+**La API funciona sin sesiones.** Cada request usa:
+```
+Authorization: Bearer <token>
+```
+
+**Flujo:**
+1. Login
+2. Generación token
+3. Validación por filtro
+4. Contexto de seguridad
+5. Autorización por rol
+
+### Roles implementados
+| Rol                  | Descripción          |
+|----------------------|----------------------|
+| `ROLE_ADMIN`         | Administrador completo |
+| `ROLE_CLIENTE`       | Cliente             |
+| `ROLE_VETERINARIO`   | Veterinario         |
+| `ROLE_RECEPCIONISTA` | Recepcionista       |
+
+### Seguridad por método
+**Seguridad fina con `@PreAuthorize`.**
+
+**Ejemplos reales:**
+- Solo veterinario crea atención médica
+- Solo admin crea especies
+- Admin y recepcionista abren caja
+- Solo admin cierra caja
+- Solo admin bloquea días
+- Recepción/veterinario cambia estado de cita
+
+### Auditoría de Identidad
+**En operaciones sensibles, el backend obtiene el usuario desde JWT.**
+
+**Caso real implementado:**
+En atención médica:
+- NO recibe veterinario en JSON
+- Obtiene email desde `SecurityContext`
+
+**Beneficio:** Previene suplantación de identidad.
+
+## 7. Testing Real con TDD
+
+**Tu proyecto ya tiene cobertura real de pruebas en:**
+
+**Controladores:**
+- `PacienteControllerTest`
+- `ProductoControllerTest`
+- `VentaControllerTest`
+- `CajaControllerTest`
+- `AuthControllerTest`
+- `CitaControllerTest`
+- `AtencionMedicaControllerTest`
+- `EspecieControllerTest`
+
+**Servicios:**
+- `VentaServicioTest`
+- `CajaServicioTest`
+
+**Estrategia aplicada:**
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+@MockBean
+@WithMockUser
+```
+
+**¿Por qué esta arquitectura de testing?**
+Spring Security + JWT necesita contexto completo. Permite:
+- Probar rutas protegidas
+- Validar HTTP real
+- Simular roles
+- Aislar servicios
+- Mantener velocidad con H2
+
+## 8. Estado Actual del Proyecto
+
+###  Backend (Implementado)
+- [x] Seguridad JWT + RBAC
+- [x] CRUD pacientes
+- [x] CRUD clientes
+- [x] CRUD productos
+- [x] CRUD citas
+- [x] Disponibilidad inteligente
+- [x] Atención médica
+- [x] Gestión de especies
+- [x] Horarios veterinarios
+- [x] Días bloqueados
+- [x] POS ventas
+- [x] Caja diaria
+- [x] Testing TDD
+
+###  Pendiente
+- [ ] Frontend Angular
+- [ ] Dockerización
+- [ ] CI/CD
+- [ ] Deploy producción
+- [ ] Reportes PDF
+- [ ] Dashboard administrativo
+
+## 9. Valor Arquitectónico del Proyecto
+
+**Este sistema ya implementa patrones usados en software empresarial real:**
+
+```
+[x]Arquitectura multicapa
+[x]DTO pattern
+[x]RBAC
+[x]JWT stateless
+[x]TDD
+[x]Transacciones
+[x]Paginación
+[x]Agenda inteligente
+[x]POS real
+[x]Caja diaria
+[x]Auditoría de usuarios
+[x]Separación de módulos por dominio
 
-- **Pruebas:** H2 en memoria  
-- **Producción:** PostgreSQL  
-
-## Pilares
-
-- **Seguridad:** Usuario, Rol, Usuario_Rol  
-- **Pacientes:** Cliente, Paciente  
-- **Clínica:** Cita, Atencion_Medica (con `resumen_ia_cliente`), Imagen_Atencion  
-- **Ventas (POS):** Producto, Venta, Detalle_Venta  
-
----
-
-# 2. Metodología Aplicada: TDD (Test-Driven Development)
-
-Hemos aplicado el ciclo estricto de desarrollo guiado por pruebas:
-
-- **Rojo:**  
-  Escribimos las pruebas (`PacienteControllerTest`) simulando peticiones HTTP antes de que existiera el código funcional.
-
-- **Verde:**  
-  Creamos el código mínimo en las capas para que la prueba pasara.  
-  Aislamos la seguridad (`excludeAutoConfiguration`) e inyectamos un simulacro del servicio (`@MockBean`) para aislar la capa web.
-
-- **Refactorización:**  
-  Ajustamos nombres, paquetes, implementamos DTOs y validaciones para cumplir con los estándares de la industria.
-
----
-
-# 3. Vertical Slice (Arquitectura por Capas)
-
-Hemos construido el flujo completo de la API REST para el módulo de Pacientes.
-
-## Capa de Entidades (`Paciente.java`)
-
-Refleja exactamente una tabla en la base de datos.
-
-- Uso de `@Entity` y `@Table`
-- Uso de Lombok para reducir código repetitivo
-
-## Capa de Repositorios (`PacienteRepositorio.java`)
-
-Interfaz que se comunica con la base de datos.
-
-- Extiende de `JpaRepository`
-- Provee métodos automáticos como:
-  - `save`
-  - `findById`
-  - `findAll`
-
-## Capa de Servicios (`PacienteServicio.java`)
-
-Contiene la lógica de negocio, validaciones y transformación de datos.
-
-- Uso de inyección por constructor
-- Encapsula reglas de negocio
-
-## Capa de Controladores (`PacienteController.java`)
-
-Puerta de entrada a la API.
-
-- Sigue estándar REST:
-  - Rutas en plural
-  - Uso correcto de códigos HTTP
-- No interactúa directamente con repositorios
-- Solo se comunica con la capa de servicios
-
----
-
-# 4. Patrón CRUD (Receta estándar para toda la aplicación)
-
-Para mantener la seguridad y limpieza, la API no expone entidades directamente. Se usa el patrón DTO (Data Transfer Object).
-
-## Tipos de DTO
-
-- **RequestDTO:**
-  - Representa los datos que envía el cliente
-  - Incluye validaciones (`@Valid`, `@NotBlank`)
-  - No contiene ID
-
-- **ResponseDTO:**
-  - Representa la respuesta al cliente
-  - Incluye ID
-
----
-
-## POST (Crear Recurso)
-
-### Test
-Verifica que:
-- JSON válido → `201 Created`
-- JSON inválido → `400 Bad Request`
-
-### Controlador
-- Usa `@PostMapping`
-- Recibe `@Valid @RequestBody RequestDTO`
-- Retorna `201 Created` con el `ResponseDTO`
-
-### Servicio
-1. Recibe el RequestDTO  
-2. Crea una nueva entidad  
-3. Copia los atributos del DTO a la entidad  
-4. Guarda con `repositorio.save()`  
-5. Convierte a ResponseDTO y retorna  
-
----
-
-## GET (Listar Todos)
-
-### Test
-Verifica que la petición retorne `200 OK`
-
-### Controlador
-- Usa `@GetMapping`
-- Retorna `ResponseEntity.ok()`
-
-### Servicio
-1. Obtiene datos con `repositorio.findAll()`  
-2. Convierte entidades a DTOs usando `stream().map(...)`  
-3. Retorna la lista  
-
----
-
-## GET por ID (Buscar Uno)
-
-### Test
-Verifica que la búsqueda por ID retorne `200 OK`
-
-### Controlador
-- Usa `@GetMapping("/{id}")`
-- Captura el ID con `@PathVariable`
-
-### Servicio
-1. Busca con `repositorio.findById(id)`  
-2. Si existe, convierte a DTO  
-3. Si no existe, lanza excepción `404 Not Found`  
-
----
-
-## PUT (Actualizar Completo)
-
-### Test
-Verifica que la actualización retorne `200 OK`
-
-### Controlador
-- Usa `@PutMapping("/{id}")`
-- Recibe `@PathVariable` y `@Valid @RequestBody`
-
-### Servicio
-1. Busca la entidad o lanza `404 Not Found`  
-2. Actualiza los datos  
-3. Guarda con `repositorio.save()`  
-4. Convierte a ResponseDTO y retorna  
-
----
-
-## DELETE (Eliminar)
-
-### Test
-Verifica que la eliminación retorne `204 No Content`
-
-### Controlador
-- Usa `@DeleteMapping("/{id}")`
-- Retorna `ResponseEntity.noContent().build()`
-
-### Servicio
-1. Verifica existencia o lanza `404 Not Found`  
-2. Elimina con `repositorio.delete(entidad)`  
-3. No retorna contenido  
-
-
-# 5. Relaciones entre Entidades (JPA / Hibernate)
-
-Hemos implementado bases de datos relacionales, conectando las tablas mediante el uso de claves foráneas (Foreign Keys) generadas automáticamente por Hibernate.
-
-## Relación Uno a Muchos (1:N) - Cliente y Paciente
-
-En la lógica de negocio:
-
-- Un Cliente tiene muchos Pacientes  
-- Un Paciente pertenece a un solo Cliente  
-
-### Lado de los "Muchos" (Paciente.java)
-
-Es la tabla que guarda la llave foránea (ID del cliente).
-
-- Uso de `@ManyToOne(fetch = FetchType.LAZY)`  
-  - Define la relación  
-  - `FetchType.LAZY` mejora el rendimiento evitando cargar datos innecesarios  
-
-- Uso de `@JoinColumn(name = "cliente_id")`  
-  - Define el nombre físico de la columna en la base de datos  
-
-### Lado del "Uno" (Cliente.java)
-
-Uso de la anotación:
-
-    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
-
-- **mappedBy**  
-  Indica que la relación es gestionada por la propiedad `cliente` en la entidad Paciente  
-
-- **cascade = CascadeType.ALL**  
-  Propaga operaciones (persist, delete, etc.) a los pacientes relacionados  
-
-- **orphanRemoval = true**  
-  Elimina automáticamente registros huérfanos  
-
----
-
-## Relación Uno a Uno (1:1) - Cita y Atención Médica
-
-- Una Cita genera una única Atención Médica.
-- Lado fuerte (`AtencionMedica`): Usa `@OneToOne` y `@JoinColumn(name = "cita_id")`.
-- Lado inverso (`Cita`): Usa `@OneToOne(mappedBy = "cita", cascade = CascadeType.ALL)`.
-
----
-
-## Regla de Arquitectura para Relaciones en DTOs
-
-Por seguridad, nunca se envían objetos completos relacionados desde el frontend.
-
-### Enfoque aplicado
-
-- PacienteRequestDTO  
-  - Solo recibe `clienteId` (`@NotNull`)  
-
-- PacienteServicio  
-  - Inyecta ClienteRepositorio  
-  - Busca el cliente por ID  
-  - Si existe, realiza la asociación:
-
-        paciente.setCliente(cliente)
-
----
-
-## Relación Compleja (POS) - Venta, DetalleVenta y Producto
-
-Para el Punto de Venta y el control de inventario, modelamos una estructura de ticket real:
-- **Cabecera (Venta):** Contiene la fecha, el total y el cliente (`@ManyToOne`). Una `Venta` tiene muchos detalles (`@OneToMany` con `cascade = CascadeType.ALL`).
-- **Filas (DetalleVenta):** Representa cada línea del ticket. Pertenece a una `Venta` (`@ManyToOne`) y está asociado a un `Producto` (`@ManyToOne`). Guarda una "foto" del precio y cantidad exactos en el momento de la transacción.
-
-# 6. Lógica Transaccional y Reglas de Negocio (Módulo POS)
-
-Para el Módulo 4 (Ventas e Inventario), implementamos reglas de negocio estrictas para evitar fugas de inventario y vulnerabilidades de seguridad:
-
-- **Confianza Cero en el Frontend (Zero Trust):** Por seguridad, el `VentaRequestDTO` *solo* recibe el `clienteId`, `productoId` y `cantidad`. El Backend es el único responsable de ir a la base de datos, consultar el precio real, calcular los subtotales, generar el total y estampar la fecha del servidor. Así evitamos que usuarios maliciosos manipulen precios desde el navegador.
-- **Integridad con `@Transactional`:** El método de cobro en `VentaServicio` está blindado con la anotación `@Transactional`. Esto asegura que si un cliente pide 3 productos y el último no tiene stock, se lance un `400 Bad Request` y la base de datos revierta toda la operación (Rollback), evitando boletas a medias y stocks descuadrados.
-
-# 7. Seguridad Estricta y Autenticación (JWT)
-
-A partir del Módulo 5, hemos eliminado la desactivación de Spring Security y hemos blindado la API bajo una arquitectura de "Cero Confianza" (Zero Trust) utilizando JSON Web Tokens (JWT).
-
-## 7.1. Cifrado y Data Seeding
-- **Contraseñas seguras:** Implementamos `BCryptPasswordEncoder` para encriptar las contraseñas antes de guardarlas en la base de datos (PostgreSQL/H2).
-- **Sembrador de Datos (Data Seeder):** Usamos `CommandLineRunner` en la clase principal para inicializar automáticamente los roles del sistema (`ROLE_ADMIN`, `ROLE_CLIENTE`, `ROLE_VETERINARIO`, `ROLE_RECEPCIONISTA`) al arrancar la aplicación.
-
-## 7.2. Filtro de Seguridad Stateless (Sin Estado)
-- La aplicación está configurada como `STATELESS`. El servidor no guarda sesiones en memoria, lo que permite que la API sea altamente escalable.
-- **JwtAuthenticationFilter:** Creamos un filtro personalizado que intercepta cada petición HTTP, extrae el token del header `Authorization: Bearer <token>`, valida la firma criptográfica y establece el contexto de seguridad.
-- **Rutas Protegidas:** Solo los endpoints `/api/auth/registro` y `/api/auth/login` son públicos. Cualquier otra ruta exige un Token válido.
-
-## 7.3. Auditoría de Identidad (Security Context)
-Aplicamos el principio de seguridad donde el Backend nunca confía en los IDs enviados por el Frontend para transacciones sensibles. 
-- En la creación de una `AtencionMedica`, el `veterinario_id` **no se recibe en el JSON**.
-- En su lugar, interceptamos la identidad del médico en pleno vuelo extrayendo su email directamente del Token JWT activo (`SecurityContextHolder.getContext().getAuthentication().getName()`). Esto evita la suplantación de identidad entre empleados.
-
-## 7.4 Problema con test
-En este proyecto aplicamos **TDD (Test-Driven Development)**. Sin embargo, al tener un sistema protegido con JWT, descubrimos un desafío arquitectónico: aislar los controladores para las pruebas unitarias.
-
-**El Problema:**
-Usar `@WebMvcTest` es como intentar arrancar el volante de un coche sin tener el motor. Corta el "Contexto" de Spring. Nuestro filtro de seguridad (`JwtAuthenticationFilter`) necesita conexión a la Base de Datos para verificar usuarios. Al cortarlo, las pruebas colapsan con errores de *ApplicationContext failure*.
-
-**Nuestra Solución (Test de Integración en Memoria):**
-En lugar de pelear engañando a Spring Security parche por parche, usamos `@SpringBootTest` combinado con `@AutoConfigureMockMvc`. 
-* **¿Qué hace?** Levanta *todo* el "coche" (la aplicación entera) en memoria de forma ultrarrápida (gracias a la BD H2).
-* **El atajo de Seguridad:** Para no tener que generar un Token JWT real en cada prueba, usamos la anotación mágica `@WithMockUser`. Esto le "susurra" a Spring: *"Déjalo pasar, confía en mí, es un usuario logueado"*.
-
-**Ejemplo de implementación:**
-
-@SpringBootTest // Levanta el contexto completo
-@AutoConfigureMockMvc(addFilters = false) // Habilita el simulador HTTP
-class PacienteControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean // Evita que toquemos la base de datos real
-    private PacienteServicio pacienteServicio;
-
-    @Test
-    @WithMockUser // Magia: Autenticación simulada
-    void debeObtenerPaginaDePacientes() throws Exception {
-        // ... configuración del mock ...
-        
-        mockMvc.perform(get("/api/pacientes?page=0&size=10"))
-                .andExpect(status().isOk());
-    }
-}
-
-# 8. Mapa de Ruta del Proyecto
-
-Estado actual del desarrollo:
-
-- [x] Módulo 1: Setup y Arquitectura Base  
-- [x] Módulo 2: Gestión de Pacientes y Clientes (CRUD y relaciones)  
-- [x] Módulo 3: Citas y Atención Médica   
-- [x] Módulo 4: Punto de Venta (POS) e Inventario   
-- [x] Módulo 5: Seguridad y Autenticación JWT 
-- [ ] Módulo 6: Frontend (Angular) (pendiente)  
-- [ ] Módulo 7: Producción (pendiente)  
