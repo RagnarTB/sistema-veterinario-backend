@@ -1,6 +1,5 @@
 package com.veterinaria.servicios;
 
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -76,11 +75,11 @@ public class ProductoServicio {
                 productoGuardado.getStockActual());
     }
 
-    public void eliminar(Long id) {
+    public void cambiarEstado(Long id, Boolean estado) {
         Producto productodb = productoRepositorio.findById(id).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con id: " + id));
-
-        productoRepositorio.delete(productodb);
+        productodb.setActivo(estado);
+        productoRepositorio.save(productodb);
     }
 
 }

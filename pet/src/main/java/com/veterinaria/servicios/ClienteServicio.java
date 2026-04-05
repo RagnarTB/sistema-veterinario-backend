@@ -1,18 +1,11 @@
 package com.veterinaria.servicios;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import com.veterinaria.dtos.ClienteRequestDTO;
 import com.veterinaria.dtos.ClienteResponseDTO;
-import com.veterinaria.dtos.PacienteResponseDTO;
 import com.veterinaria.modelos.Cliente;
 import com.veterinaria.respositorios.ClienteRepositorio;
 
@@ -96,11 +89,11 @@ public class ClienteServicio {
         );
     }
 
-    public void eliminar(Long id) {
+    public void cambiarEstado(Long id, Boolean estado) {
         Cliente clientedb = clienteRepositorio.findById(id).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado con ID:" + id));
-
-        clienteRepositorio.delete(clientedb);
+        clientedb.setActivo(estado);
+        clienteRepositorio.save(clientedb);
     }
 
 }

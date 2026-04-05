@@ -1,5 +1,6 @@
 package com.veterinaria.modelos;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,6 +16,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class Producto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,5 +27,8 @@ public class Producto {
     private Integer stockActual;
     @Version
     private Long version;
+
+    @Column(nullable = false)
+    private Boolean activo = true;
 
 }

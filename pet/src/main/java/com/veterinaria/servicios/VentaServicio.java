@@ -81,6 +81,14 @@ public class VentaServicio {
                                                         "Producto no encontrado con id: "
                                                                         + detalleDto.getProductoId()));
 
+                        // --- ¡NUEVA REGLA DE NEGOCIO AQUÍ! ---
+                        if (!producto.getActivo()) {
+                                throw new ResponseStatusException(
+                                                HttpStatus.BAD_REQUEST,
+                                                "El producto '" + producto.getNombre()
+                                                                + "' se encuentra inactivo y no puede ser vendido.");
+                        }
+
                         if (producto.getStockActual() < detalleDto.getCantidad()) {
                                 throw new ResponseStatusException(
                                                 HttpStatus.BAD_REQUEST,

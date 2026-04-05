@@ -50,4 +50,7 @@ public class Cliente {
     @Column(nullable = false)
     private Boolean esInvitado = false; // Por defecto es false para no romper los clientes actuales
 
+    @Column(nullable = false)
+    private Boolean activo = true;
+
 }

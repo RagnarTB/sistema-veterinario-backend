@@ -2,7 +2,6 @@ package com.veterinaria.controladores;
 
 import java.util.List;
 
-import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,13 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.veterinaria.dtos.CitaRequestDTO;
 import com.veterinaria.dtos.CitaResponseDTO;
-import com.veterinaria.dtos.PacienteResponseDTO;
 import com.veterinaria.dtos.SlotDisponibilidadDTO;
 import com.veterinaria.modelos.Enums.EstadoCita;
 import com.veterinaria.servicios.CitaServicio;
 
 import jakarta.validation.Valid;
-import jakarta.websocket.server.PathParam;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

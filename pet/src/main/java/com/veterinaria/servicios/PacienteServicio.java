@@ -89,12 +89,12 @@ public class PacienteServicio {
                 return mapearAResponse(pacienteGuardado);
         }
 
-        public void eliminar(Long id) {
+        public void cambiarEstado(Long id, Boolean estado) {
                 Paciente pacienteDb = pacienteRepositorio.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Paciente no encontrado con ID: " + id));
-
-                pacienteRepositorio.delete(pacienteDb);
+                pacienteDb.setActivo(estado);
+                pacienteRepositorio.save(pacienteDb);
         }
 
         // --- 3. CORRECCIÓN: EL MÉTODO AYUDANTE (Refactorización Limpia) ---
