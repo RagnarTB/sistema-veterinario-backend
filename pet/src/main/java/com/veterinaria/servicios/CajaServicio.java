@@ -1,5 +1,6 @@
 package com.veterinaria.servicios;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.springframework.http.HttpStatus;
@@ -9,18 +10,16 @@ import org.springframework.web.server.ResponseStatusException;
 import com.veterinaria.dtos.CajaRequestDTO;
 import com.veterinaria.dtos.CierreCajaResponseDTO;
 import com.veterinaria.modelos.CajaDiaria;
-import com.veterinaria.modelos.MovimientoCaja;
 import com.veterinaria.modelos.Enums.TipoMovimiento;
 import com.veterinaria.respositorios.CajaRepositorio;
-import com.veterinaria.respositorios.VentaRepositorio; // NUEVO IMPORT
+import com.veterinaria.respositorios.VentaRepositorio;
 
 @Service
 public class CajaServicio {
 
     private final CajaRepositorio cajaRepositorio;
-    private final VentaRepositorio ventaRepositorio; // NUEVO
+    private final VentaRepositorio ventaRepositorio;
 
-    // NUEVO Actualizamos el constructor para inyectar ambos repositorios
     public CajaServicio(CajaRepositorio cajaRepositorio, VentaRepositorio ventaRepositorio) {
         this.cajaRepositorio = cajaRepositorio;
         this.ventaRepositorio = ventaRepositorio;
@@ -40,9 +39,8 @@ public class CajaServicio {
         cajaRepositorio.save(nuevaCaja);
     }
 
-    // Cambiamos 'void' por 'CierreCajaResponseDTO'
     public CierreCajaResponseDTO cerrarCaja() {
-        // 1. Buscar la caja abierta usando el Enum
+        // 1. Buscar la caja abierta
         CajaDiaria cajaAbierta = cajaRepositorio.findByEstado("ABIERTA")
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "No hay ninguna caja abierta para cerrar"));
@@ -51,29 +49,33 @@ public class CajaServicio {
         cajaAbierta.setEstado("CERRADA");
         cajaAbierta.setFechaCierre(ahora);
 
-        // 2. Sumar Ventas (Ingresos automáticos por módulo ventas)
-        Double totalVentas = ventaRepositorio.sumarVentasPorCaja(cajaAbierta.getId());
-        totalVentas = (totalVentas == null) ? 0.0 : totalVentas;
+        // 2. Sumar Ventas (el repositorio ya devuelve BigDecimal)
+        BigDecimal totalVentas = ventaRepositorio.sumarVentasPorCaja(cajaAbierta.getId());
+        totalVentas = (totalVentas == null) ? BigDecimal.ZERO : totalVentas;
 
-        // 3. Calcular Ingresos y Egresos extras (Movimientos manuales y devoluciones)
-        Double ingresosExtras = cajaAbierta.getMovimientos().stream()
+        // 3. Calcular Ingresos y Egresos extras usando reduce de BigDecimal
+        BigDecimal ingresosExtras = cajaAbierta.getMovimientos().stream()
                 .filter(m -> m.getTipoMovimiento() == TipoMovimiento.INGRESO)
-                .mapToDouble(MovimientoCaja::getMonto)
-                .sum();
+                .map(m -> m.getMonto())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Double egresosExtras = cajaAbierta.getMovimientos().stream()
+        BigDecimal egresosExtras = cajaAbierta.getMovimientos().stream()
                 .filter(m -> m.getTipoMovimiento() == TipoMovimiento.EGRESO)
-                .mapToDouble(MovimientoCaja::getMonto)
-                .sum();
+                .map(m -> m.getMonto())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 4. ¡NUEVA FÓRMULA DEL ARQUEO!
-        double saldoCalculado = cajaAbierta.getSaldoInicial() + totalVentas + ingresosExtras - egresosExtras;
+        // 4. Fórmula del arqueo con BigDecimal
+        BigDecimal saldoCalculado = cajaAbierta.getSaldoInicial()
+                .add(totalVentas)
+                .add(ingresosExtras)
+                .subtract(egresosExtras);
+
         cajaAbierta.setSaldoFinal(saldoCalculado);
 
         cajaRepositorio.save(cajaAbierta);
 
-        // 5. Retornamos el "Recibo" detallado para el Frontend
-        return new com.veterinaria.dtos.CierreCajaResponseDTO(
+        // 5. Retornamos el resumen detallado para el Frontend
+        return new CierreCajaResponseDTO(
                 cajaAbierta.getId(),
                 cajaAbierta.getFechaCierre(),
                 cajaAbierta.getSaldoInicial(),

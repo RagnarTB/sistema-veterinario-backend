@@ -1,5 +1,7 @@
 package com.veterinaria.modelos;
 
+import java.math.BigDecimal;
+
 import org.hibernate.envers.Audited;
 
 import jakarta.persistence.Entity;
@@ -28,8 +30,10 @@ public class AtencionMedica {
     private String sintomas;
     private String diagnostico;
     private String tratamiento;
-    private Double peso;
-    private Double temperatura;
+    @jakarta.persistence.Column(precision = 8, scale = 3)
+    private BigDecimal peso;
+    @jakarta.persistence.Column(precision = 6, scale = 2)
+    private BigDecimal temperatura;
     private Integer frecuenciaCardiaca;
     private String resumenIaCliente;
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)

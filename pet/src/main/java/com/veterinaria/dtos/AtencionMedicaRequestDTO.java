@@ -1,5 +1,7 @@
 package com.veterinaria.dtos;
 
+import java.math.BigDecimal;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -16,9 +18,9 @@ public class AtencionMedicaRequestDTO {
     @NotBlank(message = "el tratamiento es obligatorio")
     private String tratamiento;
     @NotNull(message = "el peso es obligatorio")
-    private Double peso;
+    private BigDecimal peso;
     @NotNull(message = "la temperatura es obligatoria")
-    private Double temperatura;
+    private BigDecimal temperatura;
     @NotNull(message = "la frecuencia cardiaca es obligatoria")
     private Integer frecuenciaCardiaca;
 

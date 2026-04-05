@@ -1,5 +1,7 @@
 package com.veterinaria.dtos;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,8 +14,8 @@ public class AtencionMedicaResponseDTO {
     private String sintomas;
     private String diagnostico;
     private String tratamiento;
-    private Double peso;
-    private Double temperatura;
+    private BigDecimal peso;
+    private BigDecimal temperatura;
     private Integer frecuenciaCardiaca;
     private String resumenIaCliente;
     private Long citaId;

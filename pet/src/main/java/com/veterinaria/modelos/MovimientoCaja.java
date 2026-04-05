@@ -1,5 +1,6 @@
 package com.veterinaria.modelos;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.veterinaria.modelos.Enums.TipoMovimiento;
@@ -25,7 +26,8 @@ public class MovimientoCaja {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String concepto;
-    private Double monto;
+    @jakarta.persistence.Column(precision = 19, scale = 2)
+    private BigDecimal monto;
     private TipoMovimiento tipoMovimiento;
     private LocalDateTime fechaHora;
     @ManyToOne

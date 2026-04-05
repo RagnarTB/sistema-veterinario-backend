@@ -1,5 +1,7 @@
 package com.veterinaria.modelos;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,8 +23,8 @@ public class ServicioMedico {
 
     private String descripcion;
 
-    @Column(nullable = false)
-    private Double precio;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal precio;
 
     @Column(nullable = false)
     private Integer duracionMinutos; // Ej: 30, 45, 60

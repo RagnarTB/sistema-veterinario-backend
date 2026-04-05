@@ -13,6 +13,7 @@ import com.veterinaria.dtos.VentaRequestDTO;
 import com.veterinaria.dtos.VentaResponseDTO;
 import com.veterinaria.dtos.DetalleVentaResponseDTO;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -50,16 +51,18 @@ class VentaControllerTest {
                 }
                 """;
 
-        // 1. Preparamos los detalles de respuesta simulados
-        DetalleVentaResponseDTO detalle1 = new DetalleVentaResponseDTO(1L, "Shampoo", 2, 20.0, 40.0);
-        DetalleVentaResponseDTO detalle2 = new DetalleVentaResponseDTO(3L, "Correa", 1, 15.0, 15.0);
+        // 1. Preparamos los detalles de respuesta simulados con BigDecimal
+        DetalleVentaResponseDTO detalle1 = new DetalleVentaResponseDTO(
+                1L, "Shampoo", 2, new BigDecimal("20.00"), new BigDecimal("40.00"));
+        DetalleVentaResponseDTO detalle2 = new DetalleVentaResponseDTO(
+                3L, "Correa", 1, new BigDecimal("15.00"), new BigDecimal("15.00"));
 
         // 2. Preparamos la respuesta de la venta simulada
         VentaResponseDTO respuestaMock = new VentaResponseDTO(
                 1L,
                 1L,
                 LocalDateTime.now(),
-                55.0,
+                new BigDecimal("55.00"),
                 List.of(detalle1, detalle2));
 
         when(ventaServicio.guardar(any(VentaRequestDTO.class))).thenReturn(respuestaMock);
@@ -70,7 +73,7 @@ class VentaControllerTest {
                 .content(ventaJson))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.total").value(55.0))
+                .andExpect(jsonPath("$.total").value(55.00))
                 .andExpect(jsonPath("$.detalles").isArray());
     }
 }

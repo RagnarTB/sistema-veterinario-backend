@@ -1,5 +1,7 @@
 package com.veterinaria.modelos;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,7 +25,8 @@ public class Producto {
     private Long id;
     private String nombre;
     private String descripcion;
-    private Double precio;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal precio;
     private Integer stockActual;
     @Version
     private Long version;

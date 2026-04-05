@@ -1,5 +1,8 @@
 package com.veterinaria.dtos;
 
+import java.math.BigDecimal;
+
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,8 +16,8 @@ public class ProductoRequestDTO {
     private String descripcion;
 
     @NotNull(message = "El precio del producto es obligatorio")
-    @Min(value = 0, message = "El precio no puede ser negativo")
-    private Double precio;
+    @DecimalMin(value = "0.0", inclusive = true, message = "El precio no puede ser negativo")
+    private BigDecimal precio;
     @NotNull(message = "El stock no puede ser nulo")
     @Min(value = 0, message = "El stock no puede ser negativo")
     private Integer stockActual;

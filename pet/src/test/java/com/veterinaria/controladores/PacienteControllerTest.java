@@ -110,9 +110,10 @@ class PacienteControllerTest {
         }
 
         @Test
-        @WithMockUser
-        void debeEliminarPacienteYRetornarEstadoNoContent() throws Exception {
-                mockMvc.perform(delete("/api/pacientes/1"))
+        @WithMockUser(roles = "ADMIN") // El endpoint requiere ADMIN
+        void debeCambiarEstadoPacienteYRetornarNoContent() throws Exception {
+                mockMvc.perform(delete("/api/pacientes/1/estado")
+                                .param("activo", "false"))
                                 .andExpect(status().isNoContent());
         }
 }

@@ -1,5 +1,6 @@
 package com.veterinaria.modelos;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,8 @@ public class Venta {
     private Long id;
 
     private LocalDateTime fechaHora;
-    private Double total;
+    @jakarta.persistence.Column(precision = 19, scale = 2)
+    private BigDecimal total;
 
     @ManyToOne
     @JoinColumn(name = "cliente_id")

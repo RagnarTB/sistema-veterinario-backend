@@ -1,5 +1,6 @@
 package com.veterinaria.servicios;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,7 +24,7 @@ import com.veterinaria.modelos.Producto;
 import com.veterinaria.modelos.Venta;
 import com.veterinaria.modelos.Enums.EstadoVenta;
 import com.veterinaria.modelos.Enums.TipoMovimiento;
-import com.veterinaria.respositorios.CajaRepositorio; // ¡NUEVO IMPORT!
+import com.veterinaria.respositorios.CajaRepositorio;
 import com.veterinaria.respositorios.ClienteRepositorio;
 import com.veterinaria.respositorios.MovimientoCajaRespositorio;
 import com.veterinaria.respositorios.ProductoRepositorio;
@@ -37,10 +38,9 @@ public class VentaServicio {
         private final VentaRepositorio ventaRepositorio;
         private final ClienteRepositorio clienteRepositorio;
         private final ProductoRepositorio productoRepositorio;
-        private final CajaRepositorio cajaRepositorio; // ¡NUEVO!
+        private final CajaRepositorio cajaRepositorio;
         private final MovimientoCajaRespositorio movimientoCajaRespositorio;
 
-        // Actualizamos el constructor
         public VentaServicio(VentaRepositorio ventaRepositorio, ClienteRepositorio clienteRepositorio,
                         ProductoRepositorio productoRepositorio, CajaRepositorio cajaRepositorio,
                         MovimientoCajaRespositorio movimientoCajaRespositorio) {
@@ -55,13 +55,12 @@ public class VentaServicio {
         public VentaResponseDTO guardar(VentaRequestDTO dto) {
 
                 // ------------------------------------------------------------------
-                // ¡REGLA DE NEGOCIO MÁS IMPORTANTE! (El Guardia de Seguridad)
+                // REGLA DE NEGOCIO: No se puede vender con caja cerrada
                 // ------------------------------------------------------------------
                 CajaDiaria cajaAbierta = cajaRepositorio.findByEstado("ABIERTA")
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                                                 "No se puede realizar la venta porque la caja está cerrada"));
 
-                // El resto del código original se mantiene intacto...
                 Cliente cliente = clienteRepositorio.findById(dto.getClienteId())
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND,
@@ -72,7 +71,8 @@ public class VentaServicio {
                 venta.setFechaHora(LocalDateTime.now());
                 venta.setCaja(cajaAbierta);
 
-                double totalVenta = 0.0;
+                BigDecimal totalVenta = BigDecimal.ZERO;
+
                 for (DetalleVentaRequestDTO detalleDto : dto.getDetalles()) {
 
                         Producto producto = productoRepositorio.findById(detalleDto.getProductoId())
@@ -81,7 +81,6 @@ public class VentaServicio {
                                                         "Producto no encontrado con id: "
                                                                         + detalleDto.getProductoId()));
 
-                        // --- ¡NUEVA REGLA DE NEGOCIO AQUÍ! ---
                         if (!producto.getActivo()) {
                                 throw new ResponseStatusException(
                                                 HttpStatus.BAD_REQUEST,
@@ -98,8 +97,10 @@ public class VentaServicio {
                         producto.setStockActual(
                                         producto.getStockActual() - detalleDto.getCantidad());
 
-                        double subtotal = detalleDto.getCantidad() * producto.getPrecio();
-                        totalVenta += subtotal;
+                        // Multiplicación con BigDecimal: precio * cantidad
+                        BigDecimal subtotal = producto.getPrecio()
+                                        .multiply(BigDecimal.valueOf(detalleDto.getCantidad()));
+                        totalVenta = totalVenta.add(subtotal);
 
                         DetalleVenta nuevoDetalle = new DetalleVenta();
                         nuevoDetalle.setProducto(producto);
@@ -140,52 +141,50 @@ public class VentaServicio {
 
         @Transactional
         public MensajeResponseDTO anularVenta(Long idVenta) {
-                // 1. Buscar la venta (Tu primer paso)
+                // 1. Buscar la venta
                 Venta venta = ventaRepositorio.findById(idVenta)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Venta no encontrada"));
 
-                // Validación de seguridad: No anular lo ya anulado
+                // Validación: No anular lo ya anulado
                 if (venta.getEstado() == EstadoVenta.ANULADA) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La venta ya está anulada");
                 }
-                // 2. Buscar la Caja Abierta actual (Obligatorio para el egreso)
+
+                // 2. Buscar la Caja Abierta actual
                 CajaDiaria cajaAbierta = cajaRepositorio.findByEstado("ABIERTA")
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                                                 "No se puede anular: No hay una caja abierta para registrar el egreso"));
 
-                // --- NUEVA VALIDACIÓN DE SALDO ---
-                Double ventasActuales = ventaRepositorio.sumarVentasPorCaja(cajaAbierta.getId());
-                ventasActuales = (ventasActuales == null) ? 0.0 : ventasActuales;
+                // --- VALIDACIÓN DE SALDO ---
+                // El repositorio ya devuelve BigDecimal; si no hay ventas, retorna null
+                BigDecimal ventasActuales = ventaRepositorio.sumarVentasPorCaja(cajaAbierta.getId());
+                ventasActuales = (ventasActuales == null) ? BigDecimal.ZERO : ventasActuales;
 
-                // El saldo real disponible es: Saldo Inicial + Ventas - Egresos previos
-                // Para simplificar, comparamos si el total de ventas acumuladas permite
-                // devolver esta venta
-                if (ventasActuales < venta.getTotal()) {
+                // Comparación correcta con BigDecimal: compareTo < 0 significa "menor que"
+                if (ventasActuales.compareTo(venta.getTotal()) < 0) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                                         "No hay suficiente efectivo en caja para devolver el monto de esta venta.");
                 }
 
-                // 3. Recorrer los detalles y devolver stock (Tu segundo paso)
+                // 3. Devolver stock
                 for (DetalleVenta detalle : venta.getDetalles()) {
                         Producto producto = detalle.getProducto();
-                        // Aquí en el futuro pondríamos el IF para saber si es servicio o producto
-                        // físico
                         producto.setStockActual(producto.getStockActual() + detalle.getCantidad());
                         productoRepositorio.save(producto);
                 }
 
-                // 4. NUEVO: Registrar el Movimiento de Caja (EGRESO)
+                // 4. Registrar el Movimiento de Caja (EGRESO)
                 MovimientoCaja egreso = new MovimientoCaja();
                 egreso.setConcepto("Anulación de Venta ID: " + venta.getId());
-                egreso.setMonto(venta.getTotal()); // El monto a devolver
+                egreso.setMonto(venta.getTotal());
                 egreso.setTipoMovimiento(TipoMovimiento.EGRESO);
                 egreso.setFechaHora(LocalDateTime.now());
-                egreso.setCajaDiaria(cajaAbierta); // Relación ManyToOne
+                egreso.setCajaDiaria(cajaAbierta);
 
                 movimientoCajaRespositorio.save(egreso);
 
-                // 5. Cambiar el estado y guardar (Inmutabilidad)
+                // 5. Cambiar el estado
                 venta.setEstado(EstadoVenta.ANULADA);
                 ventaRepositorio.save(venta);
 

@@ -1,5 +1,6 @@
 package com.veterinaria.modelos;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +31,11 @@ public class CajaDiaria {
     private LocalDateTime fechaApertura;
     private LocalDateTime fechaCierre;
 
-    @Column(nullable = false)
-    private Double saldoInicial;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal saldoInicial;
 
-    private Double saldoFinal;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal saldoFinal;
 
     @Column(nullable = false)
     private String estado; // Guardaremos "ABIERTA" o "CERRADA"

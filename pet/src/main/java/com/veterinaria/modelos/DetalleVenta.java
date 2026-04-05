@@ -1,5 +1,8 @@
 package com.veterinaria.modelos;
 
+import java.math.BigDecimal;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,8 +23,10 @@ public class DetalleVenta {
     private Long id;
 
     private Integer cantidad;
-    private Double precioUnitario;
-    private Double subtotal;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal precioUnitario;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal subtotal;
 
     @ManyToOne
     @JoinColumn(name = "venta_id")

@@ -1,6 +1,8 @@
 package com.veterinaria.dtos;
 
-import jakarta.validation.constraints.Min;
+import java.math.BigDecimal;
+
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -8,7 +10,7 @@ import lombok.Data;
 public class CajaRequestDTO {
 
     @NotNull(message = "El saldo inicial es obligatorio")
-    @Min(value = 0, message = "El saldo inicial no puede ser negativo")
-    private Double saldoInicial;
+    @DecimalMin(value = "0.0", inclusive = true, message = "El saldo inicial no puede ser negativo")
+    private BigDecimal saldoInicial;
 
 }
