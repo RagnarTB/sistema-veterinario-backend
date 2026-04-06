@@ -1,14 +1,17 @@
 package com.veterinaria.servicios;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,11 +21,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.veterinaria.dtos.CajaRequestDTO;
+import com.veterinaria.dtos.CierreCajaResponseDTO;
 import com.veterinaria.modelos.CajaDiaria;
+import com.veterinaria.modelos.Empleado;
 import com.veterinaria.modelos.Sede;
 import com.veterinaria.respositorios.CajaRepositorio;
-import com.veterinaria.respositorios.VentaRepositorio;
 import com.veterinaria.respositorios.SedeRepositorio;
+import com.veterinaria.respositorios.VentaRepositorio;
 
 @ExtendWith(MockitoExtension.class)
 class CajaServicioTest {
@@ -47,11 +52,18 @@ class CajaServicioTest {
 
         Sede sede = new Sede();
         sede.setId(1L);
-        when(sedeRepositorio.findById(1L)).thenReturn(Optional.of(sede));
 
-        cajaServicio.abrirCaja(request);
+        Empleado empleado = new Empleado();
+        empleado.setSedes(new HashSet<>(Set.of(sede)));
+
+        when(sedeRepositorio.findById(1L)).thenReturn(Optional.of(sede));
+        when(cajaRepositorio.findBySedeIdAndEstado(1L, "ABIERTA"))
+                .thenReturn(Optional.empty());
+
+        cajaServicio.abrirCaja(request, empleado);
 
         ArgumentCaptor<CajaDiaria> cajaCaptor = ArgumentCaptor.forClass(CajaDiaria.class);
+
         verify(cajaRepositorio).save(cajaCaptor.capture());
 
         CajaDiaria cajaGuardada = cajaCaptor.getValue();
@@ -59,36 +71,46 @@ class CajaServicioTest {
         assertEquals(new BigDecimal("150.00"), cajaGuardada.getSaldoInicial());
         assertEquals("ABIERTA", cajaGuardada.getEstado());
         assertNotNull(cajaGuardada.getFechaApertura());
+        assertEquals(sede, cajaGuardada.getSede());
     }
 
     @Test
     void debeCerrarCajaYCalcularSaldoFinal() {
-        // 1. Preparamos una caja ficticia abierta con 100.00
+        Sede sede = new Sede();
+        sede.setId(1L);
+
+        Empleado empleado = new Empleado();
+        empleado.setSedes(new HashSet<>(Set.of(sede)));
+
         CajaDiaria cajaAbierta = new CajaDiaria();
         cajaAbierta.setId(1L);
         cajaAbierta.setSaldoInicial(new BigDecimal("100.00"));
         cajaAbierta.setEstado("ABIERTA");
         cajaAbierta.setFechaApertura(LocalDateTime.now().minusHours(8));
-        cajaAbierta.setMovimientos(new java.util.ArrayList<>());
+        cajaAbierta.setMovimientos(new ArrayList<>());
 
-        when(cajaRepositorio.findBySedeIdAndEstado(1L, "ABIERTA")).thenReturn(Optional.of(cajaAbierta));
+        when(sedeRepositorio.findById(1L)).thenReturn(Optional.of(sede));
+        when(cajaRepositorio.findBySedeIdAndEstado(1L, "ABIERTA"))
+                .thenReturn(Optional.of(cajaAbierta));
 
-        // 2. Simulamos que hoy se vendieron 250.00
-        when(ventaRepositorio.sumarVentasPorCaja(any())).thenReturn(new BigDecimal("250.00"));
+        when(ventaRepositorio.sumarVentasPorCaja(1L))
+                .thenReturn(new BigDecimal("250.00"));
 
-        // 3. El administrador cierra la caja
-        cajaServicio.cerrarCaja(1L);
+        CierreCajaResponseDTO response = cajaServicio.cerrarCaja(1L, empleado);
 
-        // 4. Capturamos lo que se guardó
         ArgumentCaptor<CajaDiaria> cajaCaptor = ArgumentCaptor.forClass(CajaDiaria.class);
+
         verify(cajaRepositorio).save(cajaCaptor.capture());
 
         CajaDiaria cajaCerrada = cajaCaptor.getValue();
 
-        // 5. Verificamos: 100 (Inicial) + 250 (Ventas) = 350
         assertEquals("CERRADA", cajaCerrada.getEstado());
         assertNotNull(cajaCerrada.getFechaCierre());
-        assertEquals(new BigDecimal("350.00"), cajaCerrada.getSaldoFinal(),
-                "El saldo final debe ser la suma exacta del inicial más las ventas");
+        assertEquals(new BigDecimal("350.00"), cajaCerrada.getSaldoFinal());
+
+        // Verificamos también el DTO de respuesta
+        assertNotNull(response);
+        assertEquals(new BigDecimal("350.00"), response.getSaldoFinal());
+        assertEquals(new BigDecimal("250.00"), response.getTotalVentas());
     }
 }

@@ -52,14 +52,27 @@ public interface CitaRepositorio extends JpaRepository<Cita, Long> {
         @EntityGraph(attributePaths = { "pacientes", "servicio", "veterinario" })
         Optional<Cita> findById(Long id);
 
-        // Rendimiento de veterinarios: conteo de citas COMPLETADAS por cada médico
         @Query("SELECT new com.veterinaria.dtos.CitasVeterinarioDTO(usr.email, COUNT(c)) " +
-                        "FROM Cita c " +
-                        "JOIN c.veterinario u " +
-                        "JOIN u.usuario usr " +
-                        "WHERE c.estado = com.veterinaria.modelos.Enums.EstadoCita.COMPLETADA " +
-                        "GROUP BY usr.id, usr.email " +
-                        "ORDER BY COUNT(c) DESC")
+            "FROM Cita c " +
+            "JOIN c.veterinario u " +
+            "JOIN u.usuario usr " +
+            "WHERE c.estado = com.veterinaria.modelos.Enums.EstadoCita.COMPLETADA " +
+            "GROUP BY usr.id, usr.email " +
+            "ORDER BY COUNT(c) DESC")
         List<CitasVeterinarioDTO> contarCitasCompletadasPorVeterinario();
-}
 
+        @EntityGraph(attributePaths = { "pacientes", "servicio", "veterinario", "sede" })
+        @Query("SELECT DISTINCT c FROM Cita c " +
+            "LEFT JOIN c.pacientes p " +
+            "LEFT JOIN p.cliente cl " +
+            "JOIN c.veterinario v " +
+            "WHERE c.sede.id = :sedeId AND (" +
+            "UPPER(p.nombre) LIKE UPPER(CONCAT('%', :buscar, '%')) OR " +
+            "UPPER(cl.nombre) LIKE UPPER(CONCAT('%', :buscar, '%')) OR " +
+            "UPPER(cl.apellido) LIKE UPPER(CONCAT('%', :buscar, '%')) OR " +
+            "cl.dni LIKE CONCAT('%', :buscar, '%') OR " +
+            "UPPER(v.nombre) LIKE UPPER(CONCAT('%', :buscar, '%')) OR " +
+            "UPPER(v.apellido) LIKE UPPER(CONCAT('%', :buscar, '%'))" +
+            ")")
+        Page<Cita> buscarEnSede(@Param("sedeId") Long sedeId, @Param("buscar") String buscar, Pageable pageable);
+}

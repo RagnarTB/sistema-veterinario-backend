@@ -99,4 +99,6 @@ public class AuthServicio {
         // 4. Devolvemos la llave al Frontend
         return new AuthResponseDTO(token, dto.getEmail());
     }
+
+    
 }

@@ -37,9 +37,12 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
     }
 
-    @GetMapping()
-    public ResponseEntity<Page<ClienteResponseDTO>> listarClientes(Pageable pageable) {
-        Page<ClienteResponseDTO> clientes = clienteServicio.listarTodos(pageable);
+    @GetMapping
+    public ResponseEntity<Page<ClienteResponseDTO>> listarClientes(
+            Pageable pageable,
+            @RequestParam(required = false) String buscar) {
+
+        Page<ClienteResponseDTO> clientes = clienteServicio.listarTodos(buscar, pageable);
 
         return ResponseEntity.ok(clientes);
     }
@@ -61,7 +64,7 @@ public class ClienteController {
     @PatchMapping("/{id}/estado")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> cambiarEstadoCliente(@PathVariable Long id, @RequestParam Boolean activo) {
-        clienteServicio.cambiarEstado(id,activo);
+        clienteServicio.cambiarEstado(id, activo);
         return ResponseEntity.noContent().build();
     }
 

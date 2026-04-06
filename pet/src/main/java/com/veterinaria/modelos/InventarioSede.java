@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Data;
 
 @Entity
@@ -32,4 +33,7 @@ public class InventarioSede {
 
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal stockMinimo;
+
+    @Version
+    private Long version;
 }

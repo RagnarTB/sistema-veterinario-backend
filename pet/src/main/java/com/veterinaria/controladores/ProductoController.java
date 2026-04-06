@@ -38,8 +38,10 @@ public class ProductoController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProductoResponseDTO>> listarProductos(Pageable pageable) {
-        Page<ProductoResponseDTO> productos = productoServicio.listarTodos(pageable);
+    public ResponseEntity<Page<ProductoResponseDTO>> listarProductos(
+            Pageable pageable,
+            @RequestParam(required = false) String buscar) {
+        Page<ProductoResponseDTO> productos = productoServicio.listarTodos(buscar, pageable);
         return ResponseEntity.ok(productos);
     }
 

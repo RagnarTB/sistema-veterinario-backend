@@ -14,6 +14,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 @Entity
 @Audited
@@ -35,17 +36,20 @@ public class DetalleVenta {
     @Column(precision = 19, scale = 2)
     private BigDecimal subtotal;
 
+    // Venta tiene @Audited, esta relación es segura (ambas auditadas)
     @ManyToOne
     @JoinColumn(name = "venta_id")
     private Venta venta;
 
-    // Un detalle puede ser un producto físico con stock
+    // Producto no es @Audited → se declara NOT_AUDITED
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
-    @JoinColumn(name = "producto_id") // nullable por defecto: puede ser null si el ítem es un servicio
+    @JoinColumn(name = "producto_id")
     private Producto producto;
 
-    // O puede ser un servicio médico (consulta, corte de pelo, etc.)
+    // ServicioMedico no es @Audited → se declara NOT_AUDITED
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
-    @JoinColumn(name = "servicio_medico_id") // nullable: puede ser null si el ítem es un producto
+    @JoinColumn(name = "servicio_medico_id")
     private ServicioMedico servicio;
 }

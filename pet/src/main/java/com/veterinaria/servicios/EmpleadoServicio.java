@@ -87,8 +87,15 @@ public class EmpleadoServicio {
         return mapearAResponse(empleadoGuardado);
     }
 
-    public Page<EmpleadoResponseDTO> listarTodos(Pageable pageable) {
-        return empleadoRepositorio.findAll(pageable).map(this::mapearAResponse);
+    public org.springframework.data.domain.Page<EmpleadoResponseDTO> listarTodos(String buscar, org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<Empleado> pagina;
+        if (buscar != null && !buscar.trim().isEmpty()) {
+            pagina = empleadoRepositorio.findByNombreContainingIgnoreCaseOrApellidoContainingIgnoreCaseOrDniContaining(
+                    buscar, buscar, buscar, pageable);
+        } else {
+            pagina = empleadoRepositorio.findAll(pageable);
+        }
+        return pagina.map(this::mapearAResponse);
     }
 
     public EmpleadoResponseDTO buscarPorId(Long id) {

@@ -52,10 +52,14 @@ public class PacienteServicio {
                 return mapearAResponse(pacienteGuardado);
         }
 
-        public Page<PacienteResponseDTO> listarTodos(Pageable pageable) {
-                Page<Paciente> paginaDePacientes = pacienteRepositorio.findAll(pageable);
-                // Usamos nuestro método ayudante para mapear toda la lista automáticamente
-                return paginaDePacientes.map(this::mapearAResponse);
+        public Page<PacienteResponseDTO> listarTodos(String buscar, Pageable pageable) {
+                Page<Paciente> pagina;
+                if (buscar != null && !buscar.trim().isEmpty()) {
+                        pagina = pacienteRepositorio.findByNombreContainingIgnoreCase(buscar, pageable);
+                } else {
+                        pagina = pacienteRepositorio.findAll(pageable);
+                }
+                return pagina.map(this::mapearAResponse);
         }
 
         public PacienteResponseDTO buscarPorId(Long id) {

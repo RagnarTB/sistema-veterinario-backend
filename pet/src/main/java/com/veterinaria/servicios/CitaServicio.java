@@ -15,6 +15,7 @@ import com.veterinaria.dtos.CitaRequestDTO;
 import com.veterinaria.dtos.CitaResponseDTO;
 import com.veterinaria.dtos.SlotDisponibilidadDTO;
 import com.veterinaria.modelos.Cita;
+import com.veterinaria.modelos.Cliente;
 import com.veterinaria.modelos.HorarioVeterinario;
 import com.veterinaria.modelos.Paciente;
 import com.veterinaria.modelos.ServicioMedico;
@@ -74,7 +75,16 @@ public class CitaServicio {
                         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontraron los pacientes");
                 }
 
-                int tiempoTotalOcupado = servicio.getDuracionMinutos() + servicio.getBufferMinutos();
+                // Validación: todos los pacientes deben pertenecer al mismo cliente
+                Cliente clienteBase = pacientes.get(0).getCliente();
+                if (pacientes.stream().anyMatch(p -> !p.getCliente().equals(clienteBase))) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Todos los pacientes de la cita deben pertenecer al mismo cliente. No se permiten mascotas de distintos dueños en una misma cita.");
+                }
+
+                int cantidadMascotas = dto.getPacienteIds().size();
+                int tiempoTotalOcupado = (servicio.getDuracionMinutos() + servicio.getBufferMinutos())
+                                * cantidadMascotas;
                 LocalTime horaFinCalculada = dto.getHoraInicio().plusMinutes(tiempoTotalOcupado);
 
                 // Pasamos -1L porque al ser una cita NUEVA, no hay ningún ID real que ignorar
@@ -106,8 +116,14 @@ public class CitaServicio {
                 return mapearAResponse(citaGuardada);
         }
 
-        public Page<CitaResponseDTO> listar(Long sedeId, Pageable pageable) {
-                return citaRepositorio.findBySedeId(sedeId, pageable).map(this::mapearAResponse);
+        public Page<CitaResponseDTO> listar(Long sedeId, String buscar, Pageable pageable) {
+                Page<Cita> pagina;
+                if (buscar != null && !buscar.trim().isEmpty()) {
+                        pagina = citaRepositorio.buscarEnSede(sedeId, buscar, pageable);
+                } else {
+                        pagina = citaRepositorio.findBySedeId(sedeId, pageable);
+                }
+                return pagina.map(this::mapearAResponse);
         }
 
         public CitaResponseDTO buscarPorId(Long id) {
@@ -139,8 +155,16 @@ public class CitaServicio {
                         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontraron los pacientes");
                 }
 
+                Cliente clienteBase = pacientes.get(0).getCliente();
+                if (pacientes.stream().anyMatch(p -> !p.getCliente().equals(clienteBase))) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Todos los pacientes de la cita deben pertenecer al mismo cliente.");
+                }
+
                 // Recalculamos tiempos por si cambió de servicio (ej. de Consulta a Cirugía)
-                int tiempoTotalOcupado = servicio.getDuracionMinutos() + servicio.getBufferMinutos();
+                int cantidadMascotas = dto.getPacienteIds().size();
+                int tiempoTotalOcupado = (servicio.getDuracionMinutos() + servicio.getBufferMinutos())
+                                * cantidadMascotas;
                 LocalTime horaFinCalculada = dto.getHoraInicio().plusMinutes(tiempoTotalOcupado);
 
                 // AQUÍ ESTÁ LA MAGIA: Pasamos el 'id' de la cita actual para que el sistema la
@@ -175,6 +199,14 @@ public class CitaServicio {
                 Cita citaDb = citaRepositorio.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Cita no encontrada con ID: " + id));
+
+                // solo se puede borrar si está AGENDADA
+                if (citaDb.getEstado() != EstadoCita.AGENDADA) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "No se puede eliminar una cita que ya fue " + citaDb.getEstado()
+                                                        + ". Estado actual: " + citaDb.getEstado());
+                }
+
                 citaRepositorio.delete(citaDb);
         }
 
@@ -193,12 +225,12 @@ public class CitaServicio {
                                 cita.getMotivo(), // En el orden correcto (7)
                                 cita.getEstado(), // En el orden correcto (8)
                                 pacientesIds, // (9)
-                                cita.getSede().getId()
-                );
+                                cita.getSede().getId());
         }
 
         // EL MOTOR DE DISPONIBILIDAD
-        public List<SlotDisponibilidadDTO> obtenerDisponibilidad(Long veterinarioId, LocalDate fecha, Long servicioId, Long sedeId) {
+        public List<SlotDisponibilidadDTO> obtenerDisponibilidad(Long veterinarioId, LocalDate fecha, Long servicioId,
+                        Long sedeId, int cantidadPacientes) {
 
                 // 1. Si el día es feriado o el doctor pidió permiso, devolvemos lista vacía
                 // inmediatamente
@@ -206,7 +238,8 @@ public class CitaServicio {
                         return List.of();
                 }
 
-                // 2. Buscamos el horario de trabajo del doctor para ese día (ej. LUNES) en esa sede
+                // 2. Buscamos el horario de trabajo del doctor para ese día (ej. LUNES) en esa
+                // sede
                 HorarioVeterinario horario = horarioRepositorio
                                 .findByVeterinarioIdAndDiaSemanaAndSedeId(veterinarioId, fecha.getDayOfWeek(), sedeId)
                                 .orElse(null);
@@ -219,7 +252,8 @@ public class CitaServicio {
                 ServicioMedico servicio = servicioRepositorio.findById(servicioId)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Servicio no encontrado"));
-                int duracionTotal = servicio.getDuracionMinutos() + servicio.getBufferMinutos();
+                int duracionPorPaciente = servicio.getDuracionMinutos() + servicio.getBufferMinutos();
+                int duracionTotal = duracionPorPaciente * cantidadPacientes;
 
                 // 4. Traemos todas las citas que ya tiene el doctor ese día
                 List<Cita> citasDelDia = citaRepositorio.buscarCitasAgendadasDelDia(veterinarioId, fecha,
@@ -261,9 +295,6 @@ public class CitaServicio {
                         // C. Si sobrevivió a las validaciones, ¡Tenemos un hueco libre!
                         if (!chocaConRefrigerio && !chocaConCita) {
                                 slotsDisponibles.add(new SlotDisponibilidadDTO(horaActual, finSlot));
-                                // Avanzamos la hora para buscar el siguiente bloque.
-                                // Podrías avanzar 'duracionTotal' o intervalos fijos de 15 mins. Lo haremos
-                                // fijo cada 15 mins para dar flexibilidad al usuario.
                                 horaActual = horaActual.plusMinutes(duracionTotal);
                         }
                 }

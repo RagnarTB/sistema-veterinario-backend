@@ -41,8 +41,11 @@ public class CitaController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<CitaResponseDTO>> listarCitas(@RequestParam Long sedeId, Pageable pageable) {
-        Page<CitaResponseDTO> citas = citaServicio.listar(sedeId, pageable);
+    public ResponseEntity<Page<CitaResponseDTO>> listarCitas(
+            @RequestParam Long sedeId,
+            @RequestParam(required = false) String buscar,
+            Pageable pageable) {
+        Page<CitaResponseDTO> citas = citaServicio.listar(sedeId, buscar, pageable);
         return ResponseEntity.ok(citas);
     }
 
@@ -72,10 +75,15 @@ public class CitaController {
             @RequestParam Long veterinarioId,
             @RequestParam java.time.LocalDate fecha,
             @RequestParam Long servicioId,
-            @RequestParam Long sedeId) {
+            @RequestParam Long sedeId,
+            @RequestParam(defaultValue = "1") int cantidadPacientes) {
 
-        List<SlotDisponibilidadDTO> slots = citaServicio.obtenerDisponibilidad(veterinarioId,
-                fecha, servicioId, sedeId);
+        List<SlotDisponibilidadDTO> slots = citaServicio.obtenerDisponibilidad(
+                veterinarioId,
+                fecha,
+                servicioId,
+                sedeId,
+                cantidadPacientes);
         return ResponseEntity.ok(slots);
     }
 

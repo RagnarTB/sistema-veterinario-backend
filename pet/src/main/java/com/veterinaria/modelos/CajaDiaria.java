@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 @Entity
 @Audited
@@ -48,7 +49,12 @@ public class CajaDiaria {
     @OneToMany(mappedBy = "cajaDiaria", cascade = CascadeType.ALL)
     private List<MovimientoCaja> movimientos = new ArrayList<>();
 
+    // Sede no es @Audited → se declara NOT_AUDITED para evitar EnversMappingException
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "sede_id")
     private Sede sede;
+
+
+    
 }

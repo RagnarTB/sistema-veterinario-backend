@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.veterinaria.dtos.CajaRequestDTO;
 import com.veterinaria.dtos.CierreCajaResponseDTO;
 import com.veterinaria.modelos.CajaDiaria;
+import com.veterinaria.modelos.Empleado;
 import com.veterinaria.modelos.Enums.TipoMovimiento;
 import com.veterinaria.modelos.Sede;
 import com.veterinaria.respositorios.CajaRepositorio;
@@ -19,77 +20,92 @@ import com.veterinaria.respositorios.SedeRepositorio;
 @Service
 public class CajaServicio {
 
-    private final CajaRepositorio cajaRepositorio;
-    private final VentaRepositorio ventaRepositorio;
-    private final SedeRepositorio sedeRepositorio;
+        private final CajaRepositorio cajaRepositorio;
+        private final VentaRepositorio ventaRepositorio;
+        private final SedeRepositorio sedeRepositorio;
 
-    public CajaServicio(CajaRepositorio cajaRepositorio, VentaRepositorio ventaRepositorio, SedeRepositorio sedeRepositorio) {
-        this.cajaRepositorio = cajaRepositorio;
-        this.ventaRepositorio = ventaRepositorio;
-        this.sedeRepositorio = sedeRepositorio;
-    }
-
-    public void abrirCaja(CajaRequestDTO dto) {
-
-        Sede sede = sedeRepositorio.findById(dto.getSedeId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sede no encontrada"));
-
-        if (cajaRepositorio.findBySedeIdAndEstado(dto.getSedeId(), "ABIERTA").isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ya existe una caja abierta en esta sede en este momento");
+        public CajaServicio(CajaRepositorio cajaRepositorio, VentaRepositorio ventaRepositorio,
+                        SedeRepositorio sedeRepositorio) {
+                this.cajaRepositorio = cajaRepositorio;
+                this.ventaRepositorio = ventaRepositorio;
+                this.sedeRepositorio = sedeRepositorio;
         }
 
-        CajaDiaria nuevaCaja = new CajaDiaria();
-        nuevaCaja.setSaldoInicial(dto.getSaldoInicial());
-        nuevaCaja.setEstado("ABIERTA");
-        nuevaCaja.setFechaApertura(LocalDateTime.now());
-        nuevaCaja.setSede(sede);
+        public void abrirCaja(CajaRequestDTO dto, Empleado empleadoActual) {
 
-        cajaRepositorio.save(nuevaCaja);
-    }
+                Sede sede = sedeRepositorio.findById(dto.getSedeId())
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                                "Sede no encontrada"));
 
-    public CierreCajaResponseDTO cerrarCaja(Long sedeId) {
-        // 1. Buscar la caja abierta
-        CajaDiaria cajaAbierta = cajaRepositorio.findBySedeIdAndEstado(sedeId, "ABIERTA")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "No hay ninguna caja abierta para cerrar"));
+                // --- VALIDACIÓN CLAVE: el empleado debe pertenecer a esa sede ---
+                if (!empleadoActual.getSedes().contains(sede)) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.FORBIDDEN,
+                                        "El empleado no pertenece a la sede solicitada. No puede abrir la caja de otra sede.");
+                }
 
-        LocalDateTime ahora = LocalDateTime.now();
-        cajaAbierta.setEstado("CERRADA");
-        cajaAbierta.setFechaCierre(ahora);
+                if (cajaRepositorio.findBySedeIdAndEstado(dto.getSedeId(), "ABIERTA").isPresent()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Ya existe una caja abierta en esta sede en este momento");
+                }
 
-        // 2. Sumar Ventas (el repositorio ya devuelve BigDecimal)
-        BigDecimal totalVentas = ventaRepositorio.sumarVentasPorCaja(cajaAbierta.getId());
-        totalVentas = (totalVentas == null) ? BigDecimal.ZERO : totalVentas;
+                CajaDiaria nuevaCaja = new CajaDiaria();
+                nuevaCaja.setSaldoInicial(dto.getSaldoInicial());
+                nuevaCaja.setEstado("ABIERTA");
+                nuevaCaja.setFechaApertura(LocalDateTime.now());
+                nuevaCaja.setSede(sede);
 
-        // 3. Calcular Ingresos y Egresos extras usando reduce de BigDecimal
-        BigDecimal ingresosExtras = cajaAbierta.getMovimientos().stream()
-                .filter(m -> m.getTipoMovimiento() == TipoMovimiento.INGRESO)
-                .map(m -> m.getMonto())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                cajaRepositorio.save(nuevaCaja);
+        }
 
-        BigDecimal egresosExtras = cajaAbierta.getMovimientos().stream()
-                .filter(m -> m.getTipoMovimiento() == TipoMovimiento.EGRESO)
-                .map(m -> m.getMonto())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        public CierreCajaResponseDTO cerrarCaja(Long sedeId, Empleado empleadoActual) {
+                Sede sede = sedeRepositorio.findById(sedeId)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                                "Sede no encontrada"));
 
-        // 4. Fórmula del arqueo con BigDecimal
-        BigDecimal saldoCalculado = cajaAbierta.getSaldoInicial()
-                .add(totalVentas)
-                .add(ingresosExtras)
-                .subtract(egresosExtras);
+                // El empleado debe pertenecer a la sede
+                if (!empleadoActual.getSedes().contains(sede)) {
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                                        "El empleado no pertenece a la sede solicitada. No puede cerrar la caja de otra sede.");
+                }
 
-        cajaAbierta.setSaldoFinal(saldoCalculado);
+                CajaDiaria cajaAbierta = cajaRepositorio.findBySedeIdAndEstado(sedeId, "ABIERTA")
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                                "No hay ninguna caja abierta para cerrar"));
 
-        cajaRepositorio.save(cajaAbierta);
+                LocalDateTime ahora = LocalDateTime.now();
+                cajaAbierta.setEstado("CERRADA");
+                cajaAbierta.setFechaCierre(ahora);
 
-        // 5. Retornamos el resumen detallado para el Frontend
-        return new CierreCajaResponseDTO(
-                cajaAbierta.getId(),
-                cajaAbierta.getFechaCierre(),
-                cajaAbierta.getSaldoInicial(),
-                totalVentas,
-                ingresosExtras,
-                egresosExtras,
-                saldoCalculado);
-    }
+                BigDecimal totalVentas = ventaRepositorio.sumarVentasPorCaja(cajaAbierta.getId());
+                totalVentas = (totalVentas == null) ? BigDecimal.ZERO : totalVentas;
+
+                BigDecimal ingresosExtras = cajaAbierta.getMovimientos().stream()
+                                .filter(m -> m.getTipoMovimiento() == TipoMovimiento.INGRESO)
+                                .map(m -> m.getMonto())
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal egresosExtras = cajaAbierta.getMovimientos().stream()
+                                .filter(m -> m.getTipoMovimiento() == TipoMovimiento.EGRESO)
+                                .map(m -> m.getMonto())
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal saldoCalculado = cajaAbierta.getSaldoInicial()
+                                .add(totalVentas)
+                                .add(ingresosExtras)
+                                .subtract(egresosExtras);
+
+                cajaAbierta.setSaldoFinal(saldoCalculado);
+
+                cajaRepositorio.save(cajaAbierta);
+
+                return new CierreCajaResponseDTO(
+                                cajaAbierta.getId(),
+                                cajaAbierta.getFechaCierre(),
+                                cajaAbierta.getSaldoInicial(),
+                                totalVentas,
+                                ingresosExtras,
+                                egresosExtras,
+                                saldoCalculado);
+        }
 }

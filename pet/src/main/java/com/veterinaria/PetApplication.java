@@ -5,12 +5,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.veterinaria.modelos.Rol;
 import com.veterinaria.respositorios.RolRespositorio;
 
 @EnableJpaAuditing // al arrancar la app se creara una tabla espejo llamada atenciones_medicas_AUD
 					// y registrara los cambios automaticamente
+@EnableScheduling
 @SpringBootApplication
 public class PetApplication {
 

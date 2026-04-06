@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 @Entity
 @Audited
@@ -27,14 +28,19 @@ import org.hibernate.envers.Audited;
 @Data
 @NoArgsConstructor
 public class Venta {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private LocalDateTime fechaHora;
+
     @jakarta.persistence.Column(precision = 19, scale = 2)
     private BigDecimal total;
 
+    // Cliente no es @Audited, por eso se declara NOT_AUDITED para evitar
+    // EnversMappingException al arrancar el contexto
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
@@ -46,6 +52,9 @@ public class Venta {
 
     private EstadoVenta estado;
 
+    // CajaDiaria no es @Audited, se declara NOT_AUDITED para evitar
+    // EnversMappingException al arrancar el contexto
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "caja_id")
     private CajaDiaria caja;

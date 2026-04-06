@@ -41,14 +41,11 @@ public class PacienteController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PacienteResponseDTO>> listarPacientes(Pageable pageable) {
-        // 1. Le pedimos la lista ya procesada (DTOs) al servicio
-        Page<PacienteResponseDTO> pacientes = pacienteServicio.listarTodos(pageable);
-
-        // 2. La devolvemos envuelta en nuestro ticket de éxito (200 OK)
+    public ResponseEntity<Page<PacienteResponseDTO>> listarPacientes(
+            Pageable pageable,
+            @RequestParam(required = false) String buscar) {
+        Page<PacienteResponseDTO> pacientes = pacienteServicio.listarTodos(buscar, pageable);
         return ResponseEntity.ok(pacientes);
-        // Nota: ResponseEntity.ok(...) es un atajo elegante para
-        // ResponseEntity.status(HttpStatus.OK).body(...)
     }
 
     @GetMapping("/{id}") // Le decimos que espere un ID en la URL

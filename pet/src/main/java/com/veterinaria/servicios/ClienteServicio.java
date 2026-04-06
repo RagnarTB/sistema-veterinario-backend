@@ -1,4 +1,5 @@
 package com.veterinaria.servicios;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,10 @@ public class ClienteServicio {
     }
 
     public ClienteResponseDTO guardar(ClienteRequestDTO dto) {
+
+        if (clienteRepositorio.existsByDni(dto.getDni())) {
+            throw new RuntimeException("El DNI ya se encuentra registrado");
+        }
 
         Cliente cliente = new Cliente();
         cliente.setNombre(dto.getNombre());
@@ -45,12 +50,22 @@ public class ClienteServicio {
 
     }
 
-    public Page<ClienteResponseDTO> listarTodos(Pageable pageable) {
-        Page<Cliente> paginaDeClientes = clienteRepositorio.findAll(pageable);
+    public Page<ClienteResponseDTO> listarTodos(String buscar, Pageable pageable) {
+        Page<Cliente> pagina;
+        if (buscar != null && !buscar.trim().isEmpty()) {
+            pagina = clienteRepositorio.findByNombreContainingIgnoreCaseOrApellidoContainingIgnoreCaseOrDniContaining(
+                    buscar, buscar, buscar, pageable);
+        } else {
+            pagina = clienteRepositorio.findAll(pageable);
+        }
 
-        return paginaDeClientes.map(cliente -> new ClienteResponseDTO(cliente.getId(), cliente.getNombre(),
-                cliente.getApellido(), cliente.getTelefono(), cliente.getDni(), cliente.getEmail()));
-
+        return pagina.map(cliente -> new ClienteResponseDTO(
+                cliente.getId(),
+                cliente.getNombre(),
+                cliente.getApellido(),
+                cliente.getTelefono(),
+                cliente.getDni(),
+                cliente.getEmail()));
     }
 
     public ClienteResponseDTO buscarPorId(Long id) {

@@ -39,9 +39,14 @@ public class ProductoServicio {
     // =========================
     // GET /api/productos
     // =========================
-    public Page<ProductoResponseDTO> listarTodos(Pageable pageable) {
-        return productoRepositorio.findAll(pageable)
-                .map(this::mapearAResponseDTO);
+    public Page<ProductoResponseDTO> listarTodos(String buscar, Pageable pageable) {
+        Page<Producto> pagina;
+        if (buscar != null && !buscar.trim().isEmpty()) {
+            pagina = productoRepositorio.findByNombreContainingIgnoreCase(buscar, pageable);
+        } else {
+            pagina = productoRepositorio.findAll(pageable);
+        }
+        return pagina.map(this::mapearAResponseDTO);
     }
 
     // =========================
