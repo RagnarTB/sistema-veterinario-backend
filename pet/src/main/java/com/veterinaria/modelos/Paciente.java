@@ -1,5 +1,6 @@
 package com.veterinaria.modelos;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import jakarta.persistence.Column;
@@ -35,6 +36,9 @@ public class Paciente {
     @ManyToOne(fetch = FetchType.LAZY) // "Muchos pacientes pertenecen a Un cliente"
     @JoinColumn(name = "cliente_id") // se llamará la columna en la base de datos
     private Cliente cliente;
+
+    @Column(nullable = false)
+    private LocalDate fechaNacimiento;
 
     // EL CAMBIO Actualizamos el lado pasivo de la relación
     @ManyToMany(mappedBy = "pacientes")

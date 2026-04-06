@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import org.hibernate.envers.Audited;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -49,4 +50,9 @@ public class AtencionMedica {
     @ManyToOne
     @JoinColumn(name = "veterinario_id")
     private Empleado veterinario;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "paciente_id", nullable = false)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private Paciente paciente;
 }

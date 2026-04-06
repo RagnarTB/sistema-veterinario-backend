@@ -30,6 +30,7 @@ class AtencionMedicaControllerTest {
     void recepcionistaNoDebePoderCrearAtencionMedica() throws Exception {
         String jsonRequest = """
                 {
+                    "pacienteId": 10,
                     "sintomas": "Fiebre y letargo",
                     "diagnostico": "Parvovirus",
                     "tratamiento": "Suero y antibióticos",
@@ -54,6 +55,7 @@ class AtencionMedicaControllerTest {
     void veterinarioSiPuedeCrearAtencionMedica() throws Exception {
         String jsonRequest = """
                 {
+                    "pacienteId": 10,
                     "sintomas": "Fiebre y letargo",
                     "diagnostico": "Parvovirus",
                     "tratamiento": "Suero y antibióticos",

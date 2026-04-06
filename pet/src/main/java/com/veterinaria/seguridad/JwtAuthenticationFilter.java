@@ -1,5 +1,6 @@
 package com.veterinaria.seguridad;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,7 +47,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 2. Extraer el token (quitamos la palabra "Bearer " que tiene 7 letras)
         jwt = authHeader.substring(7);
-        userEmail = jwtServicio.extraerUsername(jwt);
+        try {
+            userEmail = jwtServicio.extraerUsername(jwt);
+        } catch (JwtException | IllegalArgumentException ex) {
+            // Token inválido/expirado/malformado: no autenticamos y dejamos que Spring Security
+            // responda 401 si el endpoint lo requiere.
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // 3. Si hay email en el token y el usuario aún no está autenticado en este hilo
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -54,7 +62,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
             // 4. Validar que el token sea correcto
-            if (jwtServicio.esTokenValido(jwt, userDetails)) {
+            boolean tokenValido;
+            try {
+                tokenValido = jwtServicio.esTokenValido(jwt, userDetails);
+            } catch (JwtException | IllegalArgumentException ex) {
+                tokenValido = false;
+            }
+
+            if (tokenValido) {
                 // 5. Autenticar manualmente al usuario en Spring Security
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());

@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.time.Duration;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,6 +22,8 @@ public class JwtServicio {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    private static final Duration ACCESS_TTL = Duration.ofMinutes(15);
+
     // 1. GENERAR EL TOKEN (Se usa en el Login)
     public String generarToken(UserDetails userDetails) {
         return generarToken(new HashMap<>(), userDetails);
@@ -31,7 +34,7 @@ public class JwtServicio {
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername()) // El subject es el email
                 .setIssuedAt(new Date(System.currentTimeMillis())) // Fecha de creación
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // Expira en 24 horas
+                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TTL.toMillis()))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256) // Firmado con algoritmo seguro
                 .compact();
     }

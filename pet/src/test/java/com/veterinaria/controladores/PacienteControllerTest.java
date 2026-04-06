@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser; // ¡La l
 import com.veterinaria.servicios.PacienteServicio;
 import com.veterinaria.dtos.PacienteResponseDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -42,6 +43,7 @@ class PacienteControllerTest {
                                     "nombre": "Firulais",
                                     "especieId": 1,
                                     "raza": "Mestizo",
+                                    "fechaNacimiento": "2020-01-15",
                                     "clienteId": 1
                                 }
                                 """;
@@ -59,7 +61,9 @@ class PacienteControllerTest {
                                         {
                                 "nombre":"",
                                 "especieId": 1,
-                                "raza":"Mestizo"}
+                                "raza":"Mestizo",
+                                "fechaNacimiento": "2020-01-15",
+                                "clienteId": 1}
                                         """;
                 mockMvc.perform(post("/api/pacientes")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -71,7 +75,13 @@ class PacienteControllerTest {
         @Test
         @WithMockUser
         void debeObtenerPaginaDePacientesYRetornarEstadoOk() throws Exception {
-                PacienteResponseDTO pacienteMock = new PacienteResponseDTO(1L, "Firulais", "Perro", "Mestizo", 1L);
+                PacienteResponseDTO pacienteMock = new PacienteResponseDTO(
+                                1L,
+                                "Firulais",
+                                "Perro",
+                                "Mestizo",
+                                LocalDate.of(2020, 1, 15),
+                                1L);
                 Page<PacienteResponseDTO> paginaMock = new PageImpl<>(List.of(pacienteMock));
 
                 when(pacienteServicio.listarTodos(any(), any())).thenReturn(paginaMock);
@@ -99,6 +109,7 @@ class PacienteControllerTest {
                                     "nombre": "Firulais Corregido",
                                     "especieId": 1,
                                     "raza": "Mestizo",
+                                    "fechaNacimiento": "2020-01-15",
                                     "clienteId": 1
                                 }
                                 """;

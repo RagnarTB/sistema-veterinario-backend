@@ -1,12 +1,12 @@
 package com.veterinaria.servicios;
 
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 // IMPORTANTE: Importamos el Contexto de Seguridad
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.veterinaria.dtos.AtencionMedicaRequestDTO;
@@ -14,6 +14,7 @@ import com.veterinaria.dtos.AtencionMedicaResponseDTO;
 import com.veterinaria.modelos.AtencionMedica;
 import com.veterinaria.modelos.Cita;
 import com.veterinaria.modelos.Empleado;
+import com.veterinaria.modelos.Paciente;
 import com.veterinaria.modelos.Enums.EstadoCita;
 import com.veterinaria.respositorios.AtencionMedicaRepositorio;
 import com.veterinaria.respositorios.CitaRepositorio;
@@ -34,18 +35,22 @@ public class AtencionMedicaServicio {
     }
 
     // CREATE
+    @Transactional
     public AtencionMedicaResponseDTO guardar(AtencionMedicaRequestDTO dto) {
         Cita cita = citaRepositorio.findById(dto.getCitaId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "No se puede crear la atencion medica, cita no encontrada: " + dto.getCitaId()));
 
-        if (cita.getEstado() == EstadoCita.COMPLETADA) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Esta cita ya tiene una historia clínica registrada.");
-        }
         if (cita.getEstado() == EstadoCita.CANCELADA || cita.getEstado() == EstadoCita.NO_ASISTIO) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "No se puede atender a un paciente cuya cita fue cancelada o no asistió.");
+        }
+
+        // NUEVA VALIDACIÓN: Asegurar que este paciente en específico no tenga ya una
+        // historia en esta cita
+        if (atencionMedicaRepositorio.existsByCitaIdAndPacienteId(dto.getCitaId(), dto.getPacienteId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Este paciente ya tiene una historia clínica registrada en esta cita.");
         }
 
         // Obtenemos el email del doctor directamente del Token JWT que
@@ -61,10 +66,17 @@ public class AtencionMedicaServicio {
                     "No puedes registrar la atención médica de un paciente asignado a otro veterinario.");
         }
 
+        Paciente pacienteAtendido = cita.getPacientes().stream()
+                .filter(p -> p.getId().equals(dto.getPacienteId()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El paciente indicado no pertenece a esta cita."));
+
         AtencionMedica atencionMedica = new AtencionMedica();
 
         // CORRECCIÓN 1: Pasamos el objeto, no el ID
         atencionMedica.setCita(cita);
+        atencionMedica.setPaciente(pacienteAtendido);
         atencionMedica.setVeterinario(doctor);
         atencionMedica.setDiagnostico(dto.getDiagnostico());
         atencionMedica.setFrecuenciaCardiaca(dto.getFrecuenciaCardiaca());
@@ -75,6 +87,7 @@ public class AtencionMedicaServicio {
 
         // REGLA DE NEGOCIO: La cita ya fue atendida, cambia su estado
         cita.setEstado(EstadoCita.COMPLETADA);
+        citaRepositorio.save(cita);
 
         AtencionMedica atencionGuardada = atencionMedicaRepositorio.save(atencionMedica);
 
@@ -117,6 +130,7 @@ public class AtencionMedicaServicio {
     }
 
     // DELETE
+    @Transactional
     public void eliminar(Long id) {
         AtencionMedica atencionDb = atencionMedicaRepositorio.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,

@@ -11,16 +11,20 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.veterinaria.dtos.ProductoRequestDTO;
 import com.veterinaria.dtos.ProductoResponseDTO;
+import com.veterinaria.modelos.InventarioSede;
 import com.veterinaria.modelos.Producto;
+import com.veterinaria.respositorios.InventarioSedeRepositorio;
 import com.veterinaria.respositorios.ProductoRepositorio;
 
 @Service
 public class ProductoServicio {
 
     private final ProductoRepositorio productoRepositorio;
+    private final InventarioSedeRepositorio inventarioSedeRepositorio;
 
-    public ProductoServicio(ProductoRepositorio productoRepositorio) {
+    public ProductoServicio(ProductoRepositorio productoRepositorio, InventarioSedeRepositorio inventarioSedeRepositorio) {
         this.productoRepositorio = productoRepositorio;
+        this.inventarioSedeRepositorio = inventarioSedeRepositorio;
     }
 
     // =========================
@@ -90,7 +94,14 @@ public class ProductoServicio {
     // GET /api/productos/alertas-stock
     // =========================
     public List<ProductoResponseDTO> obtenerAlertasStock() {
-        return new java.util.ArrayList<>();
+        List<InventarioSede> alertas = inventarioSedeRepositorio.findAlertasStock();
+
+        // Para demo: devolvemos productos únicos (sin duplicar por sede).
+        return alertas.stream()
+                .map(InventarioSede::getProducto)
+                .distinct()
+                .map(this::mapearAResponseDTO)
+                .collect(Collectors.toList());
     }
 
     // =========================

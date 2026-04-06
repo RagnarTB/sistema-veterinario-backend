@@ -3,12 +3,14 @@ package com.veterinaria.servicios;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.veterinaria.dtos.CitaRequestDTO;
@@ -57,7 +59,9 @@ public class CitaServicio {
                 this.sedeRepositorio = sedeRepositorio;
         }
 
+        @Transactional
         public CitaResponseDTO guardar(CitaRequestDTO dto) {
+                validarFechaHoraNoPasado(dto.getFecha(), dto.getHoraInicio());
                 ServicioMedico servicio = servicioRepositorio.findById(dto.getServicioId())
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Servicio no encontrado"));
@@ -86,6 +90,9 @@ public class CitaServicio {
                 int tiempoTotalOcupado = (servicio.getDuracionMinutos() + servicio.getBufferMinutos())
                                 * cantidadMascotas;
                 LocalTime horaFinCalculada = dto.getHoraInicio().plusMinutes(tiempoTotalOcupado);
+
+                // Mitigación de carrera: tomamos lock sobre las citas del día antes de chequear y guardar.
+                citaRepositorio.buscarCitasAgendadasDelDiaConLock(veterinario.getId(), dto.getFecha(), ESTADOS_IGNORADOS);
 
                 // Pasamos -1L porque al ser una cita NUEVA, no hay ningún ID real que ignorar
                 boolean existeCruce = citaRepositorio.existeCruceDeHorario(
@@ -133,7 +140,9 @@ public class CitaServicio {
                                                 "Cita no encontrada con ID: " + id));
         }
 
+        @Transactional
         public CitaResponseDTO actualizar(Long id, CitaRequestDTO dto) {
+                validarFechaHoraNoPasado(dto.getFecha(), dto.getHoraInicio());
                 Cita citaDb = citaRepositorio.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Cita no encontrada con ID: " + id));
@@ -167,6 +176,8 @@ public class CitaServicio {
                                 * cantidadMascotas;
                 LocalTime horaFinCalculada = dto.getHoraInicio().plusMinutes(tiempoTotalOcupado);
 
+                citaRepositorio.buscarCitasAgendadasDelDiaConLock(veterinario.getId(), dto.getFecha(), ESTADOS_IGNORADOS);
+
                 // AQUÍ ESTÁ LA MAGIA: Pasamos el 'id' de la cita actual para que el sistema la
                 // ignore en la búsqueda de cruces
                 boolean existeCruce = citaRepositorio.existeCruceDeHorario(
@@ -195,6 +206,7 @@ public class CitaServicio {
                 return mapearAResponse(citaGuardada);
         }
 
+        @Transactional
         public void eliminar(Long id) {
                 Cita citaDb = citaRepositorio.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -232,6 +244,10 @@ public class CitaServicio {
         public List<SlotDisponibilidadDTO> obtenerDisponibilidad(Long veterinarioId, LocalDate fecha, Long servicioId,
                         Long sedeId, int cantidadPacientes) {
 
+                if (cantidadPacientes < 1) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "cantidadPacientes debe ser >= 1");
+                }
+
                 // 1. Si el día es feriado o el doctor pidió permiso, devolvemos lista vacía
                 // inmediatamente
                 if (diaBloqueadoRepositorio.estaBloqueadoElDia(fecha, veterinarioId)) {
@@ -262,7 +278,7 @@ public class CitaServicio {
                 List<SlotDisponibilidadDTO> slotsDisponibles = new java.util.ArrayList<>();
                 LocalTime horaActual = horario.getHoraEntrada();
                 if (fecha.equals(LocalDate.now()) && LocalTime.now().isAfter(horaActual)) {
-                        horaActual = LocalTime.now();
+                        horaActual = LocalTime.now().withSecond(0).withNano(0);
                 }
 
                 // 5. El Bucle Principal: Iteramos minuto a minuto generando bloques
@@ -303,16 +319,57 @@ public class CitaServicio {
         }
 
         // MÉTODO PARA EL TABLERO DE RECEPCIÓN
+        @Transactional
         public void cambiarEstado(Long id, EstadoCita nuevoEstado) {
                 Cita citaDb = citaRepositorio.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Cita no encontrada con ID: " + id));
 
-                // Aquí podríamos añadir lógica de negocio compleja (ej. prohibir pasar de
-                // CANCELADA a COMPLETADA)
-                // Por ahora, confiamos en que el frontend enviará transiciones lógicas.
+                validarTransicionEstado(citaDb.getEstado(), nuevoEstado);
                 citaDb.setEstado(nuevoEstado);
 
                 citaRepositorio.save(citaDb);
+        }
+
+        private static void validarFechaHoraNoPasado(LocalDate fecha, LocalTime horaInicio) {
+                if (fecha == null || horaInicio == null) {
+                        return; // Bean Validation se encarga; aquí evitamos NPE.
+                }
+
+                if (fecha.isBefore(LocalDate.now())) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se permiten citas en el pasado");
+                }
+                if (fecha.equals(LocalDate.now()) && horaInicio.isBefore(LocalTime.now().withSecond(0).withNano(0))) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se permiten citas en el pasado");
+                }
+        }
+
+        private static void validarTransicionEstado(EstadoCita actual, EstadoCita nuevo) {
+                if (actual == null || nuevo == null) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado inválido");
+                }
+
+                // Estados terminales: no se permiten cambios
+                if (Set.of(EstadoCita.CANCELADA, EstadoCita.NO_ASISTIO, EstadoCita.COMPLETADA).contains(actual)) {
+                        throw new ResponseStatusException(HttpStatus.CONFLICT,
+                                "No se puede cambiar el estado desde " + actual);
+                }
+
+                boolean permitido = switch (actual) {
+                        case AGENDADA -> Set.of(EstadoCita.CONFIRMADA, EstadoCita.EN_SALA_ESPERA, EstadoCita.CANCELADA,
+                                EstadoCita.NO_ASISTIO).contains(nuevo);
+                        case CONFIRMADA -> Set.of(EstadoCita.EN_SALA_ESPERA, EstadoCita.CANCELADA, EstadoCita.NO_ASISTIO)
+                                .contains(nuevo);
+                        case EN_SALA_ESPERA ->
+                                Set.of(EstadoCita.EN_CONSULTORIO, EstadoCita.CANCELADA, EstadoCita.NO_ASISTIO)
+                                        .contains(nuevo);
+                        case EN_CONSULTORIO -> Set.of(EstadoCita.COMPLETADA).contains(nuevo);
+                        default -> false;
+                };
+
+                if (!permitido) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Transición de estado inválida: " + actual + " -> " + nuevo);
+                }
         }
 }

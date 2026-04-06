@@ -1,5 +1,7 @@
 package com.veterinaria.dtos;
 
+import java.time.LocalDate;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +15,7 @@ public class PacienteResponseDTO {
     // EL CAMBIO, Renombramos la variable para ser super especificos
     private String especieNombre;
     private String raza;
+    private LocalDate fechaNacimiento;
     private Long clienteId;
 
 }

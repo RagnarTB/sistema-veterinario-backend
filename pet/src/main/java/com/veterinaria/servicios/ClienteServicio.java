@@ -10,6 +10,8 @@ import com.veterinaria.dtos.ClienteResponseDTO;
 import com.veterinaria.modelos.Cliente;
 import com.veterinaria.respositorios.ClienteRepositorio;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class ClienteServicio {
 
@@ -104,10 +106,15 @@ public class ClienteServicio {
         );
     }
 
+    @Transactional
     public void cambiarEstado(Long id, Boolean estado) {
         Cliente clientedb = clienteRepositorio.findById(id).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado con ID:" + id));
         clientedb.setActivo(estado);
+
+        if (clientedb.getPacientes() != null) {
+            clientedb.getPacientes().forEach(paciente -> paciente.setActivo(estado));
+        }
         clienteRepositorio.save(clientedb);
     }
 

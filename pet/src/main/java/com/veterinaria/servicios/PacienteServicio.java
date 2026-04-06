@@ -44,6 +44,7 @@ public class PacienteServicio {
                 paciente.setNombre(dto.getNombre());
                 paciente.setEspecie(especie);
                 paciente.setRaza(dto.getRaza());
+                paciente.setFechaNacimiento(dto.getFechaNacimiento());
                 paciente.setCliente(dueno);
 
                 Paciente pacienteGuardado = pacienteRepositorio.save(paciente);
@@ -86,6 +87,7 @@ public class PacienteServicio {
                 pacienteDb.setNombre(dto.getNombre());
                 pacienteDb.setEspecie(especie); // Asignamos el objeto Especie
                 pacienteDb.setRaza(dto.getRaza());
+                pacienteDb.setFechaNacimiento(dto.getFechaNacimiento());
                 pacienteDb.setCliente(dueno);
 
                 Paciente pacienteGuardado = pacienteRepositorio.save(pacienteDb);
@@ -108,6 +110,7 @@ public class PacienteServicio {
                                 paciente.getNombre(),
                                 paciente.getEspecie().getNombre(), // Extraemos el nombre de la especie
                                 paciente.getRaza(),
+                                paciente.getFechaNacimiento(),
                                 paciente.getCliente().getId());
         }
 }

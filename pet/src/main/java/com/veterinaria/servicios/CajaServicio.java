@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.veterinaria.dtos.CajaRequestDTO;
@@ -31,6 +32,7 @@ public class CajaServicio {
                 this.sedeRepositorio = sedeRepositorio;
         }
 
+        @Transactional
         public void abrirCaja(CajaRequestDTO dto, Empleado empleadoActual) {
 
                 Sede sede = sedeRepositorio.findById(dto.getSedeId())
@@ -60,6 +62,7 @@ public class CajaServicio {
                 cajaRepositorio.save(nuevaCaja);
         }
 
+        @Transactional
         public CierreCajaResponseDTO cerrarCaja(Long sedeId, Empleado empleadoActual) {
                 Sede sede = sedeRepositorio.findById(sedeId)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
