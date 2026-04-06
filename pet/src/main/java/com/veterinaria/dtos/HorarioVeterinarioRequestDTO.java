@@ -24,4 +24,7 @@ public class HorarioVeterinarioRequestDTO {
     // Estos son opcionales (el doctor podría no tener hora de refrigerio)
     private LocalTime inicioRefrigerio;
     private LocalTime finRefrigerio;
+
+    @NotNull(message = "El ID de la sede es obligatorio")
+    private Long sedeId;
 }

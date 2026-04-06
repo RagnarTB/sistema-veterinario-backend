@@ -44,6 +44,7 @@ public class PacienteServicio {
                 paciente.setNombre(dto.getNombre());
                 paciente.setEspecie(especie);
                 paciente.setRaza(dto.getRaza());
+                paciente.setFechaNacimiento(dto.getFechaNacimiento());
                 paciente.setCliente(dueno);
 
                 Paciente pacienteGuardado = pacienteRepositorio.save(paciente);
@@ -52,10 +53,14 @@ public class PacienteServicio {
                 return mapearAResponse(pacienteGuardado);
         }
 
-        public Page<PacienteResponseDTO> listarTodos(Pageable pageable) {
-                Page<Paciente> paginaDePacientes = pacienteRepositorio.findAll(pageable);
-                // Usamos nuestro método ayudante para mapear toda la lista automáticamente
-                return paginaDePacientes.map(this::mapearAResponse);
+        public Page<PacienteResponseDTO> listarTodos(String buscar, Pageable pageable) {
+                Page<Paciente> pagina;
+                if (buscar != null && !buscar.trim().isEmpty()) {
+                        pagina = pacienteRepositorio.findByNombreContainingIgnoreCase(buscar, pageable);
+                } else {
+                        pagina = pacienteRepositorio.findAll(pageable);
+                }
+                return pagina.map(this::mapearAResponse);
         }
 
         public PacienteResponseDTO buscarPorId(Long id) {
@@ -82,6 +87,7 @@ public class PacienteServicio {
                 pacienteDb.setNombre(dto.getNombre());
                 pacienteDb.setEspecie(especie); // Asignamos el objeto Especie
                 pacienteDb.setRaza(dto.getRaza());
+                pacienteDb.setFechaNacimiento(dto.getFechaNacimiento());
                 pacienteDb.setCliente(dueno);
 
                 Paciente pacienteGuardado = pacienteRepositorio.save(pacienteDb);
@@ -89,12 +95,12 @@ public class PacienteServicio {
                 return mapearAResponse(pacienteGuardado);
         }
 
-        public void eliminar(Long id) {
+        public void cambiarEstado(Long id, Boolean estado) {
                 Paciente pacienteDb = pacienteRepositorio.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Paciente no encontrado con ID: " + id));
-
-                pacienteRepositorio.delete(pacienteDb);
+                pacienteDb.setActivo(estado);
+                pacienteRepositorio.save(pacienteDb);
         }
 
         // --- 3. CORRECCIÓN: EL MÉTODO AYUDANTE (Refactorización Limpia) ---
@@ -104,6 +110,7 @@ public class PacienteServicio {
                                 paciente.getNombre(),
                                 paciente.getEspecie().getNombre(), // Extraemos el nombre de la especie
                                 paciente.getRaza(),
+                                paciente.getFechaNacimiento(),
                                 paciente.getCliente().getId());
         }
 }

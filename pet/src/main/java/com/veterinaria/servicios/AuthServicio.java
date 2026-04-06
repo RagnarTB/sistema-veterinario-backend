@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.veterinaria.dtos.AuthResponseDTO;
+import com.veterinaria.dtos.CambiarPasswordRequestDTO;
 import com.veterinaria.dtos.LoginRequestDTO;
 import com.veterinaria.dtos.MensajeResponseDTO;
 import com.veterinaria.dtos.RegistroClienteDTO;
@@ -26,6 +27,7 @@ public class AuthServicio {
     private UsuarioRepositorio usuarioRepositorio;
     private RolRespositorio rolRespositorio;
     private ClienteRepositorio clienteRepositorio;
+    private final RefreshTokenServicio refreshTokenServicio;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtServicio jwtServicio;
@@ -34,7 +36,8 @@ public class AuthServicio {
     public AuthServicio(UsuarioRepositorio usuarioRepositorio, RolRespositorio rolRespositorio,
             ClienteRepositorio clienteRepositorio, PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager, JwtServicio jwtServicio,
-            org.springframework.security.core.userdetails.UserDetailsService userDetailsService) {
+            org.springframework.security.core.userdetails.UserDetailsService userDetailsService,
+            RefreshTokenServicio refreshTokenServicio) {
         this.usuarioRepositorio = usuarioRepositorio;
         this.rolRespositorio = rolRespositorio;
         this.clienteRepositorio = clienteRepositorio;
@@ -42,6 +45,7 @@ public class AuthServicio {
         this.authenticationManager = authenticationManager;
         this.jwtServicio = jwtServicio;
         this.userDetailsService = userDetailsService;
+        this.refreshTokenServicio = refreshTokenServicio;
     }
 
     @Transactional // AQUI: Fundamental porque guardamos en 2 tablas
@@ -52,7 +56,7 @@ public class AuthServicio {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El email ya está registrado");
         }
         if (clienteRepositorio.existsByDni(dto.getDni())) {
-            throw new RuntimeException("El DNI ya se encuentra registrado");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El DNI ya se encuentra registrado");
         }
 
         // 2. Buscar el Rol (Exigencia de Spring Security: empezar con ROLE_)
@@ -96,7 +100,56 @@ public class AuthServicio {
         // 3. Generamos el Token JWT criptográfico
         String token = jwtServicio.generarToken(userDetails);
 
+        Usuario usuario = usuarioRepositorio.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no válido"));
+
+        String refreshToken = refreshTokenServicio.crearRefreshTokenParaUsuario(usuario);
+
         // 4. Devolvemos la llave al Frontend
-        return new AuthResponseDTO(token, dto.getEmail());
+        return new AuthResponseDTO(token, refreshToken, dto.getEmail());
     }
+
+    @Transactional
+    public MensajeResponseDTO cambiarPassword(String emailUsuarioLogueado, CambiarPasswordRequestDTO dto) {
+        Usuario usuario = usuarioRepositorio.findByEmail(emailUsuarioLogueado)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        // Validar que la contraseña actual ingresada coincida con la de la BD
+        if (!passwordEncoder.matches(dto.getPasswordActual(), usuario.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña actual es incorrecta");
+        }
+
+        // Validar que la nueva no sea igual a la antigua (opcional pero recomendado)
+        if (passwordEncoder.matches(dto.getPasswordNueva(), usuario.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La nueva contraseña no puede ser igual a la anterior");
+        }
+
+        // Cifrar y guardar
+        usuario.setPassword(passwordEncoder.encode(dto.getPasswordNueva()));
+        usuarioRepositorio.save(usuario);
+
+        // Al cambiar password, revocamos todos los refresh tokens del usuario
+        refreshTokenServicio.revocarTodosLosTokensDeUsuario(usuario.getId());
+
+        return new MensajeResponseDTO("Contraseña actualizada correctamente");
+    }
+
+    public AuthResponseDTO refreshToken(String refreshTokenRaw) {
+        String refreshTokenNuevo = refreshTokenServicio.rotarRefreshToken(refreshTokenRaw);
+
+        Usuario usuario = refreshTokenServicio.obtenerUsuarioDesdeRefreshToken(refreshTokenNuevo);
+        org.springframework.security.core.userdetails.UserDetails userDetails = userDetailsService
+                .loadUserByUsername(usuario.getEmail());
+
+        String token = jwtServicio.generarToken(userDetails);
+        return new AuthResponseDTO(token, refreshTokenNuevo, usuario.getEmail());
+    }
+
+    @Transactional
+    public MensajeResponseDTO logout(String refreshTokenRaw) {
+        refreshTokenServicio.revocarRefreshToken(refreshTokenRaw);
+        return new MensajeResponseDTO("Sesión cerrada correctamente");
+    }
+
 }

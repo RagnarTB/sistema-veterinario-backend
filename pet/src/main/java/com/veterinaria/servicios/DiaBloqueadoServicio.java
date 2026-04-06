@@ -1,5 +1,6 @@
 package com.veterinaria.servicios;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,37 +11,56 @@ import org.springframework.web.server.ResponseStatusException;
 import com.veterinaria.dtos.DiaBloqueadoRequestDTO;
 import com.veterinaria.dtos.DiaBloqueadoResponseDTO;
 import com.veterinaria.modelos.DiaBloqueado;
-import com.veterinaria.modelos.Usuario;
+import com.veterinaria.modelos.Empleado;
+import com.veterinaria.modelos.Enums.EstadoCita;
+import com.veterinaria.respositorios.CitaRepositorio;
 import com.veterinaria.respositorios.DiaBloqueadoRepositorio;
-import com.veterinaria.respositorios.UsuarioRepositorio;
+import com.veterinaria.respositorios.EmpleadoRepositorio;
 
 @Service
 public class DiaBloqueadoServicio {
 
     private final DiaBloqueadoRepositorio diaBloqueadoRepositorio;
-    private final UsuarioRepositorio usuarioRepositorio;
+    private final EmpleadoRepositorio empleadoRepositorio;
+    private final CitaRepositorio citaRepositorio;
 
     public DiaBloqueadoServicio(DiaBloqueadoRepositorio diaBloqueadoRepositorio,
-            UsuarioRepositorio usuarioRepositorio) {
+            EmpleadoRepositorio empleadoRepositorio, CitaRepositorio citaRepositorio) {
         this.diaBloqueadoRepositorio = diaBloqueadoRepositorio;
-        this.usuarioRepositorio = usuarioRepositorio;
+        this.empleadoRepositorio = empleadoRepositorio;
+        this.citaRepositorio = citaRepositorio;
     }
 
     public DiaBloqueadoResponseDTO guardar(DiaBloqueadoRequestDTO dto) {
+        List<EstadoCita> estadosPendientes = Arrays.asList(EstadoCita.AGENDADA, EstadoCita.CONFIRMADA);
+        boolean tieneCitas;
+
+        // Diferenciamos si es bloqueo de un doctor o de toda la clínica
+        if (dto.getVeterinarioId() != null) {
+            tieneCitas = citaRepositorio.existenCitasPendientesPorVeterinarioYFecha(
+                    dto.getVeterinarioId(), dto.getFecha(), estadosPendientes);
+        } else {
+            tieneCitas = citaRepositorio.existenCitasPendientesPorFecha(dto.getFecha(), estadosPendientes);
+        }
+
+        if (tieneCitas) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No se puede bloquear el día. Existen citas agendadas o confirmadas para esta fecha. Reprograme a los pacientes primero.");
+        }
+
         DiaBloqueado diaBloqueado = new DiaBloqueado();
         diaBloqueado.setFecha(dto.getFecha());
         diaBloqueado.setMotivo(dto.getMotivo());
 
-        // Validamos si es un permiso para un doctor específico o un cierre general
         if (dto.getVeterinarioId() != null) {
-            Usuario veterinario = usuarioRepositorio.findById(dto.getVeterinarioId())
+            Empleado veterinario = empleadoRepositorio.findById(dto.getVeterinarioId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veterinario no encontrado"));
             diaBloqueado.setVeterinario(veterinario);
         }
 
         DiaBloqueado guardado = diaBloqueadoRepositorio.save(diaBloqueado);
         return mapearAResponse(guardado);
-    }
+    }   
 
     public List<DiaBloqueadoResponseDTO> listarTodos() {
         return diaBloqueadoRepositorio.findAll().stream()

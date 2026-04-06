@@ -1,20 +1,16 @@
 package com.veterinaria.servicios;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import com.veterinaria.dtos.ClienteRequestDTO;
 import com.veterinaria.dtos.ClienteResponseDTO;
-import com.veterinaria.dtos.PacienteResponseDTO;
 import com.veterinaria.modelos.Cliente;
 import com.veterinaria.respositorios.ClienteRepositorio;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class ClienteServicio {
@@ -26,6 +22,10 @@ public class ClienteServicio {
     }
 
     public ClienteResponseDTO guardar(ClienteRequestDTO dto) {
+
+        if (clienteRepositorio.existsByDni(dto.getDni())) {
+            throw new RuntimeException("El DNI ya se encuentra registrado");
+        }
 
         Cliente cliente = new Cliente();
         cliente.setNombre(dto.getNombre());
@@ -52,12 +52,22 @@ public class ClienteServicio {
 
     }
 
-    public Page<ClienteResponseDTO> listarTodos(Pageable pageable) {
-        Page<Cliente> paginaDeClientes = clienteRepositorio.findAll(pageable);
+    public Page<ClienteResponseDTO> listarTodos(String buscar, Pageable pageable) {
+        Page<Cliente> pagina;
+        if (buscar != null && !buscar.trim().isEmpty()) {
+            pagina = clienteRepositorio.findByNombreContainingIgnoreCaseOrApellidoContainingIgnoreCaseOrDniContaining(
+                    buscar, buscar, buscar, pageable);
+        } else {
+            pagina = clienteRepositorio.findAll(pageable);
+        }
 
-        return paginaDeClientes.map(cliente -> new ClienteResponseDTO(cliente.getId(), cliente.getNombre(),
-                cliente.getApellido(), cliente.getTelefono(), cliente.getDni(), cliente.getEmail()));
-
+        return pagina.map(cliente -> new ClienteResponseDTO(
+                cliente.getId(),
+                cliente.getNombre(),
+                cliente.getApellido(),
+                cliente.getTelefono(),
+                cliente.getDni(),
+                cliente.getEmail()));
     }
 
     public ClienteResponseDTO buscarPorId(Long id) {
@@ -96,11 +106,16 @@ public class ClienteServicio {
         );
     }
 
-    public void eliminar(Long id) {
+    @Transactional
+    public void cambiarEstado(Long id, Boolean estado) {
         Cliente clientedb = clienteRepositorio.findById(id).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado con ID:" + id));
+        clientedb.setActivo(estado);
 
-        clienteRepositorio.delete(clientedb);
+        if (clientedb.getPacientes() != null) {
+            clientedb.getPacientes().forEach(paciente -> paciente.setActivo(estado));
+        }
+        clienteRepositorio.save(clientedb);
     }
 
 }

@@ -28,5 +28,5 @@ public class DiaBloqueado {
     // no atiende.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "veterinario_id")
-    private Usuario veterinario;
+    private Empleado veterinario;
 }

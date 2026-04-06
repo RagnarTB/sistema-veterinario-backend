@@ -1,5 +1,6 @@
 package com.veterinaria.dtos;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -12,9 +13,9 @@ import lombok.NoArgsConstructor;
 public class CierreCajaResponseDTO {
     private Long cajaId;
     private LocalDateTime fechaCierre;
-    private Double saldoInicial;
-    private Double totalVentas;
-    private Double ingresosExtras;
-    private Double egresosDevoluciones;
-    private Double saldoFinal;
+    private BigDecimal saldoInicial;
+    private BigDecimal totalVentas;
+    private BigDecimal ingresosExtras;
+    private BigDecimal egresosDevoluciones;
+    private BigDecimal saldoFinal;
 }

@@ -23,4 +23,5 @@ public class CitaResponseDTO {
     private String motivo;
     private EstadoCita estado;
     private List<Long> pacienteIds;
+    private Long sedeId;
 }

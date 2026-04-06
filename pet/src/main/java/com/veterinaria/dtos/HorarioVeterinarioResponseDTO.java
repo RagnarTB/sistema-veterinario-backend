@@ -18,4 +18,5 @@ public class HorarioVeterinarioResponseDTO {
     private LocalTime horaSalida;
     private LocalTime inicioRefrigerio;
     private LocalTime finRefrigerio;
+    private Long sedeId;
 }

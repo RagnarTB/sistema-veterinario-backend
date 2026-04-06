@@ -9,13 +9,20 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-// IMPORTANTE: Este servicio no existe todavía
+import com.veterinaria.modelos.Empleado;
+import com.veterinaria.modelos.Sede;
 import com.veterinaria.servicios.CajaServicio;
+import com.veterinaria.servicios.EmpleadoAutenticadoService;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -27,18 +34,30 @@ class CajaControllerTest {
     @MockBean
     private CajaServicio cajaServicio;
 
-    @Test
-    @WithMockUser(roles = "ADMIN") // Solo el Admin o Recepcionista principal abre la caja
-    void debeAbrirCajaConSaldoInicial() throws Exception {
+    @MockBean
+    private EmpleadoAutenticadoService empleadoAutenticadoService;
 
-        // Enviamos con cuánto dinero en efectivo iniciamos el día (para dar vueltos)
+    private Empleado empleadoMock() {
+        Sede sede = new Sede();
+        sede.setId(1L);
+        Empleado empleado = new Empleado();
+        empleado.setSedes(new HashSet<>(Set.of(sede)));
+        return empleado;
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void debeAbrirCajaConSaldoInicial() throws Exception {
+        when(empleadoAutenticadoService.obtenerEmpleadoActual()).thenReturn(empleadoMock());
+        doNothing().when(cajaServicio).abrirCaja(any(), any());
+
         String jsonRequest = """
                 {
+                    "sedeId": 1,
                     "saldoInicial": 100.50
                 }
                 """;
 
-        // Simulamos la petición POST a nuestro futuro endpoint
         mockMvc.perform(post("/api/caja/abrir")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonRequest))
@@ -46,11 +65,13 @@ class CajaControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN") // Solo un administrador cierra la caja
+    @WithMockUser(roles = "ADMIN")
     void debeCerrarCajaYRetornarEstadoOk() throws Exception {
+        when(empleadoAutenticadoService.obtenerEmpleadoActual()).thenReturn(empleadoMock());
+        when(cajaServicio.cerrarCaja(any(), any())).thenReturn(null);
 
-        // Simulamos la petición PUT para cerrar la caja del día
-        mockMvc.perform(put("/api/caja/cerrar"))
+        mockMvc.perform(put("/api/caja/cerrar")
+                .param("sedeId", "1"))
                 .andExpect(status().isOk());
     }
 }

@@ -1,8 +1,11 @@
 package com.veterinaria.modelos;
 
+import java.math.BigDecimal;
+
 import org.hibernate.envers.Audited;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,10 +31,16 @@ public class AtencionMedica {
     private String sintomas;
     private String diagnostico;
     private String tratamiento;
-    private Double peso;
-    private Double temperatura;
+    @jakarta.persistence.Column(precision = 8, scale = 3)
+    private BigDecimal peso;
+    @jakarta.persistence.Column(precision = 6, scale = 2)
+    private BigDecimal temperatura;
     private Integer frecuenciaCardiaca;
     private String resumenIaCliente;
+
+    @jakarta.persistence.Column(nullable = false)
+    private Boolean activo = true;
+
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @OneToOne
     @JoinColumn(name = "cita_id")
@@ -40,5 +49,10 @@ public class AtencionMedica {
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "veterinario_id")
-    private Usuario veterinario;
+    private Empleado veterinario;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "paciente_id", nullable = false)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private Paciente paciente;
 }

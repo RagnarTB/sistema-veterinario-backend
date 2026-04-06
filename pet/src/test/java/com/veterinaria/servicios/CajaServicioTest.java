@@ -1,13 +1,17 @@
 package com.veterinaria.servicios;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,10 +21,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.veterinaria.dtos.CajaRequestDTO;
+import com.veterinaria.dtos.CierreCajaResponseDTO;
 import com.veterinaria.modelos.CajaDiaria;
+import com.veterinaria.modelos.Empleado;
+import com.veterinaria.modelos.Sede;
 import com.veterinaria.respositorios.CajaRepositorio;
-
-// ¡SPOILER! Este import va a fallar porque el repositorio de ventas aún no tiene la sumatoria
+import com.veterinaria.respositorios.SedeRepositorio;
 import com.veterinaria.respositorios.VentaRepositorio;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,7 +36,10 @@ class CajaServicioTest {
     private CajaRepositorio cajaRepositorio;
 
     @Mock
-    private VentaRepositorio ventaRepositorio; // ¡NUEVO! Necesitamos preguntar por las ventas
+    private VentaRepositorio ventaRepositorio;
+
+    @Mock
+    private SedeRepositorio sedeRepositorio;
 
     @InjectMocks
     private CajaServicio cajaServicio;
@@ -38,51 +47,75 @@ class CajaServicioTest {
     @Test
     void debeAbrirCajaYGuardarEnBaseDeDatos() {
         CajaRequestDTO request = new CajaRequestDTO();
-        request.setSaldoInicial(150.0);
+        request.setSaldoInicial(new BigDecimal("150.00"));
+        request.setSedeId(1L);
 
-        cajaServicio.abrirCaja(request);
+        Sede sede = new Sede();
+        sede.setId(1L);
+
+        Empleado empleado = new Empleado();
+        empleado.setId(1L);
+        empleado.setSedes(new HashSet<>(Set.of(sede)));
+
+        when(sedeRepositorio.findById(1L)).thenReturn(Optional.of(sede));
+        when(cajaRepositorio.findByEmpleadoIdAndEstado(1L, "ABIERTA"))
+                .thenReturn(Optional.empty());
+
+        cajaServicio.abrirCaja(request, empleado);
 
         ArgumentCaptor<CajaDiaria> cajaCaptor = ArgumentCaptor.forClass(CajaDiaria.class);
+
         verify(cajaRepositorio).save(cajaCaptor.capture());
 
         CajaDiaria cajaGuardada = cajaCaptor.getValue();
 
-        assertEquals(150.0, cajaGuardada.getSaldoInicial());
+        assertEquals(new BigDecimal("150.00"), cajaGuardada.getSaldoInicial());
         assertEquals("ABIERTA", cajaGuardada.getEstado());
         assertNotNull(cajaGuardada.getFechaApertura());
+        assertEquals(sede, cajaGuardada.getSede());
+        assertEquals(empleado, cajaGuardada.getEmpleado());
     }
 
-    // --- ¡NUESTRO NUEVO TEST ESTRELLA! ---
     @Test
     void debeCerrarCajaYCalcularSaldoFinal() {
-        // 1. Preparamos una caja ficticia que se abrió hace 8 horas con 100 dólares
+        Sede sede = new Sede();
+        sede.setId(1L);
+
+        Empleado empleado = new Empleado();
+        empleado.setId(1L);
+        empleado.setSedes(new HashSet<>(Set.of(sede)));
+
         CajaDiaria cajaAbierta = new CajaDiaria();
         cajaAbierta.setId(1L);
-        cajaAbierta.setSaldoInicial(100.0);
+        cajaAbierta.setSaldoInicial(new BigDecimal("100.00"));
         cajaAbierta.setEstado("ABIERTA");
         cajaAbierta.setFechaApertura(LocalDateTime.now().minusHours(8));
+        cajaAbierta.setMovimientos(new ArrayList<>());
+        cajaAbierta.setSede(sede);
+        cajaAbierta.setEmpleado(empleado);
 
-        cajaAbierta.setMovimientos(new java.util.ArrayList<>());
+        when(sedeRepositorio.findById(1L)).thenReturn(Optional.of(sede));
+        when(cajaRepositorio.findByEmpleadoIdAndSedeIdAndEstado(1L, 1L, "ABIERTA"))
+                .thenReturn(Optional.of(cajaAbierta));
 
-        when(cajaRepositorio.findByEstado("ABIERTA")).thenReturn(Optional.of(cajaAbierta));
+        when(ventaRepositorio.sumarVentasPorCaja(1L))
+                .thenReturn(new BigDecimal("250.00"));
 
-        // 2. Simulamos que el sistema calculó que hoy se vendieron 250 dólares
-        when(ventaRepositorio.sumarVentasPorCaja(any())).thenReturn(250.0);
+        CierreCajaResponseDTO response = cajaServicio.cerrarCaja(1L, empleado);
 
-        // 3. El administrador oprime el botón de "Cerrar Caja"
-        cajaServicio.cerrarCaja();
-
-        // 4. Capturamos qué se guardó en la base de datos
         ArgumentCaptor<CajaDiaria> cajaCaptor = ArgumentCaptor.forClass(CajaDiaria.class);
+
         verify(cajaRepositorio).save(cajaCaptor.capture());
 
         CajaDiaria cajaCerrada = cajaCaptor.getValue();
 
-        // 5. ¡LA VERDADERA PRUEBA!
         assertEquals("CERRADA", cajaCerrada.getEstado());
         assertNotNull(cajaCerrada.getFechaCierre());
-        // Matemáticas: 100 (Inicial) + 250 (Ventas) = 350
-        assertEquals(350.0, cajaCerrada.getSaldoFinal(),
-                "El saldo final debe ser la suma exacta del inicial más las ventas");
+        assertEquals(new BigDecimal("350.00"), cajaCerrada.getSaldoFinal());
+
+        // Verificamos también el DTO de respuesta
+        assertNotNull(response);
+        assertEquals(new BigDecimal("350.00"), response.getSaldoFinal());
+        assertEquals(new BigDecimal("250.00"), response.getTotalVentas());
     }
 }

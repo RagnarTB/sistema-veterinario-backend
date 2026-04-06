@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AuthResponseDTO {
     private String token; // Aquí irá el choricito de texto JWT
+    private String refreshToken;
     private String email;
     // Más adelante devolveremos el ROL aquí también para que Angular sepa qué menús
     // mostrar

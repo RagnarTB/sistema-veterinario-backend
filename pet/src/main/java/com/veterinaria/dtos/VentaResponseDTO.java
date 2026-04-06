@@ -1,5 +1,6 @@
 package com.veterinaria.dtos;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,6 @@ public class VentaResponseDTO {
     private Long id;
     private Long clienteId;
     private LocalDateTime fechaHora;
-    private Double total;
+    private BigDecimal total;
     private List<DetalleVentaResponseDTO> detalles;
 }

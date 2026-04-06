@@ -1,5 +1,7 @@
 package com.veterinaria.modelos;
 
+
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -15,4 +17,7 @@ public class Especie {
     // Hacemos que el nombre sea único para no tener "Canino" y "canino" repetidos
     @Column(nullable = false, unique = true)
     private String nombre;
+
+    @Column(nullable = false)
+    private Boolean activo = true;
 }

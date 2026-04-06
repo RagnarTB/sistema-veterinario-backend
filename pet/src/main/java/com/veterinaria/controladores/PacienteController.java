@@ -3,22 +3,18 @@ package com.veterinaria.controladores;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.veterinaria.dtos.PacienteRequestDTO;
 import com.veterinaria.dtos.PacienteResponseDTO;
-import com.veterinaria.modelos.*;
-import com.veterinaria.respositorios.PacienteRepositorio;
 import com.veterinaria.servicios.PacienteServicio;
 
 import jakarta.validation.Valid;
@@ -45,14 +41,11 @@ public class PacienteController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PacienteResponseDTO>> listarPacientes(Pageable pageable) {
-        // 1. Le pedimos la lista ya procesada (DTOs) al servicio
-        Page<PacienteResponseDTO> pacientes = pacienteServicio.listarTodos(pageable);
-
-        // 2. La devolvemos envuelta en nuestro ticket de éxito (200 OK)
+    public ResponseEntity<Page<PacienteResponseDTO>> listarPacientes(
+            Pageable pageable,
+            @RequestParam(required = false) String buscar) {
+        Page<PacienteResponseDTO> pacientes = pacienteServicio.listarTodos(buscar, pageable);
         return ResponseEntity.ok(pacientes);
-        // Nota: ResponseEntity.ok(...) es un atajo elegante para
-        // ResponseEntity.status(HttpStatus.OK).body(...)
     }
 
     @GetMapping("/{id}") // Le decimos que espere un ID en la URL
@@ -75,12 +68,10 @@ public class PacienteController {
         return ResponseEntity.ok(pacienteActualizado);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarPaciente(@PathVariable Long id) { // ¡No olvides el @PathVariable!
-
-        // El controlador le delega el trabajo pesado al servicio
-        pacienteServicio.eliminar(id);
-
+    @DeleteMapping("/{id}/estado")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> cambiarEstadoPaciente(@PathVariable Long id, @RequestParam Boolean activo) {
+        pacienteServicio.cambiarEstado(id, activo);
         // Si todo sale bien, devuelve 204 No Content
         return ResponseEntity.noContent().build();
     }

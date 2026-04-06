@@ -1,6 +1,5 @@
 package com.veterinaria.controladores;
 
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,10 +22,14 @@ public class VentaController {
     @Autowired
     private VentaServicio ventaServicio;
 
+    @Autowired
+    private com.veterinaria.servicios.EmpleadoAutenticadoService empleadoAutenticadoService;
+
     @PostMapping
     public ResponseEntity<VentaResponseDTO> crearVenta(
             @Valid @RequestBody VentaRequestDTO dto) {
-        VentaResponseDTO respuesta = ventaServicio.guardar(dto);
+        com.veterinaria.modelos.Empleado empleadoActual = empleadoAutenticadoService.obtenerEmpleadoActual();
+        VentaResponseDTO respuesta = ventaServicio.guardar(dto, empleadoActual);
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
     }
 
@@ -46,6 +49,7 @@ public class VentaController {
     @PatchMapping("/{id}/anular")
     @PreAuthorize("hasRole('ADMIN')") // Un cajero normal no debería poder anular sin permiso
     public ResponseEntity<com.veterinaria.dtos.MensajeResponseDTO> anularVenta(@PathVariable Long id) {
-        return ResponseEntity.ok(ventaServicio.anularVenta(id));
+        com.veterinaria.modelos.Empleado empleadoActual = empleadoAutenticadoService.obtenerEmpleadoActual();
+        return ResponseEntity.ok(ventaServicio.anularVenta(id, empleadoActual));
     }
 }

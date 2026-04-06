@@ -1,5 +1,6 @@
 package com.veterinaria.modelos;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.veterinaria.modelos.Enums.TipoMovimiento;
@@ -15,17 +16,21 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.envers.Audited;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Audited
 @Table(name = "movimiento_caja")
 public class MovimientoCaja {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String concepto;
-    private Double monto;
+    @jakarta.persistence.Column(precision = 19, scale = 2)
+    private BigDecimal monto;
     private TipoMovimiento tipoMovimiento;
     private LocalDateTime fechaHora;
     @ManyToOne
