@@ -31,8 +31,6 @@ public class ProductoServicio {
         producto.setNombre(dto.getNombre());
         producto.setDescripcion(dto.getDescripcion());
         producto.setPrecio(dto.getPrecio());
-        producto.setStockActual(dto.getStockActual());
-        producto.setStockMinimo(dto.getStockMinimo()); // Nuevo campo
 
         Producto productoGuardado = productoRepositorio.save(producto);
         return mapearAResponseDTO(productoGuardado);
@@ -67,8 +65,6 @@ public class ProductoServicio {
         productodb.setNombre(dto.getNombre());
         productodb.setDescripcion(dto.getDescripcion());
         productodb.setPrecio(dto.getPrecio());
-        productodb.setStockActual(dto.getStockActual());
-        productodb.setStockMinimo(dto.getStockMinimo()); // Nuevo campo
 
         Producto productoGuardado = productoRepositorio.save(productodb);
         return mapearAResponseDTO(productoGuardado);
@@ -89,10 +85,7 @@ public class ProductoServicio {
     // GET /api/productos/alertas-stock
     // =========================
     public List<ProductoResponseDTO> obtenerAlertasStock() {
-        return productoRepositorio.obtenerAlertasDeStock()
-                .stream()
-                .map(this::mapearAResponseDTO)
-                .collect(Collectors.toList());
+        return new java.util.ArrayList<>();
     }
 
     // =========================
@@ -103,8 +96,6 @@ public class ProductoServicio {
                 producto.getId(),
                 producto.getNombre(),
                 producto.getDescripcion(),
-                producto.getPrecio(),
-                producto.getStockActual(),
-                producto.getStockMinimo()); // 6 argumentos — alineado con @AllArgsConstructor
+                producto.getPrecio()); 
     }
 }

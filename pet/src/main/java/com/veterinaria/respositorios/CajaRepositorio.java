@@ -11,5 +11,5 @@ public interface CajaRepositorio extends JpaRepository<CajaDiaria, Long> {
 
     // ¡NUEVO! Con solo escribir este nombre, Spring Boot genera la consulta SQL
     // automáticamente
-    Optional<CajaDiaria> findByEstado(String estado);
+    Optional<CajaDiaria> findBySedeIdAndEstado(Long sedeId, String estado);
 }

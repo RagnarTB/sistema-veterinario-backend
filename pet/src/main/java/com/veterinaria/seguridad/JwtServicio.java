@@ -7,6 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.security.Key;
 import java.util.Date;
@@ -17,10 +18,8 @@ import java.util.function.Function;
 @Service
 public class JwtServicio {
 
-    // Esta es la "Firma" de tu clínica. En producción, esto NUNCA va en el
-    // código, va en las variables de entorno (.env).
-    // Es una cadena aleatoria codificada en Base64 (debe tener al menos 256 bits).
-    private static final String SECRET_KEY = "Q2xhdmVTZWNyZXRhTXV5U2VndXJhUGFyYUxhQ2xpbmljYVZldGVyaW5hcmlhMjAyNA==";
+    @Value("${jwt.secret}")
+    private String secretKey;
 
     // 1. GENERAR EL TOKEN (Se usa en el Login)
     public String generarToken(UserDetails userDetails) {
@@ -69,7 +68,7 @@ public class JwtServicio {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

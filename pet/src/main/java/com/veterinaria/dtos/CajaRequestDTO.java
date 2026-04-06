@@ -13,4 +13,7 @@ public class CajaRequestDTO {
     @DecimalMin(value = "0.0", inclusive = true, message = "El saldo inicial no puede ser negativo")
     private BigDecimal saldoInicial;
 
+    @NotNull(message = "La sede es obligatoria")
+    private Long sedeId;
+
 }

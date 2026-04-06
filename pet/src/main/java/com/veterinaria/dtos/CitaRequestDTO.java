@@ -29,4 +29,6 @@ public class CitaRequestDTO {
     @NotEmpty(message = "La cita debe tener al menos un paciente")
     private List<Long> pacienteIds;
 
+    @NotNull(message = "El ID de sede es obligatorio")
+    private Long sedeId;
 }

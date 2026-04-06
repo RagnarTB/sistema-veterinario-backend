@@ -13,24 +13,24 @@ import com.veterinaria.dtos.AtencionMedicaRequestDTO;
 import com.veterinaria.dtos.AtencionMedicaResponseDTO;
 import com.veterinaria.modelos.AtencionMedica;
 import com.veterinaria.modelos.Cita;
-import com.veterinaria.modelos.Usuario;
+import com.veterinaria.modelos.Empleado;
 import com.veterinaria.modelos.Enums.EstadoCita;
 import com.veterinaria.respositorios.AtencionMedicaRepositorio;
 import com.veterinaria.respositorios.CitaRepositorio;
-import com.veterinaria.respositorios.UsuarioRepositorio;
+import com.veterinaria.respositorios.EmpleadoRepositorio;
 
 @Service
 public class AtencionMedicaServicio {
 
     private AtencionMedicaRepositorio atencionMedicaRepositorio;
     private CitaRepositorio citaRepositorio;
-    private final UsuarioRepositorio usuarioRepositorio;
+    private final EmpleadoRepositorio empleadoRepositorio;
 
     public AtencionMedicaServicio(AtencionMedicaRepositorio atencionMedicaRepositorio,
-            CitaRepositorio citaRepositorio, UsuarioRepositorio usuarioRepositorio) {
+            CitaRepositorio citaRepositorio, EmpleadoRepositorio empleadoRepositorio) {
         this.atencionMedicaRepositorio = atencionMedicaRepositorio;
         this.citaRepositorio = citaRepositorio;
-        this.usuarioRepositorio = usuarioRepositorio;
+        this.empleadoRepositorio = empleadoRepositorio;
     }
 
     // CREATE
@@ -52,8 +52,8 @@ public class AtencionMedicaServicio {
         // usó para entrar
         String emailDoctorAutenticado = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // Buscamos a ese doctor en la base de datos
-        Usuario doctor = usuarioRepositorio.findByEmail(emailDoctorAutenticado)
+        // Buscamos al empleado conectado, buscando por el email de su usuario asociado
+        Empleado doctor = empleadoRepositorio.findByUsuarioEmail(emailDoctorAutenticado)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no válido"));
 
         if (!cita.getVeterinario().getId().equals(doctor.getId())) {
@@ -121,7 +121,8 @@ public class AtencionMedicaServicio {
         AtencionMedica atencionDb = atencionMedicaRepositorio.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Atención médica no encontrada con ID: " + id));
-        atencionMedicaRepositorio.delete(atencionDb);
+        atencionDb.setActivo(false);
+        atencionMedicaRepositorio.save(atencionDb);
     }
 
     // Método Auxiliar (DRY - Don't Repeat Yourself) para transformar Entidad a DTO
@@ -137,6 +138,7 @@ public class AtencionMedicaServicio {
         dto.setResumenIaCliente(entidad.getResumenIaCliente());
         // CORRECCIÓN 2: Incluimos el ID de la cita en la respuesta
         dto.setCitaId(entidad.getCita().getId());
+        dto.setActivo(entidad.getActivo());
         // AQUI: Enviamos el ID del doctor al Frontend
         if (entidad.getVeterinario() != null) {
             dto.setVeterinarioId(entidad.getVeterinario().getId());

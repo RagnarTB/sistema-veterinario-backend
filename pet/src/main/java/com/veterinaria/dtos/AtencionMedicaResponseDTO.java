@@ -20,5 +20,6 @@ public class AtencionMedicaResponseDTO {
     private String resumenIaCliente;
     private Long citaId;
     private Long veterinarioId;
+    private Boolean activo;
 
 }

@@ -10,20 +10,20 @@ import org.springframework.web.server.ResponseStatusException;
 import com.veterinaria.dtos.DiaBloqueadoRequestDTO;
 import com.veterinaria.dtos.DiaBloqueadoResponseDTO;
 import com.veterinaria.modelos.DiaBloqueado;
-import com.veterinaria.modelos.Usuario;
+import com.veterinaria.modelos.Empleado;
 import com.veterinaria.respositorios.DiaBloqueadoRepositorio;
-import com.veterinaria.respositorios.UsuarioRepositorio;
+import com.veterinaria.respositorios.EmpleadoRepositorio;
 
 @Service
 public class DiaBloqueadoServicio {
 
     private final DiaBloqueadoRepositorio diaBloqueadoRepositorio;
-    private final UsuarioRepositorio usuarioRepositorio;
+    private final EmpleadoRepositorio empleadoRepositorio;
 
     public DiaBloqueadoServicio(DiaBloqueadoRepositorio diaBloqueadoRepositorio,
-            UsuarioRepositorio usuarioRepositorio) {
+            EmpleadoRepositorio empleadoRepositorio) {
         this.diaBloqueadoRepositorio = diaBloqueadoRepositorio;
-        this.usuarioRepositorio = usuarioRepositorio;
+        this.empleadoRepositorio = empleadoRepositorio;
     }
 
     public DiaBloqueadoResponseDTO guardar(DiaBloqueadoRequestDTO dto) {
@@ -33,7 +33,7 @@ public class DiaBloqueadoServicio {
 
         // Validamos si es un permiso para un doctor específico o un cierre general
         if (dto.getVeterinarioId() != null) {
-            Usuario veterinario = usuarioRepositorio.findById(dto.getVeterinarioId())
+            Empleado veterinario = empleadoRepositorio.findById(dto.getVeterinarioId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veterinario no encontrado"));
             diaBloqueado.setVeterinario(veterinario);
         }

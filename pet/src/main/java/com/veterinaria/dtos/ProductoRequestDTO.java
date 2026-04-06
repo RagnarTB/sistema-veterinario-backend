@@ -18,12 +18,4 @@ public class ProductoRequestDTO {
     @NotNull(message = "El precio del producto es obligatorio")
     @DecimalMin(value = "0.0", inclusive = true, message = "El precio no puede ser negativo")
     private BigDecimal precio;
-
-    @NotNull(message = "El stock no puede ser nulo")
-    @DecimalMin(value = "0.0", inclusive = true, message = "El stock no puede ser negativo")
-    private BigDecimal stockActual;
-
-    @NotNull(message = "El stock mínimo es obligatorio")
-    @DecimalMin(value = "0.0", inclusive = true, message = "El stock mínimo no puede ser negativo")
-    private BigDecimal stockMinimo;
 }

@@ -13,7 +13,10 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.envers.Audited;
+
 @Entity
+@Audited
 @Table(name = "detalles_venta")
 @Data
 @NoArgsConstructor

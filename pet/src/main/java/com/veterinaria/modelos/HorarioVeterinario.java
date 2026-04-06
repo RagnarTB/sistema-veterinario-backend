@@ -21,7 +21,11 @@ public class HorarioVeterinario {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "veterinario_id", nullable = false)
-    private Usuario veterinario;
+    private Empleado veterinario;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sede_id", nullable = false)
+    private Sede sede;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

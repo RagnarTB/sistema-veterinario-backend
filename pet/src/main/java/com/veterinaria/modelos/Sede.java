@@ -1,37 +1,32 @@
 package com.veterinaria.modelos;
 
-import java.math.BigDecimal;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "productos")
+@Table(name = "sedes")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Producto {
-
+public class Sede {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String nombre;
-    private String descripcion;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal precio;
+    @Column(nullable = false)
+    private String direccion;
 
-    @Version
-    private Long version;
+    private String telefono;
 
     @Column(nullable = false)
     private Boolean activo = true;

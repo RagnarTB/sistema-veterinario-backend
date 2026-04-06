@@ -13,6 +13,9 @@ public class VentaRequestDTO {
     // No pedimos pacienteId porque el cliente podría venir solo a comprar comida
     // No pedimos total, fecha ni hora (eso lo calcula el Backend por seguridad)
 
+    @NotNull(message = "La sede es obligatoria")
+    private Long sedeId;
+
     @NotEmpty(message = "La venta debe tener al menos un detalle")
     private List<DetalleVentaRequestDTO> detalles;
 }

@@ -11,37 +11,45 @@ import com.veterinaria.dtos.CajaRequestDTO;
 import com.veterinaria.dtos.CierreCajaResponseDTO;
 import com.veterinaria.modelos.CajaDiaria;
 import com.veterinaria.modelos.Enums.TipoMovimiento;
+import com.veterinaria.modelos.Sede;
 import com.veterinaria.respositorios.CajaRepositorio;
 import com.veterinaria.respositorios.VentaRepositorio;
+import com.veterinaria.respositorios.SedeRepositorio;
 
 @Service
 public class CajaServicio {
 
     private final CajaRepositorio cajaRepositorio;
     private final VentaRepositorio ventaRepositorio;
+    private final SedeRepositorio sedeRepositorio;
 
-    public CajaServicio(CajaRepositorio cajaRepositorio, VentaRepositorio ventaRepositorio) {
+    public CajaServicio(CajaRepositorio cajaRepositorio, VentaRepositorio ventaRepositorio, SedeRepositorio sedeRepositorio) {
         this.cajaRepositorio = cajaRepositorio;
         this.ventaRepositorio = ventaRepositorio;
+        this.sedeRepositorio = sedeRepositorio;
     }
 
     public void abrirCaja(CajaRequestDTO dto) {
 
-        if (cajaRepositorio.findByEstado("ABIERTA").isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ya existe una caja abierta en este momento");
+        Sede sede = sedeRepositorio.findById(dto.getSedeId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sede no encontrada"));
+
+        if (cajaRepositorio.findBySedeIdAndEstado(dto.getSedeId(), "ABIERTA").isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ya existe una caja abierta en esta sede en este momento");
         }
 
         CajaDiaria nuevaCaja = new CajaDiaria();
         nuevaCaja.setSaldoInicial(dto.getSaldoInicial());
         nuevaCaja.setEstado("ABIERTA");
         nuevaCaja.setFechaApertura(LocalDateTime.now());
+        nuevaCaja.setSede(sede);
 
         cajaRepositorio.save(nuevaCaja);
     }
 
-    public CierreCajaResponseDTO cerrarCaja() {
+    public CierreCajaResponseDTO cerrarCaja(Long sedeId) {
         // 1. Buscar la caja abierta
-        CajaDiaria cajaAbierta = cajaRepositorio.findByEstado("ABIERTA")
+        CajaDiaria cajaAbierta = cajaRepositorio.findBySedeIdAndEstado(sedeId, "ABIERTA")
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "No hay ninguna caja abierta para cerrar"));
 

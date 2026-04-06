@@ -30,9 +30,7 @@ class ProductoControllerTest {
                 {
                     "nombre": "Shampoo Antipulgas",
                     "descripcion": "Shampoo para perros de todas las razas",
-                    "precio": 45.50,
-                    "stockActual": 20,
-                    "stockMinimo": 5
+                    "precio": 45.50
                 }
                 """;
 
@@ -48,9 +46,7 @@ class ProductoControllerTest {
                 {
                     "nombre": "Shampoo Antipulgas",
                     "descripcion": "Shampoo",
-                    "precio": -10.0,
-                    "stockActual": 20,
-                    "stockMinimo": 5
+                    "precio": -10.0
                 }
                 """;
 
@@ -59,22 +55,4 @@ class ProductoControllerTest {
                 .content(productoInvalidoJson))
                 .andExpect(status().isBadRequest());
     }
-
-    @Test
-    void debeRetornarBadRequestCuandoStockMinimoEsNegativo() throws Exception {
-        String productoInvalidoJson = """
-                {
-                    "nombre": "Shampoo Antipulgas",
-                    "descripcion": "Shampoo",
-                    "precio": 45.50,
-                    "stockActual": 20,
-                    "stockMinimo": -1
-                }
-                """;
-
-        mockMvc.perform(post("/api/productos")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(productoInvalidoJson))
-                .andExpect(status().isBadRequest());
     }
-}

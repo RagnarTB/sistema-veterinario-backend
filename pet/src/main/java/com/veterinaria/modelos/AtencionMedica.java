@@ -36,6 +36,10 @@ public class AtencionMedica {
     private BigDecimal temperatura;
     private Integer frecuenciaCardiaca;
     private String resumenIaCliente;
+
+    @jakarta.persistence.Column(nullable = false)
+    private Boolean activo = true;
+
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @OneToOne
     @JoinColumn(name = "cita_id")
@@ -44,5 +48,5 @@ public class AtencionMedica {
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne
     @JoinColumn(name = "veterinario_id")
-    private Usuario veterinario;
+    private Empleado veterinario;
 }

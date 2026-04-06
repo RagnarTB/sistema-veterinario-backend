@@ -44,7 +44,8 @@ class CitaControllerTest {
                     "servicioId": 1,
                     "veterinarioId": 2,
                     "motivo": "Primera vacuna para la camada de gatitos",
-                    "pacienteIds": [1, 2, 3, 4]
+                    "pacienteIds": [1, 2, 3, 4],
+                    "sedeId": 1
                 }
                 """;
 
@@ -58,7 +59,8 @@ class CitaControllerTest {
                 2L,
                 "Primera vacuna para la camada de gatitos",
                 EstadoCita.AGENDADA,
-                List.of(1L, 2L, 3L, 4L));
+                List.of(1L, 2L, 3L, 4L),
+                1L);
 
         when(citaServicio.guardar(any(CitaRequestDTO.class))).thenReturn(respuestaMock);
 

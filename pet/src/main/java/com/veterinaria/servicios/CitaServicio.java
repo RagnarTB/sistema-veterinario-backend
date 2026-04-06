@@ -18,14 +18,16 @@ import com.veterinaria.modelos.Cita;
 import com.veterinaria.modelos.HorarioVeterinario;
 import com.veterinaria.modelos.Paciente;
 import com.veterinaria.modelos.ServicioMedico;
-import com.veterinaria.modelos.Usuario;
+import com.veterinaria.modelos.Empleado;
 import com.veterinaria.modelos.Enums.EstadoCita;
 import com.veterinaria.respositorios.CitaRepositorio;
 import com.veterinaria.respositorios.DiaBloqueadoRepositorio;
 import com.veterinaria.respositorios.HorarioVeterinarioRepositorio;
 import com.veterinaria.respositorios.PacienteRepositorio;
 import com.veterinaria.respositorios.ServicioMedicoRepositorio;
-import com.veterinaria.respositorios.UsuarioRepositorio;
+import com.veterinaria.respositorios.EmpleadoRepositorio;
+import com.veterinaria.modelos.Sede;
+import com.veterinaria.respositorios.SedeRepositorio;
 
 @Service
 public class CitaServicio {
@@ -33,22 +35,25 @@ public class CitaServicio {
         private final CitaRepositorio citaRepositorio;
         private final PacienteRepositorio pacienteRepositorio;
         private final ServicioMedicoRepositorio servicioRepositorio;
-        private final UsuarioRepositorio usuarioRepositorio;
+        private final EmpleadoRepositorio empleadoRepositorio;
         private final List<EstadoCita> ESTADOS_IGNORADOS = List.of(EstadoCita.CANCELADA, EstadoCita.NO_ASISTIO);
 
         private final HorarioVeterinarioRepositorio horarioRepositorio;
         private final DiaBloqueadoRepositorio diaBloqueadoRepositorio;
+        private final SedeRepositorio sedeRepositorio;
 
         public CitaServicio(CitaRepositorio citaRepositorio, PacienteRepositorio pacienteRepositorio,
-                        ServicioMedicoRepositorio servicioRepositorio, UsuarioRepositorio usuarioRepositorio,
+                        ServicioMedicoRepositorio servicioRepositorio, EmpleadoRepositorio empleadoRepositorio,
                         HorarioVeterinarioRepositorio horarioRepositorio,
-                        DiaBloqueadoRepositorio diaBloqueadoRepositorio) {
+                        DiaBloqueadoRepositorio diaBloqueadoRepositorio,
+                        SedeRepositorio sedeRepositorio) {
                 this.citaRepositorio = citaRepositorio;
                 this.pacienteRepositorio = pacienteRepositorio;
                 this.servicioRepositorio = servicioRepositorio;
-                this.usuarioRepositorio = usuarioRepositorio;
+                this.empleadoRepositorio = empleadoRepositorio;
                 this.horarioRepositorio = horarioRepositorio;
                 this.diaBloqueadoRepositorio = diaBloqueadoRepositorio;
+                this.sedeRepositorio = sedeRepositorio;
         }
 
         public CitaResponseDTO guardar(CitaRequestDTO dto) {
@@ -56,9 +61,13 @@ public class CitaServicio {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Servicio no encontrado"));
 
-                Usuario veterinario = usuarioRepositorio.findById(dto.getVeterinarioId())
+                Empleado veterinario = empleadoRepositorio.findById(dto.getVeterinarioId())
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Veterinario no encontrado"));
+
+                Sede sede = sedeRepositorio.findById(dto.getSedeId())
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                                "Sede no encontrada"));
 
                 List<Paciente> pacientes = pacienteRepositorio.findAllById(dto.getPacienteIds());
                 if (pacientes.isEmpty()) {
@@ -90,14 +99,15 @@ public class CitaServicio {
                 cita.setMotivo(dto.getMotivo());
                 cita.setServicio(servicio);
                 cita.setVeterinario(veterinario);
+                cita.setSede(sede);
                 cita.setPacientes(pacientes);
 
                 Cita citaGuardada = citaRepositorio.save(cita);
                 return mapearAResponse(citaGuardada);
         }
 
-        public Page<CitaResponseDTO> listar(Pageable pageable) {
-                return citaRepositorio.findAll(pageable).map(this::mapearAResponse);
+        public Page<CitaResponseDTO> listar(Long sedeId, Pageable pageable) {
+                return citaRepositorio.findBySedeId(sedeId, pageable).map(this::mapearAResponse);
         }
 
         public CitaResponseDTO buscarPorId(Long id) {
@@ -116,9 +126,13 @@ public class CitaServicio {
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Servicio no encontrado"));
 
-                Usuario veterinario = usuarioRepositorio.findById(dto.getVeterinarioId())
+                Empleado veterinario = empleadoRepositorio.findById(dto.getVeterinarioId())
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                                 "Veterinario no encontrado"));
+
+                Sede sede = sedeRepositorio.findById(dto.getSedeId())
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                                "Sede no encontrada"));
 
                 List<Paciente> pacientes = pacienteRepositorio.findAllById(dto.getPacienteIds());
                 if (pacientes.isEmpty()) {
@@ -150,6 +164,7 @@ public class CitaServicio {
                 citaDb.setMotivo(dto.getMotivo());
                 citaDb.setServicio(servicio);
                 citaDb.setVeterinario(veterinario);
+                citaDb.setSede(sede);
                 citaDb.setPacientes(pacientes);
 
                 Cita citaGuardada = citaRepositorio.save(citaDb);
@@ -177,12 +192,13 @@ public class CitaServicio {
                                 cita.getVeterinario().getId(), // En el orden correcto (6)
                                 cita.getMotivo(), // En el orden correcto (7)
                                 cita.getEstado(), // En el orden correcto (8)
-                                pacientesIds // (9)
+                                pacientesIds, // (9)
+                                cita.getSede().getId()
                 );
         }
 
         // EL MOTOR DE DISPONIBILIDAD
-        public List<SlotDisponibilidadDTO> obtenerDisponibilidad(Long veterinarioId, LocalDate fecha, Long servicioId) {
+        public List<SlotDisponibilidadDTO> obtenerDisponibilidad(Long veterinarioId, LocalDate fecha, Long servicioId, Long sedeId) {
 
                 // 1. Si el día es feriado o el doctor pidió permiso, devolvemos lista vacía
                 // inmediatamente
@@ -190,9 +206,9 @@ public class CitaServicio {
                         return List.of();
                 }
 
-                // 2. Buscamos el horario de trabajo del doctor para ese día (ej. LUNES)
+                // 2. Buscamos el horario de trabajo del doctor para ese día (ej. LUNES) en esa sede
                 HorarioVeterinario horario = horarioRepositorio
-                                .findByVeterinarioIdAndDiaSemana(veterinarioId, fecha.getDayOfWeek())
+                                .findByVeterinarioIdAndDiaSemanaAndSedeId(veterinarioId, fecha.getDayOfWeek(), sedeId)
                                 .orElse(null);
 
                 if (horario == null) {
@@ -248,7 +264,7 @@ public class CitaServicio {
                                 // Avanzamos la hora para buscar el siguiente bloque.
                                 // Podrías avanzar 'duracionTotal' o intervalos fijos de 15 mins. Lo haremos
                                 // fijo cada 15 mins para dar flexibilidad al usuario.
-                                horaActual = horaActual.plusMinutes(15);
+                                horaActual = horaActual.plusMinutes(duracionTotal);
                         }
                 }
 

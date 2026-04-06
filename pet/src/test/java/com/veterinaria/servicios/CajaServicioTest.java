@@ -19,8 +19,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.veterinaria.dtos.CajaRequestDTO;
 import com.veterinaria.modelos.CajaDiaria;
+import com.veterinaria.modelos.Sede;
 import com.veterinaria.respositorios.CajaRepositorio;
 import com.veterinaria.respositorios.VentaRepositorio;
+import com.veterinaria.respositorios.SedeRepositorio;
 
 @ExtendWith(MockitoExtension.class)
 class CajaServicioTest {
@@ -31,6 +33,9 @@ class CajaServicioTest {
     @Mock
     private VentaRepositorio ventaRepositorio;
 
+    @Mock
+    private SedeRepositorio sedeRepositorio;
+
     @InjectMocks
     private CajaServicio cajaServicio;
 
@@ -38,6 +43,11 @@ class CajaServicioTest {
     void debeAbrirCajaYGuardarEnBaseDeDatos() {
         CajaRequestDTO request = new CajaRequestDTO();
         request.setSaldoInicial(new BigDecimal("150.00"));
+        request.setSedeId(1L);
+
+        Sede sede = new Sede();
+        sede.setId(1L);
+        when(sedeRepositorio.findById(1L)).thenReturn(Optional.of(sede));
 
         cajaServicio.abrirCaja(request);
 
@@ -61,13 +71,13 @@ class CajaServicioTest {
         cajaAbierta.setFechaApertura(LocalDateTime.now().minusHours(8));
         cajaAbierta.setMovimientos(new java.util.ArrayList<>());
 
-        when(cajaRepositorio.findByEstado("ABIERTA")).thenReturn(Optional.of(cajaAbierta));
+        when(cajaRepositorio.findBySedeIdAndEstado(1L, "ABIERTA")).thenReturn(Optional.of(cajaAbierta));
 
         // 2. Simulamos que hoy se vendieron 250.00
         when(ventaRepositorio.sumarVentasPorCaja(any())).thenReturn(new BigDecimal("250.00"));
 
         // 3. El administrador cierra la caja
-        cajaServicio.cerrarCaja();
+        cajaServicio.cerrarCaja(1L);
 
         // 4. Capturamos lo que se guardó
         ArgumentCaptor<CajaDiaria> cajaCaptor = ArgumentCaptor.forClass(CajaDiaria.class);

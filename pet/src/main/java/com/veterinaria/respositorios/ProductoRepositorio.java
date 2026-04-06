@@ -14,7 +14,7 @@ public interface ProductoRepositorio extends JpaRepository<Producto, Long> {
     // Para el módulo de "Nueva Venta": solo productos activos con paginación
     Page<Producto> findByActivoTrue(Pageable pageable);
 
-    // Alerta de stock mínimo: productos activos cuyo stock actual <= stock mínimo
-    @Query("SELECT p FROM Producto p WHERE p.activo = true AND p.stockActual <= p.stockMinimo")
-    List<Producto> obtenerAlertasDeStock();
+    // Alerta de stock mínimo: ahora dependerá de la tabla inventarios_sede y será gestionada por sede
+    // @Query("SELECT p FROM Producto p WHERE p.activo = true AND p.stockActual <= p.stockMinimo")
+    // List<Producto> obtenerAlertasDeStock();
 }

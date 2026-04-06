@@ -16,10 +16,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.envers.Audited;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Audited
 @Table(name = "movimiento_caja")
 public class MovimientoCaja {
     @Id

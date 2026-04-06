@@ -40,6 +40,7 @@ class VentaControllerTest {
         String ventaJson = """
                 {
                     "clienteId": 1,
+                    "sedeId": 1,
                     "detalles": [
                         {
                             "productoId": 1,

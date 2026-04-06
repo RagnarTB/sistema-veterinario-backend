@@ -43,18 +43,22 @@ public interface CitaRepositorio extends JpaRepository<Cita, Long> {
                         @Param("fecha") LocalDate fecha,
                         @Param("estadosIgnorados") List<EstadoCita> estadosIgnorados);
 
-        @EntityGraph(attributePaths = { "pacientes", "servicio", "veterinario" })
+        @EntityGraph(attributePaths = { "pacientes", "servicio", "veterinario", "sede" })
         Page<Cita> findAll(Pageable pageable);
+
+        @EntityGraph(attributePaths = { "pacientes", "servicio", "veterinario", "sede" })
+        Page<Cita> findBySedeId(Long sedeId, Pageable pageable);
 
         @EntityGraph(attributePaths = { "pacientes", "servicio", "veterinario" })
         Optional<Cita> findById(Long id);
 
         // Rendimiento de veterinarios: conteo de citas COMPLETADAS por cada médico
-        @Query("SELECT new com.veterinaria.dtos.CitasVeterinarioDTO(u.email, COUNT(c)) " +
+        @Query("SELECT new com.veterinaria.dtos.CitasVeterinarioDTO(usr.email, COUNT(c)) " +
                         "FROM Cita c " +
                         "JOIN c.veterinario u " +
+                        "JOIN u.usuario usr " +
                         "WHERE c.estado = com.veterinaria.modelos.Enums.EstadoCita.COMPLETADA " +
-                        "GROUP BY u.id, u.email " +
+                        "GROUP BY usr.id, usr.email " +
                         "ORDER BY COUNT(c) DESC")
         List<CitasVeterinarioDTO> contarCitasCompletadasPorVeterinario();
 }

@@ -31,6 +31,8 @@ import com.veterinaria.respositorios.MovimientoCajaRespositorio;
 import com.veterinaria.respositorios.ProductoRepositorio;
 import com.veterinaria.respositorios.ServicioMedicoRepositorio;
 import com.veterinaria.respositorios.VentaRepositorio;
+import com.veterinaria.respositorios.InventarioSedeRepositorio;
+import com.veterinaria.modelos.InventarioSede;
 
 import jakarta.transaction.Transactional;
 
@@ -43,19 +45,22 @@ public class VentaServicio {
     private final ServicioMedicoRepositorio servicioMedicoRepositorio;
     private final CajaRepositorio cajaRepositorio;
     private final MovimientoCajaRespositorio movimientoCajaRespositorio;
+    private final InventarioSedeRepositorio inventarioSedeRepositorio;
 
     public VentaServicio(VentaRepositorio ventaRepositorio,
             ClienteRepositorio clienteRepositorio,
             ProductoRepositorio productoRepositorio,
             ServicioMedicoRepositorio servicioMedicoRepositorio,
             CajaRepositorio cajaRepositorio,
-            MovimientoCajaRespositorio movimientoCajaRespositorio) {
+            MovimientoCajaRespositorio movimientoCajaRespositorio,
+            InventarioSedeRepositorio inventarioSedeRepositorio) {
         this.ventaRepositorio = ventaRepositorio;
         this.clienteRepositorio = clienteRepositorio;
         this.productoRepositorio = productoRepositorio;
         this.servicioMedicoRepositorio = servicioMedicoRepositorio;
         this.cajaRepositorio = cajaRepositorio;
         this.movimientoCajaRespositorio = movimientoCajaRespositorio;
+        this.inventarioSedeRepositorio = inventarioSedeRepositorio;
     }
 
     // =========================
@@ -65,9 +70,9 @@ public class VentaServicio {
     public VentaResponseDTO guardar(VentaRequestDTO dto) {
 
         // REGLA DE NEGOCIO: No se puede vender con la caja cerrada
-        CajaDiaria cajaAbierta = cajaRepositorio.findByEstado("ABIERTA")
+        CajaDiaria cajaAbierta = cajaRepositorio.findBySedeIdAndEstado(dto.getSedeId(), "ABIERTA")
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "No se puede realizar la venta porque la caja está cerrada"));
+                        "No se puede realizar la venta porque la caja de la sede está cerrada"));
 
         Cliente cliente = clienteRepositorio.findById(dto.getClienteId())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -114,13 +119,17 @@ public class VentaServicio {
                                     + "' está inactivo y no puede venderse.");
                 }
 
-                if (producto.getStockActual().compareTo(detalleDto.getCantidad()) < 0) {
+                InventarioSede inventario = inventarioSedeRepositorio.findByProductoIdAndSedeId(detalleDto.getProductoId(), dto.getSedeId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "El producto no tiene stock registrado en esta sede."));
+
+                if (inventario.getStockActual().compareTo(detalleDto.getCantidad()) < 0) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                             "Stock insuficiente para el producto: " + producto.getNombre());
                 }
 
                 // Descontar stock con BigDecimal.subtract()
-                producto.setStockActual(producto.getStockActual().subtract(detalleDto.getCantidad()));
+                inventario.setStockActual(inventario.getStockActual().subtract(detalleDto.getCantidad()));
+                inventarioSedeRepositorio.save(inventario);
 
                 BigDecimal subtotal = producto.getPrecio().multiply(detalleDto.getCantidad());
 
@@ -194,9 +203,9 @@ public class VentaServicio {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La venta ya está anulada");
         }
 
-        CajaDiaria cajaAbierta = cajaRepositorio.findByEstado("ABIERTA")
+        CajaDiaria cajaAbierta = cajaRepositorio.findBySedeIdAndEstado(venta.getCaja().getSede().getId(), "ABIERTA")
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "No se puede anular: no hay caja abierta para registrar el egreso"));
+                        "No se puede anular: no hay caja abierta en la sede para registrar el egreso"));
 
         BigDecimal ventasActuales = ventaRepositorio.sumarVentasPorCaja(cajaAbierta.getId());
         ventasActuales = (ventasActuales == null) ? BigDecimal.ZERO : ventasActuales;
@@ -209,10 +218,12 @@ public class VentaServicio {
         // Devolver stock SOLO de los ítems que son productos físicos
         for (DetalleVenta detalle : venta.getDetalles()) {
             if (detalle.getProducto() != null) {
-                Producto producto = detalle.getProducto();
-                // Devolver stock con BigDecimal.add()
-                producto.setStockActual(producto.getStockActual().add(detalle.getCantidad()));
-                productoRepositorio.save(producto);
+                InventarioSede inventario = inventarioSedeRepositorio.findByProductoIdAndSedeId(detalle.getProducto().getId(), venta.getCaja().getSede().getId())
+                        .orElse(null);
+                if (inventario != null) {
+                    inventario.setStockActual(inventario.getStockActual().add(detalle.getCantidad()));
+                    inventarioSedeRepositorio.save(inventario);
+                }
             }
             // Los servicios no tienen stock → no hay nada que devolver
         }

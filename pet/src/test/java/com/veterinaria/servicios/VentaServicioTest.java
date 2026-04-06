@@ -43,9 +43,10 @@ class VentaServicioTest {
     void debeLanzarErrorAlVenderSiCajaEstaCerrada() {
         VentaRequestDTO request = new VentaRequestDTO();
         request.setClienteId(1L);
+        request.setSedeId(1L);
 
         // Simulamos que no hay caja ABIERTA
-        when(cajaRepositorio.findByEstado("ABIERTA")).thenReturn(Optional.empty());
+        when(cajaRepositorio.findBySedeIdAndEstado(1L, "ABIERTA")).thenReturn(Optional.empty());
 
         // El sistema DEBE lanzar excepción si la caja está cerrada
         assertThrows(ResponseStatusException.class, () -> {

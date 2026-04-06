@@ -10,32 +10,39 @@ import org.springframework.web.server.ResponseStatusException;
 import com.veterinaria.dtos.HorarioVeterinarioRequestDTO;
 import com.veterinaria.dtos.HorarioVeterinarioResponseDTO;
 import com.veterinaria.modelos.HorarioVeterinario;
-import com.veterinaria.modelos.Usuario;
+import com.veterinaria.modelos.Empleado;
 import com.veterinaria.respositorios.HorarioVeterinarioRepositorio;
-import com.veterinaria.respositorios.UsuarioRepositorio;
+import com.veterinaria.respositorios.EmpleadoRepositorio;
+import com.veterinaria.modelos.Sede;
+import com.veterinaria.respositorios.SedeRepositorio;
 
 @Service
 public class HorarioVeterinarioServicio {
 
     private final HorarioVeterinarioRepositorio horarioRepositorio;
-    private final UsuarioRepositorio usuarioRepositorio;
+    private final EmpleadoRepositorio empleadoRepositorio;
+    private final SedeRepositorio sedeRepositorio;
 
     public HorarioVeterinarioServicio(HorarioVeterinarioRepositorio horarioRepositorio,
-            UsuarioRepositorio usuarioRepositorio) {
+            EmpleadoRepositorio empleadoRepositorio, SedeRepositorio sedeRepositorio) {
         this.horarioRepositorio = horarioRepositorio;
-        this.usuarioRepositorio = usuarioRepositorio;
+        this.empleadoRepositorio = empleadoRepositorio;
+        this.sedeRepositorio = sedeRepositorio;
     }
 
     public HorarioVeterinarioResponseDTO guardar(HorarioVeterinarioRequestDTO dto) {
         // Validar que el doctor exista
-        Usuario veterinario = usuarioRepositorio.findById(dto.getVeterinarioId())
+        Empleado veterinario = empleadoRepositorio.findById(dto.getVeterinarioId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Veterinario no encontrado"));
 
-        // Validar que no tenga ya un horario asignado para ese mismo día
-        if (horarioRepositorio.findByVeterinarioIdAndDiaSemana(dto.getVeterinarioId(), dto.getDiaSemana())
+        Sede sede = sedeRepositorio.findById(dto.getSedeId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sede no encontrada"));
+
+        // Validar que no tenga ya un horario asignado para ese mismo día EN ESA SEDE
+        if (horarioRepositorio.findByVeterinarioIdAndDiaSemanaAndSedeId(dto.getVeterinarioId(), dto.getDiaSemana(), dto.getSedeId())
                 .isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "El veterinario ya tiene un horario asignado para este día");
+                    "El veterinario ya tiene un horario asignado para este día en esta sede");
         }
 
         if (dto.getHoraEntrada().isAfter(dto.getHoraSalida())) {
@@ -50,6 +57,7 @@ public class HorarioVeterinarioServicio {
 
         HorarioVeterinario horario = new HorarioVeterinario();
         horario.setVeterinario(veterinario);
+        horario.setSede(sede);
         horario.setDiaSemana(dto.getDiaSemana());
         horario.setHoraEntrada(dto.getHoraEntrada());
         horario.setHoraSalida(dto.getHoraSalida());
@@ -75,6 +83,7 @@ public class HorarioVeterinarioServicio {
     private HorarioVeterinarioResponseDTO mapearAResponse(HorarioVeterinario h) {
         return new HorarioVeterinarioResponseDTO(
                 h.getId(), h.getVeterinario().getId(), h.getDiaSemana(),
-                h.getHoraEntrada(), h.getHoraSalida(), h.getInicioRefrigerio(), h.getFinRefrigerio());
+                h.getHoraEntrada(), h.getHoraSalida(), h.getInicioRefrigerio(), h.getFinRefrigerio(),
+                h.getSede().getId());
     }
 }

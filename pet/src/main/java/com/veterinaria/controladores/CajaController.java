@@ -29,8 +29,8 @@ public class CajaController {
     // ¡NUEVO ENDPOINT!
     @PutMapping("/cerrar")
     @PreAuthorize("hasRole('ADMIN')") // Por seguridad, solo el dueño/admin cierra la caja
-    public ResponseEntity<CierreCajaResponseDTO> cerrarCaja() {
-        CierreCajaResponseDTO resumen = cajaServicio.cerrarCaja();
+    public ResponseEntity<CierreCajaResponseDTO> cerrarCaja(@RequestParam Long sedeId) {
+        CierreCajaResponseDTO resumen = cajaServicio.cerrarCaja(sedeId);
         return ResponseEntity.ok(resumen);
     }
 }

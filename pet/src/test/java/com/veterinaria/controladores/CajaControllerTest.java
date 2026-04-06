@@ -34,6 +34,7 @@ class CajaControllerTest {
         // Enviamos con cuánto dinero en efectivo iniciamos el día (para dar vueltos)
         String jsonRequest = """
                 {
+                    "sedeId": 1,
                     "saldoInicial": 100.50
                 }
                 """;
@@ -49,8 +50,9 @@ class CajaControllerTest {
     @WithMockUser(roles = "ADMIN") // Solo un administrador cierra la caja
     void debeCerrarCajaYRetornarEstadoOk() throws Exception {
 
-        // Simulamos la petición PUT para cerrar la caja del día
-        mockMvc.perform(put("/api/caja/cerrar"))
+        // Simulamos la petición PUT para cerrar la caja del día especificando la sede
+        mockMvc.perform(put("/api/caja/cerrar")
+                .param("sedeId", "1"))
                 .andExpect(status().isOk());
     }
 }
