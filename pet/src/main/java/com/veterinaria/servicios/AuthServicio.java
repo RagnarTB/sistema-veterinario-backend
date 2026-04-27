@@ -1,5 +1,8 @@
 package com.veterinaria.servicios;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -8,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.veterinaria.dtos.AuthResponseDTO;
 import com.veterinaria.dtos.CambiarPasswordRequestDTO;
+import com.veterinaria.dtos.GoogleLoginRequestDTO;
 import com.veterinaria.dtos.LoginRequestDTO;
 import com.veterinaria.dtos.MensajeResponseDTO;
 import com.veterinaria.dtos.RegistroClienteDTO;
@@ -32,12 +36,14 @@ public class AuthServicio {
     private final AuthenticationManager authenticationManager;
     private final JwtServicio jwtServicio;
     private final org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
+    private final GoogleTokenVerifierServicio googleTokenVerifierServicio;
 
     public AuthServicio(UsuarioRepositorio usuarioRepositorio, RolRespositorio rolRespositorio,
             ClienteRepositorio clienteRepositorio, PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager, JwtServicio jwtServicio,
             org.springframework.security.core.userdetails.UserDetailsService userDetailsService,
-            RefreshTokenServicio refreshTokenServicio) {
+            RefreshTokenServicio refreshTokenServicio,
+            GoogleTokenVerifierServicio googleTokenVerifierServicio) {
         this.usuarioRepositorio = usuarioRepositorio;
         this.rolRespositorio = rolRespositorio;
         this.clienteRepositorio = clienteRepositorio;
@@ -46,67 +52,67 @@ public class AuthServicio {
         this.jwtServicio = jwtServicio;
         this.userDetailsService = userDetailsService;
         this.refreshTokenServicio = refreshTokenServicio;
+        this.googleTokenVerifierServicio = googleTokenVerifierServicio;
     }
 
-    @Transactional // AQUI: Fundamental porque guardamos en 2 tablas
+    @Transactional
     public MensajeResponseDTO registrarCliente(RegistroClienteDTO dto) {
-
-        // 1. Validar si el email y dni ya existe
         if (usuarioRepositorio.findByEmail(dto.getEmail()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El email ya está registrado");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El email ya estÃ¡ registrado");
         }
         if (clienteRepositorio.existsByDni(dto.getDni())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El DNI ya se encuentra registrado");
         }
 
-        // 2. Buscar el Rol (Exigencia de Spring Security: empezar con ROLE_)
         Rol rolCliente = rolRespositorio.findByNombre("ROLE_CLIENTE")
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "El rol ROLE_CLIENTE no existe en la BD"));
 
-        // 3. Crear el Usuario
         Usuario nuevoUsuario = new Usuario();
         nuevoUsuario.setEmail(dto.getEmail());
-        nuevoUsuario.setPassword(passwordEncoder.encode(dto.getPassword())); // ya encriptada
-        nuevoUsuario.getRoles().add(rolCliente); // AQUI: Le asignamos el rol encontrado
+        nuevoUsuario.setPassword(passwordEncoder.encode(dto.getPassword()));
+        nuevoUsuario.getRoles().add(rolCliente);
 
         Usuario usuarioGuardado = usuarioRepositorio.save(nuevoUsuario);
 
-        // 4. Crear la ENTIDAD Cliente (no un DTO) y vincularla
         Cliente nuevoCliente = new Cliente();
         nuevoCliente.setNombre(dto.getNombre());
         nuevoCliente.setApellido(dto.getApellido());
         nuevoCliente.setDni(dto.getDni());
         nuevoCliente.setTelefono(dto.getTelefono());
         nuevoCliente.setEmail(dto.getEmail());
-        nuevoCliente.setUsuario(usuarioGuardado); // AQUI: Magia relacional
+        nuevoCliente.setUsuario(usuarioGuardado);
 
-        clienteRepositorio.save(nuevoCliente); // AQUI: Faltaba guardarlo
+        clienteRepositorio.save(nuevoCliente);
 
-        return new MensajeResponseDTO("Cliente registrado con éxito");
+        return new MensajeResponseDTO("Cliente registrado con Ã©xito");
     }
 
     public AuthResponseDTO login(LoginRequestDTO dto) {
-        // 1. El Manager verifica si el email y la contraseña son correctos
-        // Si la contraseña está mal, esto lanza un error 403 automáticamente
+        Usuario usuario = usuarioRepositorio.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no vÃ¡lido"));
+
+        if (usuario.getPassword() == null || usuario.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La cuenta no tiene inicio de sesiÃ³n por correo habilitado");
+        }
+
         authenticationManager.authenticate(
                 new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
                         dto.getEmail(), dto.getPassword()));
 
-        // 2. Si paso, buscamos los datos del usuario (roles, etc.)
-        org.springframework.security.core.userdetails.UserDetails userDetails = userDetailsService
-                .loadUserByUsername(dto.getEmail());
+        return construirAuthResponse(usuario);
+    }
 
-        // 3. Generamos el Token JWT criptográfico
-        String token = jwtServicio.generarToken(userDetails);
+    @Transactional
+    public AuthResponseDTO loginConGoogle(GoogleLoginRequestDTO dto) {
+        GoogleTokenVerifierServicio.GoogleUserInfo googleUserInfo = googleTokenVerifierServicio.verificar(dto.getIdToken());
 
-        Usuario usuario = usuarioRepositorio.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no válido"));
+        Usuario usuario = usuarioRepositorio.findByEmail(googleUserInfo.email())
+                .map(usuarioExistente -> vincularGoogleAUsuarioExistente(usuarioExistente, googleUserInfo))
+                .orElseGet(() -> crearClienteDesdeGoogle(googleUserInfo));
 
-        String refreshToken = refreshTokenServicio.crearRefreshTokenParaUsuario(usuario);
-
-        // 4. Devolvemos la llave al Frontend
-        return new AuthResponseDTO(token, refreshToken, dto.getEmail());
+        return construirAuthResponse(usuario);
     }
 
     @Transactional
@@ -114,25 +120,25 @@ public class AuthServicio {
         Usuario usuario = usuarioRepositorio.findByEmail(emailUsuarioLogueado)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-        // Validar que la contraseña actual ingresada coincida con la de la BD
-        if (!passwordEncoder.matches(dto.getPasswordActual(), usuario.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña actual es incorrecta");
+        if (usuario.getPassword() == null || usuario.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La cuenta no tiene password local configurado");
         }
 
-        // Validar que la nueva no sea igual a la antigua (opcional pero recomendado)
+        if (!passwordEncoder.matches(dto.getPasswordActual(), usuario.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseÃ±a actual es incorrecta");
+        }
+
         if (passwordEncoder.matches(dto.getPasswordNueva(), usuario.getPassword())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "La nueva contraseña no puede ser igual a la anterior");
+                    "La nueva contraseÃ±a no puede ser igual a la anterior");
         }
 
-        // Cifrar y guardar
         usuario.setPassword(passwordEncoder.encode(dto.getPasswordNueva()));
         usuarioRepositorio.save(usuario);
-
-        // Al cambiar password, revocamos todos los refresh tokens del usuario
         refreshTokenServicio.revocarTodosLosTokensDeUsuario(usuario.getId());
 
-        return new MensajeResponseDTO("Contraseña actualizada correctamente");
+        return new MensajeResponseDTO("ContraseÃ±a actualizada correctamente");
     }
 
     public AuthResponseDTO refreshToken(String refreshTokenRaw) {
@@ -143,13 +149,108 @@ public class AuthServicio {
                 .loadUserByUsername(usuario.getEmail());
 
         String token = jwtServicio.generarToken(userDetails);
-        return new AuthResponseDTO(token, refreshTokenNuevo, usuario.getEmail());
+        return new AuthResponseDTO(token, refreshTokenNuevo, usuario.getEmail(), extraerRoles(usuario));
     }
 
     @Transactional
     public MensajeResponseDTO logout(String refreshTokenRaw) {
         refreshTokenServicio.revocarRefreshToken(refreshTokenRaw);
-        return new MensajeResponseDTO("Sesión cerrada correctamente");
+        return new MensajeResponseDTO("SesiÃ³n cerrada correctamente");
     }
 
+    private AuthResponseDTO construirAuthResponse(Usuario usuario) {
+        org.springframework.security.core.userdetails.UserDetails userDetails = userDetailsService
+                .loadUserByUsername(usuario.getEmail());
+        String token = jwtServicio.generarToken(userDetails);
+        String refreshToken = refreshTokenServicio.crearRefreshTokenParaUsuario(usuario);
+        return new AuthResponseDTO(token, refreshToken, usuario.getEmail(), extraerRoles(usuario));
+    }
+
+    private Usuario vincularGoogleAUsuarioExistente(Usuario usuario, GoogleTokenVerifierServicio.GoogleUserInfo googleUserInfo) {
+        if (!tieneRol(usuario, "ROLE_CLIENTE")) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "El correo ya pertenece a una cuenta no habilitada para acceso con Google");
+        }
+
+        if (usuario.getGoogleSubject() != null && !usuario.getGoogleSubject().equals(googleUserInfo.subject())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "La cuenta ya estÃ¡ vinculada a un perfil distinto de Google");
+        }
+
+        usuario.setGoogleSubject(googleUserInfo.subject());
+        usuario.setGoogleVinculado(true);
+        Usuario usuarioGuardado = usuarioRepositorio.save(usuario);
+
+        Cliente cliente = clienteRepositorio.findByUsuario(usuarioGuardado)
+                .orElseGet(() -> crearClienteDesdeGoogle(usuarioGuardado, googleUserInfo));
+
+        actualizarClienteDesdeGoogle(cliente, googleUserInfo);
+        return usuarioGuardado;
+    }
+
+    private Usuario crearClienteDesdeGoogle(GoogleTokenVerifierServicio.GoogleUserInfo googleUserInfo) {
+        Rol rolCliente = rolRespositorio.findByNombre("ROLE_CLIENTE")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "El rol ROLE_CLIENTE no existe en la BD"));
+
+        Usuario usuario = new Usuario();
+        usuario.setEmail(googleUserInfo.email());
+        usuario.setGoogleSubject(googleUserInfo.subject());
+        usuario.setGoogleVinculado(true);
+        usuario.getRoles().add(rolCliente);
+
+        Usuario usuarioGuardado = usuarioRepositorio.save(usuario);
+        crearClienteDesdeGoogle(usuarioGuardado, googleUserInfo);
+        return usuarioGuardado;
+    }
+
+    private Cliente crearClienteDesdeGoogle(Usuario usuario, GoogleTokenVerifierServicio.GoogleUserInfo googleUserInfo) {
+        Cliente cliente = new Cliente();
+        cliente.setNombre(valorSeguro(googleUserInfo.nombre()));
+        cliente.setApellido(valorSeguro(googleUserInfo.apellido()));
+        cliente.setTelefono("");
+        cliente.setDni("");
+        cliente.setEmail(usuario.getEmail());
+        cliente.setUsuario(usuario);
+        return clienteRepositorio.save(cliente);
+    }
+
+    private void actualizarClienteDesdeGoogle(Cliente cliente, GoogleTokenVerifierServicio.GoogleUserInfo googleUserInfo) {
+        boolean actualizado = false;
+
+        if (estaVacio(cliente.getNombre()) && !estaVacio(googleUserInfo.nombre())) {
+            cliente.setNombre(googleUserInfo.nombre());
+            actualizado = true;
+        }
+        if (estaVacio(cliente.getApellido()) && !estaVacio(googleUserInfo.apellido())) {
+            cliente.setApellido(googleUserInfo.apellido());
+            actualizado = true;
+        }
+        if (estaVacio(cliente.getEmail())) {
+            cliente.setEmail(googleUserInfo.email());
+            actualizado = true;
+        }
+
+        if (actualizado) {
+            clienteRepositorio.save(cliente);
+        }
+    }
+
+    private boolean tieneRol(Usuario usuario, String rol) {
+        return usuario.getRoles().stream().anyMatch(item -> rol.equals(item.getNombre()));
+    }
+
+    private boolean estaVacio(String valor) {
+        return valor == null || valor.isBlank();
+    }
+
+    private String valorSeguro(String valor) {
+        return valor == null ? "" : valor;
+    }
+
+    private Set<String> extraerRoles(Usuario usuario) {
+        return usuario.getRoles().stream()
+                .map(Rol::getNombre)
+                .collect(Collectors.toSet());
+    }
 }

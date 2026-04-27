@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.veterinaria.dtos.AuthResponseDTO;
 import com.veterinaria.dtos.CambiarPasswordRequestDTO;
+import com.veterinaria.dtos.GoogleLoginRequestDTO;
 import com.veterinaria.dtos.LoginRequestDTO;
 import com.veterinaria.dtos.MensajeResponseDTO;
 import com.veterinaria.dtos.RefreshTokenRequestDTO;
@@ -37,6 +38,12 @@ public class AuthController {
         AuthResponseDTO respuesta = authServicio.login(dto);
         return ResponseEntity.ok(respuesta);
 
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponseDTO> loginConGoogle(@Valid @RequestBody GoogleLoginRequestDTO dto) {
+        AuthResponseDTO respuesta = authServicio.loginConGoogle(dto);
+        return ResponseEntity.ok(respuesta);
     }
 
     @PostMapping("/cambiar-password")

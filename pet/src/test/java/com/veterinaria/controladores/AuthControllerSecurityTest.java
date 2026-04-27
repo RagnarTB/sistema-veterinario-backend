@@ -60,5 +60,19 @@ class AuthControllerSecurityTest {
                         .content(json))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void loginConGoogleSinAutenticacionDebeRetornar200() throws Exception {
+        String json = """
+                {
+                  "idToken": "google-token-valido"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk());
+    }
 }
 

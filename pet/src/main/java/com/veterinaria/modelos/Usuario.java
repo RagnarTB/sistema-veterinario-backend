@@ -29,6 +29,7 @@ public class Usuario {
     private Long id;
 
     // El email será nuestro "username" para el login
+    @Column(nullable = false, unique = true)
     private String email;
 
     // Aquí guardaremos la contraseña CIFRADA (nunca en texto plano)
@@ -43,6 +44,12 @@ public class Usuario {
 
     @Column(nullable = false)
     private Boolean activo = true;
+
+    @Column(unique = true)
+    private String googleSubject;
+
+    @Column(nullable = false)
+    private Boolean googleVinculado = false;
 
     @OneToOne(mappedBy = "usuario")
     private Empleado empleado;

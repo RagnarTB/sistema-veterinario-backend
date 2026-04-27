@@ -58,4 +58,18 @@ class AuthControllerTest {
                 .content(loginJson))
                 .andExpect(status().isOk()); // El login exitoso devuelve 200 OK
     }
+
+    @Test
+    void debeAutenticarUsuarioConGoogleYRetornarToken() throws Exception {
+        String googleJson = """
+                {
+                    "idToken": "google-token-valido"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/google")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(googleJson))
+                .andExpect(status().isOk());
+    }
 }

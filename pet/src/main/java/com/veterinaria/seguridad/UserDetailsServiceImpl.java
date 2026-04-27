@@ -37,6 +37,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .collect(Collectors.toList());
 
         // 3. Retornamos el objeto User que Spring Security sí entiende
-        return new User(usuario.getEmail(), usuario.getPassword(), authorities);
+        String password = usuario.getPassword() != null ? usuario.getPassword() : "";
+        return new User(usuario.getEmail(), password, authorities);
     }
 }
