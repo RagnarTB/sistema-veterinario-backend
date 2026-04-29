@@ -43,9 +43,9 @@ import { MatIconModule } from '@angular/material/icon';
             <mat-form-field appearance="outline" class="dni-field">
               <mat-label>DNI / Documento</mat-label>
               <mat-icon matPrefix class="prefix-icon">badge</mat-icon>
-              <input matInput formControlName="dni" placeholder="Ej. 12345678" required />
+              <input matInput formControlName="dni" placeholder="Ej. 12345678" required maxlength="8"/>
               <mat-error *ngIf="form.get('dni')?.hasError('required')">El DNI es obligatorio</mat-error>
-              <mat-error *ngIf="form.get('dni')?.hasError('pattern')">Solo números</mat-error>
+              <mat-error *ngIf="form.get('dni')?.hasError('pattern')">Debe tener exactamente 8 dígitos numéricos</mat-error>
             </mat-form-field>
             <button mat-flat-button color="primary" type="button" class="btn-search-dni" 
                     (click)="buscarDni()" 
@@ -73,8 +73,9 @@ import { MatIconModule } from '@angular/material/icon';
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Teléfono</mat-label>
             <mat-icon matPrefix class="prefix-icon">phone</mat-icon>
-            <input matInput formControlName="telefono" placeholder="Ej. 987654321" required />
+            <input matInput formControlName="telefono" placeholder="Ej. 987654321" required  maxlength="9"/>
             <mat-error *ngIf="form.get('telefono')?.hasError('required')">El teléfono es obligatorio</mat-error>
+            <mat-error *ngIf="form.get('telefono')?.hasError('pattern')">Debe tener exactamente 9 dígitos numéricos</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width col-span-2">
@@ -154,10 +155,10 @@ export class ClienteDialogComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      nombre: [{value: this.data?.nombre || '', disabled: this.isEdit}, Validators.required],
+      nombre: [{value: this.data?.nombre || '', disabled: this.isEdit}, Validators.required,],
       apellido: [{value: this.data?.apellido || '', disabled: this.isEdit}, Validators.required],
-      dni: [{value: this.data?.dni || '', disabled: this.isEdit}, [Validators.required, Validators.pattern('^[0-9A-Za-z]+$')]],
-      telefono: [this.data?.telefono || '', Validators.required],
+      dni: [{value: this.data?.dni || '', disabled: this.isEdit}, [Validators.required, Validators.pattern('^[0-9]{8}$')]],
+      telefono: [this.data?.telefono || '', [Validators.required, Validators.pattern('^[0-9]{9}$')]],
       email: [{value: this.data?.email || '', disabled: this.isEdit}, [Validators.required, Validators.email]],
       direccion: [(this.data as any)?.direccion || '']
     });
