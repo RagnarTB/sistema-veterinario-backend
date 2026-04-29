@@ -277,7 +277,23 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.renderGoogleButton();
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/app/dashboard']);
+      return;
+    }
+
+    if (typeof google === 'undefined' || !google.accounts) {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        this.renderGoogleButton();
+      };
+      document.head.appendChild(script);
+    } else {
+      this.renderGoogleButton();
+    }
   }
 
   renderGoogleButton(retries = 0) {
@@ -292,12 +308,7 @@ export class LoginComponent implements OnInit {
       let rendered = false;
       const btn1 = document.getElementById('googleButton');
       if (btn1) {
-        google.accounts.id.renderButton(btn1, { theme: 'outline', size: 'large', width: '100%' });
-        rendered = true;
-      }
-      const btn2 = document.getElementById('googleButtonRegister');
-      if (btn2) {
-        google.accounts.id.renderButton(btn2, { theme: 'outline', size: 'large', width: '100%' });
+        google.accounts.id.renderButton(btn1, { theme: 'outline', size: 'large', width: 350 });
         rendered = true;
       }
 
