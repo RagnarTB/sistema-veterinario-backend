@@ -1,0 +1,458 @@
+/* Contenedor Principal Ajustado al Viewport */
+.vet-modal-container {
+  display: flex;
+  flex-direction: column;
+  height: 85vh;
+  max-height: 800px;
+  background-color: #f8fafc;
+  border-radius: 16px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  box-sizing: border-box;
+}
+
+/* Header del Dialog */
+.vet-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.vet-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.vet-header-icon-box {
+  background-color: #f0fdf4;
+  color: #0d9488;
+  padding: 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.vet-header-icon-box .material-icons-round {
+  font-size: 24px;
+}
+
+.vet-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.vet-modal-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vet-modal-subtitle .material-icons-round {
+  font-size: 14px;
+}
+
+.highlight-text {
+  font-weight: 600;
+  color: #0d9488;
+}
+
+.vet-modal-close-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.15s;
+}
+
+.vet-modal-close-btn:hover {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+/* Área de Contenido */
+.vet-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* Tarjeta del Formulario */
+.vet-form-card {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  margin-bottom: 24px;
+}
+
+.vet-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.vet-form-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d9488;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vet-form-title .material-icons-round {
+  font-size: 16px;
+}
+
+.vet-form-help {
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Formulario en Grid Nativo */
+.vet-form-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.col-span-5 { grid-column: span 5 / span 5; }
+.col-span-3 { grid-column: span 3 / span 3; }
+.col-span-2 { grid-column: span 2 / span 2; }
+
+.vet-form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.vet-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  margin-left: 2px;
+}
+
+/* Inputs Unificados */
+.vet-input-wrapper-modal {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.vet-control-input {
+  width: 100%;
+  height: 40px;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  color: #334155;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.vet-input-wrapper-modal .vet-control-input {
+  padding-left: 36px;
+}
+
+.vet-control-input:focus {
+  border-color: #0d9488;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.08);
+}
+
+.field-icon {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+/* Botón Guardar / Agregar */
+.vet-btn-submit {
+  height: 40px;
+  background-color: #0d9488;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(13, 148, 136, 0.15);
+  transition: all 0.2s;
+}
+
+.vet-btn-submit:hover:not(:disabled) {
+  background-color: #0f766e;
+}
+
+.vet-btn-submit:disabled {
+  background-color: #cbd5e1;
+  color: #94a3b8;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Autocomplete Custom Rows */
+.vet-autocomplete-row {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.prod-title {
+  font-weight: 600;
+  color: #334155;
+  font-size: 13.5px;
+}
+
+.prod-meta {
+  font-size: 10.5px;
+  color: #94a3b8;
+}
+
+.prod-brand {
+  color: #0d9488;
+  font-weight: 600;
+}
+
+/* Sección de la Lista de Insumos */
+.vet-list-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.vet-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.vet-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vet-section-title .material-icons-round {
+  color: #0d9488;
+}
+
+.vet-count-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  padding: 3px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+/* Tabla del Modal */
+.vet-table-container-modal {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01);
+}
+
+.vet-modal-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vet-modal-table th {
+  background-color: #f8fafc;
+  padding: 12px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.vet-modal-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13.5px;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.vet-modal-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Filas deshabilitadas */
+.row-disabled {
+  opacity: 0.55;
+  background-color: #f8fafc;
+}
+
+.vet-prod-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.vet-prod-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.vet-prod-unit {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.vet-quantity-badge {
+  font-family: monospace;
+  font-weight: 700;
+  color: #0369a1;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.vet-table-notes {
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Chips de Estado */
+.chip-premium-modal {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.chip-premium-modal.active { background-color: #dcfce7; color: #15803d; }
+.chip-premium-modal.inactive { background-color: #fee2e2; color: #b91c1c; }
+
+/* Botones de Acción Internos */
+.vet-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.modal-action-btn {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 5px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.modal-action-btn:hover {
+  background-color: #f8fafc;
+  transform: scale(1.05);
+}
+
+.modal-action-btn.delete { color: #dc2626; }
+.modal-action-btn.delete:hover { background-color: #fef2f2; border-color: #feca25; }
+
+.modal-action-btn .material-icons-round {
+  font-size: 16px;
+}
+
+/* Footer del Modal */
+.vet-modal-footer {
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.vet-btn-close-modal {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  height: 42px !important;
+  padding: 0 24px !important;
+  border-radius: 8px !important;
+}
+
+/* Spinner e Historiales vacíos */
+.vet-spinner-inline {
+  position: absolute;
+  right: 10px;
+}
+
+.mini-spin {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #0d9488;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: modal-spin 0.6s linear infinite;
+}
+
+@keyframes modal-spin {
+  to { transform: rotate(360deg); }
+}
+
+.vet-modal-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+  color: #94a3b8;
+}
+
+.vet-modal-empty .material-icons-round {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.vet-modal-empty h4 { margin: 0; font-size: 14px; color: #64748b; }
+.vet-modal-empty p { margin: 4px 0 0 0; font-size: 12px; }
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }

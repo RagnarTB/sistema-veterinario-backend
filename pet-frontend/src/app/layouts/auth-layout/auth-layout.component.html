@@ -1,0 +1,97 @@
+<div class="auth-layout">
+
+  <!-- DECORACIÓN -->
+  <div class="background-decoration">
+    <div class="circle circle-1"></div>
+    <div class="circle circle-2"></div>
+  </div>
+
+  <!-- PANEL IZQUIERDO -->
+  <aside class="left-panel">
+
+    <!-- LOGO -->
+    <div class="brand-header">
+      <div class="logo-box">
+        <span class="material-icons-round">
+          pets
+        </span>
+      </div>
+
+      <div class="brand-text">
+        <h1>VetCare</h1>
+        <p>Sistema Integral de Gestión Veterinaria</p>
+      </div>
+    </div>
+
+    <!-- CONTENIDO -->
+    <div class="hero-content">
+      <h2>
+        Gestiona tu clínica veterinaria
+        de forma moderna y profesional.
+      </h2>
+
+      <p>
+        Organiza citas, historiales clínicos,
+        pacientes e inventario desde un
+        solo lugar.
+      </p>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <span class="material-icons-round">
+            event_available
+          </span>
+        </div>
+
+        <div>
+          <h3>Gestión de citas</h3>
+          <p>
+            Agenda consultas fácilmente.
+          </p>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <span class="material-icons-round">
+            medical_services
+          </span>
+        </div>
+
+        <div>
+          <h3>Historial clínico</h3>
+          <p>
+            Información médica organizada.
+          </p>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <span class="material-icons-round">
+            inventory_2
+          </span>
+        </div>
+
+        <div>
+          <h3>Inventario inteligente</h3>
+          <p>
+            Control de productos y farmacia.
+          </p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- PANEL DERECHO -->
+  <main class="right-panel">
+    <div class="login-container">
+      <!-- AQUÍ VA EL LOGIN (el componente `login` gestiona su propia tarjeta) -->
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+</div>

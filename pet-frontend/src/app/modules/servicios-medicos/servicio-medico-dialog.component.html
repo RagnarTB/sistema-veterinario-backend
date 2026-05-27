@@ -1,0 +1,132 @@
+<div class="vet-dialog-container">
+  
+  <div class="vet-dialog-header">
+    <div class="vet-header-left">
+      <div class="vet-header-icon-box">
+        <span class="material-icons-round">{{ data ? 'edit' : 'add_task' }}</span>
+      </div>
+      <div class="vet-header-text">
+        <h2 class="vet-dialog-title">{{ data ? 'Editar' : 'Nuevo' }} Servicio Médico</h2>
+        <p class="vet-dialog-subtitle">Configure las especificaciones, tiempos y costos base para el catálogo.</p>
+      </div>
+    </div>
+    <button type="button" (click)="onCancel()" class="vet-dialog-close-btn" title="Cerrar">
+      <span class="material-icons-round">close</span>
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="vet-dialog-form">
+    
+    <mat-dialog-content class="vet-dialog-content custom-scrollbar">
+      <div class="vet-form-layout-grid">
+
+        <div class="vet-form-group col-span-12">
+          <label class="vet-input-label">Nombre del Servicio *</label>
+          <div class="vet-field-icon-wrapper">
+            <span class="material-icons-round field-input-icon">assignment</span>
+            <input 
+              type="text" 
+              formControlName="nombre" 
+              class="vet-form-input-native" 
+              placeholder="Ej. Consulta General Especializada"
+              [class.vet-input-invalid]="form.get('nombre')?.invalid && form.get('nombre')?.touched"
+            >
+          </div>
+          <div *ngIf="form.get('nombre')?.errors?.['required'] && form.get('nombre')?.touched" class="vet-input-error-msg">
+            El nombre del servicio es obligatorio.
+          </div>
+        </div>
+
+        <div class="vet-form-group col-span-12">
+          <label class="vet-input-label">Descripción o Notas</label>
+          <div class="vet-field-icon-wrapper">
+            <span class="material-icons-round field-input-icon textarea-icon">description</span>
+            <textarea 
+              formControlName="descripcion" 
+              class="vet-form-textarea-native" 
+              rows="3" 
+              placeholder="Escriba detalles relevantes sobre el procedimiento médico..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="vet-form-group col-span-6">
+          <label class="vet-input-label">Tipo de Servicio *</label>
+          <mat-form-field appearance="outline" class="vet-material-override-select">
+            <mat-select formControlName="tipoServicio">
+              @for (tipo of tipos; track tipo) {
+                <mat-option [value]="tipo">{{ tipo }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="vet-form-group col-span-6">
+          <label class="vet-input-label">Precio Base *</label>
+          <div class="vet-field-icon-wrapper">
+            <span class="vet-currency-prefix">S/</span>
+            <input 
+              type="number" 
+              formControlName="precio" 
+              step="0.01" 
+              min="0" 
+              class="vet-form-input-native padding-prefix"
+              [class.vet-input-invalid]="form.get('precio')?.invalid && form.get('precio')?.touched"
+            >
+          </div>
+          <div *ngIf="form.get('precio')?.errors?.['required'] && form.get('precio')?.touched" class="vet-input-error-msg">
+            El precio base es requerido.
+          </div>
+        </div>
+
+        <div class="vet-form-group col-span-6">
+          <label class="vet-input-label">Duración Estimada *</label>
+          <div class="vet-field-icon-wrapper">
+            <span class="material-icons-round field-input-icon">schedule</span>
+            <input 
+              type="number" 
+              formControlName="duracionMinutos" 
+              min="1" 
+              class="vet-form-input-native padding-suffix"
+              [class.vet-input-invalid]="form.get('duracionMinutos')?.invalid && form.get('duracionMinutos')?.touched"
+            >
+            <span class="vet-input-suffix-text">min</span>
+          </div>
+          <div *ngIf="form.get('duracionMinutos')?.errors?.['required'] && form.get('duracionMinutos')?.touched" class="vet-input-error-msg">
+            Especifique un tiempo válido.
+          </div>
+        </div>
+
+        <div class="vet-form-group col-span-6">
+          <label class="vet-input-label">Tiempo de Limpieza/Buffer *</label>
+          <div class="vet-field-icon-wrapper">
+            <span class="material-icons-round field-input-icon">clean_hands</span>
+            <input 
+              type="number" 
+              formControlName="bufferMinutos" 
+              min="0" 
+              class="vet-form-input-native padding-suffix"
+              [class.vet-input-invalid]="form.get('bufferMinutos')?.invalid && form.get('bufferMinutos')?.touched"
+            >
+            <span class="vet-input-suffix-text">min</span>
+          </div>
+          <div *ngIf="form.get('bufferMinutos')?.errors?.['required'] && form.get('bufferMinutos')?.touched" class="vet-input-error-msg">
+            Este campo es requerido.
+          </div>
+        </div>
+
+      </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="vet-dialog-actions-footer">
+      <button type="button" class="vet-btn-secondary" (click)="onCancel()">
+        Cancelar
+      </button>
+      <button type="submit" class="vet-btn-primary-submit" [disabled]="form.invalid">
+        <span class="material-icons-round">check_circle</span>
+        {{ data ? 'Guardar Cambios' : 'Crear Servicio' }}
+      </button>
+    </mat-dialog-actions>
+
+  </form>
+</div>

@@ -1,0 +1,291 @@
+/* ==========================================
+   1. ESTRUCTURA GENERAL DEL MODAL
+   ========================================== */
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: #032b43;
+  margin: 0;
+  padding: 24px 24px 12px;
+}
+
+.dialog-title mat-icon {
+  color: #00bfa5 !important;
+  font-size: 28px !important;
+  height: 28px !important;
+  width: 28px !important;
+}
+
+.dialog-content-scroll {
+  max-height: 65vh;
+  padding: 0 24px 24px;
+  overflow-y: auto;
+}
+
+.dialog-subtitle {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* ==========================================
+   2. GRID
+   ========================================== */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+
+.col-span-2 {
+  grid-column: span 2;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* ==========================================
+   3. CAMPOS
+   ========================================== */
+mat-form-field {
+  width: 100%;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper {
+  background-color: #ffffff !important;
+}
+
+::ng-deep .mat-mdc-form-field-icon-prefix {
+  color: #94a3b8;
+  padding: 0 8px;
+}
+
+/* ==========================================
+   4. BORDES OUTLINE
+   ========================================== */
+::ng-deep .mat-mdc-form-field .mdc-notched-outline__leading,
+::ng-deep .mat-mdc-form-field .mdc-notched-outline__notch,
+::ng-deep .mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-color: #cbd5e1 !important;
+}
+
+::ng-deep .mat-mdc-form-field .mdc-notched-outline__leading {
+  border-radius: 8px 0 0 8px !important;
+}
+
+::ng-deep .mat-mdc-form-field .mdc-notched-outline__trailing {
+  border-radius: 0 8px 8px 0 !important;
+}
+
+/* Borde en focus — turquesa */
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: #00a68f !important;
+  border-width: 2px !important;
+}
+
+/* Borde en error — rojo */
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__leading,
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__notch,
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mdc-notched-outline__trailing {
+  border-color: #dc3545 !important;
+}
+
+/* ==========================================
+   5. LABEL — SIEMPRE FLOTADO ARRIBA
+   ========================================== */
+::ng-deep .mat-mdc-form-field .mdc-notched-outline__notch {
+  border-top: none !important;
+}
+
+/* Siempre arriba sin importar si tiene valor o no */
+::ng-deep .mat-mdc-form-field .mdc-floating-label {
+  transform: translateY(-180%) scale(0.75) !important;
+  background-color: #ffffff !important;
+  padding: 0 4px !important;
+  color: #64748b !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  pointer-events: none !important;
+}
+
+/* Focus — turquesa */
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: #00a68f !important;
+}
+
+/* Error — rojo */
+::ng-deep .mat-mdc-form-field.mat-form-field-invalid .mdc-floating-label {
+  color: #dc3545 !important;
+}
+
+/* ==========================================
+   6. ICONOS PREFIJO
+   ========================================== */
+.prefix-icon,
+::ng-deep .mat-mdc-form-field-icon-prefix mat-icon {
+  color: #94a3b8 !important;
+  font-size: 20px !important;
+  height: 20px !important;
+  width: 20px !important;
+  margin-right: 4px !important;
+}
+
+::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-form-field-icon-prefix mat-icon {
+  color: #00a68f !important;
+}
+
+/* ==========================================
+   7. ICONOS SUFIJO
+   ========================================== */
+::ng-deep .mat-mdc-form-field-icon-suffix mat-icon,
+::ng-deep .mat-mdc-form-field-suffix mat-icon {
+  color: #00bfa5 !important;
+  font-size: 22px !important;
+  height: 22px !important;
+  width: 22px !important;
+}
+
+::ng-deep .mat-mdc-form-field-suffix .mat-datepicker-toggle-default-icon {
+  color: #94a3b8 !important;
+}
+
+::ng-deep .mat-mdc-icon-button.mat-mdc-button-base {
+  width: 36px !important;
+  height: 36px !important;
+  padding: 6px !important;
+}
+
+/* ==========================================
+   8. INPUT — texto y placeholder
+   ========================================== */
+::ng-deep .mat-mdc-form-field input.mat-mdc-input-element {
+  color: #032b43 !important;
+  font-size: 0.95rem !important;
+}
+
+::ng-deep .mat-mdc-form-field input.mat-mdc-input-element::placeholder {
+  color: #94a3b8 !important;
+  font-size: 0.9rem !important;
+}
+
+::ng-deep .mat-mdc-form-field .mat-mdc-input-element:disabled {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+}
+
+/* ==========================================
+   9. SELECT
+   ========================================== */
+::ng-deep .mat-mdc-select-arrow {
+  color: #94a3b8 !important;
+}
+
+::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-select-arrow {
+  color: #00a68f !important;
+}
+
+::ng-deep .mat-mdc-select-value-text {
+  color: #032b43 !important;
+  font-size: 0.95rem !important;
+}
+
+/* ==========================================
+   10. AUTOCOMPLETE
+   ========================================== */
+.cliente-op-name {
+  color: #032b43;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.cliente-op-doc {
+  color: #64748b;
+  font-size: 0.82rem;
+  margin-left: 4px;
+}
+
+/* ==========================================
+   11. ERRORES
+   ========================================== */
+::ng-deep .mat-mdc-form-field .mat-mdc-form-field-error {
+  color: #dc3545 !important;
+  font-size: 0.78rem !important;
+}
+
+/* ==========================================
+   12. BOTONES
+   ========================================== */
+.dialog-actions {
+  padding: 0 24px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Cancelar — rojo */
+.btn-cancel {
+  background-color: #dc3545 !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: normal !important;
+  font-size: 14px !important;
+  padding: 0 20px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background-color: #bd2130 !important;
+}
+
+/* Registrar/Guardar — turquesa */
+::ng-deep .mat-mdc-button-base.mat-flat-button:not([disabled]) {
+  background-color: #00bfa5 !important;
+  color: #ffffff !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  border-radius: 6px !important;
+  font-weight: normal !important;
+  font-size: 14px !important;
+  padding: 0 20px !important;
+  box-shadow: none !important;
+  transition: background-color 0.2s ease;
+}
+
+::ng-deep .mat-mdc-button-base.mat-flat-button:not([disabled]):hover {
+  background-color: #00a68f !important;
+}
+
+/* Deshabilitado */
+::ng-deep .mat-mdc-button-base.mat-flat-button[disabled] {
+  background-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  border-radius: 6px !important;
+  font-weight: normal !important;
+  font-size: 14px !important;
+}
+
+/* ==========================================
+   13. RESPONSIVE
+   ========================================== */
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .col-span-2 {
+    grid-column: span 1;
+  }
+}

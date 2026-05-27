@@ -1,0 +1,102 @@
+<h2 mat-dialog-title class="dialog-title">
+  <span class="material-icons-round">
+    {{ pasoActual === 1 ? (isEdit ? 'edit' : 'person_add') : 'verified' }}
+  </span>
+  {{ pasoActual === 1 ? (isEdit ? 'Editar Cliente' : 'Nuevo Cliente') : 'Confirmar Datos' }}
+</h2>
+
+<form [formGroup]="form" *ngIf="pasoActual === 1">
+  <mat-dialog-content class="dialog-content-scroll">
+    <p class="dialog-subtitle">
+      {{ isEdit ? 'Modifica los datos del cliente a continuación.' : 'Ingresa los datos personales para registrar al nuevo cliente.' }}
+    </p>
+
+    <div class="form-grid">
+      <div class="dni-search-container col-span-2">
+        <mat-form-field appearance="outline" floatLabel="always" class="dni-field">
+          <mat-label>DNI / Documento</mat-label>
+          <mat-icon matPrefix class="prefix-icon">badge</mat-icon>
+          <input matInput formControlName="dni" placeholder="Ingresa su DNI" required maxlength="8" (keydown)="soloNumeros($event)"/>
+          <mat-error *ngIf="form.get('dni')?.hasError('required')">El DNI es obligatorio</mat-error>
+          <mat-error *ngIf="form.get('dni')?.hasError('pattern')">Debe tener exactamente 8 dígitos numéricos</mat-error>
+        </mat-form-field>
+        
+        <button mat-flat-button color="primary" type="button" class="btn-search-dni"
+                (click)="buscarDni()"
+                [disabled]="form.get('dni')?.invalid || form.get('dni')?.value.length !== 8 || buscandoDni || isEdit">
+          <mat-icon *ngIf="!buscandoDni">search</mat-icon>
+          <mat-spinner diameter="20" *ngIf="buscandoDni" class="spinner-dni"></mat-spinner>
+          {{ buscandoDni ? 'Buscando...' : 'Buscar Reniec' }}
+        </button>
+      </div>
+
+      <mat-form-field appearance="outline" floatLabel="always" class="full-width">
+        <mat-label>Nombre</mat-label>
+        <mat-icon matPrefix class="prefix-icon">person</mat-icon>
+        <input matInput formControlName="nombre" placeholder="Ingresa su nombre" required (keydown)="soloLetras($event)"/>
+        <mat-error *ngIf="form.get('nombre')?.hasError('required')">El nombre es obligatorio</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" floatLabel="always" class="full-width">
+        <mat-label>Apellido</mat-label>
+        <mat-icon matPrefix class="prefix-icon">person_outline</mat-icon>
+        <input matInput formControlName="apellido" placeholder="Ingresa su apellido" required (keydown)="soloLetras($event)"/>
+        <mat-error *ngIf="form.get('apellido')?.hasError('required')">El apellido es obligatorio</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" floatLabel="always" class="full-width">
+        <mat-label>Teléfono</mat-label>
+        <mat-icon matPrefix class="prefix-icon">phone</mat-icon>
+        <input matInput formControlName="telefono" placeholder="Ingresa su teléfono" required maxlength="9" (keydown)="soloNumeros($event)"/>
+        <mat-error *ngIf="form.get('telefono')?.hasError('required')">El teléfono es obligatorio</mat-error>
+        <mat-error *ngIf="form.get('telefono')?.hasError('pattern')">Debe tener exactamente 9 dígitos numéricos</mat-error>
+      </mat-form-field>
+
+      <div class="full-width"></div>
+
+      <mat-form-field appearance="outline" floatLabel="always" class="full-width col-span-2">
+        <mat-label>Correo Electrónico</mat-label>
+        <mat-icon matPrefix class="prefix-icon">mail_outline</mat-icon>
+        <input matInput formControlName="email" type="email" placeholder="Ingresa su correo electrónico" required />
+        <mat-error *ngIf="form.get('email')?.hasError('required')">El email es obligatorio</mat-error>
+        <mat-error *ngIf="form.get('email')?.hasError('email')">Formato de correo inválido</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" floatLabel="always" class="full-width col-span-2">
+        <mat-label>Dirección (Opcional)</mat-label>
+        <mat-icon matPrefix class="prefix-icon">location_on</mat-icon>
+        <input matInput formControlName="direccion" placeholder="Ingresa su dirección" />
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-stroked-button type="button" (click)="onCancel()" class="btn-cancel">Cancelar</button>
+    <button mat-flat-button color="primary" type="button" (click)="irAResumen()" [disabled]="form.invalid || isSubmitting">
+      Continuar
+    </button>
+  </mat-dialog-actions>
+</form>
+
+<div *ngIf="pasoActual === 2">
+  <mat-dialog-content class="dialog-content-scroll">
+    <p class="dialog-subtitle">Verifica que los datos sean correctos antes de guardarlos en el sistema.</p>
+
+    <div class="resumen-box">
+      <p><strong>DNI:</strong> {{ datosResumen?.dni }}</p>
+      <p><strong>Nombres:</strong> {{ datosResumen?.nombre }} {{ datosResumen?.apellido }}</p>
+      <p><strong>Teléfono:</strong> {{ datosResumen?.telefono }}</p>
+      <p><strong>Correo:</strong> {{ datosResumen?.email }}</p>
+      <p><strong>Dirección:</strong> {{ datosResumen?.direccion || 'No especificada' }}</p>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-stroked-button type="button" (click)="regresarAEditar()" class="btn-cancel">
+      Regresar a editar
+    </button>
+    <button mat-flat-button color="primary" type="button" (click)="confirmarYGuardar()" [disabled]="isSubmitting">
+      <mat-icon style="margin-right: 4px;">save</mat-icon> Confirmar
+    </button>
+  </mat-dialog-actions>
+</div>

@@ -1,0 +1,157 @@
+<div class="page-container fade-in-up">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Catálogo de Productos</h1>
+      <p class="page-subtitle">Gestión de insumos, medicinas y productos de retail</p>
+    </div>
+    <div class="flex gap-3">
+      @if (esAdmin()) {
+        <button class="btn btn-secondary" (click)="abrirGestionCatalogos()">
+          <span class="material-icons-round">settings</span>
+          Catálogos
+        </button>
+      }
+      @if (puedeOperar()) {
+        <button class="btn btn-primary" (click)="abrirModalNuevo()">
+          <span class="material-icons-round">add</span>
+          Nuevo Producto
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="card p-4 mb-6 flex flex-wrap gap-4 items-end">
+    <div class="search-box flex-1" style="min-width: 250px;">
+      <label class="text-xs font-bold" style="color: var(--text-muted); display: block; margin-bottom: 4px;">BUSCAR PRODUCTO</label>
+      <div style="position: relative;">
+        <span class="material-icons-round search-icon">search</span>
+        <input
+          type="text"
+          [(ngModel)]="busqueda"
+          (ngModelChange)="onSearch()"
+          class="form-control search-input"
+          placeholder="Nombre o marca..."
+        >
+      </div>
+    </div>
+
+    <div style="min-width: 220px;">
+      <label class="text-xs font-bold" style="color: var(--text-muted); display: block; margin-bottom: 4px;">SEDE ACTUAL</label>
+      <div style="position: relative;">
+        <span class="material-icons-round" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #60a5fa; font-size: 18px;">storefront</span>
+        <select [(ngModel)]="sedeSeleccionadaId" (change)="onSedeChange()" class="form-control" 
+                style="padding-left: 36px; border-color: #60a5fa; font-weight: 600; cursor: pointer;">
+          @for (sede of sedes(); track sede.id) {
+            <option [ngValue]="sede.id">{{ sede.nombre }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card overflow-hidden">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Categoría</th>
+            <th>Precio (S/)</th>
+            <th class="text-center">Stock Actual</th>
+            <th class="text-center">Stock Mín.</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (producto of productos; track producto.id) {
+            <tr class="table-row-hover">
+              <td>
+                <div class="font-medium" style="color: var(--text-primary)">{{ producto.nombre }}</div>
+                <div class="text-xs" style="color: var(--text-muted)">{{ producto.marca || 'Sin marca' }}</div>
+              </td>
+              <td>
+                <span class="badge badge-info">
+                  {{ producto.categoriaNombre || 'Sin categoría' }}
+                </span>
+              </td>
+              <td class="font-semibold" style="color: var(--color-primary-400)">
+                S/ {{ producto.precio | number:'1.2-2' }}
+              </td>
+              <td class="text-center">
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                  <span class="font-bold" [style.color]="(producto.stockActual || 0) <= (producto.stockMinimo || 0) ? '#f87171' : '#4ade80'" style="font-size: 1.1rem;">
+                    {{ producto.stockActual || 0 }}
+                  </span>
+                  <span class="text-xs" style="color: var(--text-muted)">{{ producto.unidadVentaNombre }}</span>
+                </div>
+              </td>
+              <td class="text-center">
+                @if (puedeOperar()) {
+                  <div class="stock-minimo-badge" (click)="editarStockMinimo(producto)" matTooltip="Click para configurar stock mínimo">
+                    <span class="material-icons-round">notifications_active</span>
+                    <span>{{ producto.stockMinimo || 0 }}</span>
+                  </div>
+                } @else {
+                  <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
+                    {{ producto.stockMinimo || 0 }}
+                  </div>
+                }
+              </td>
+              <td>
+                @if (producto.activo) {
+                  <span class="badge-status active">ACTIVO</span>
+                } @else {
+                  <span class="badge-status inactive">INACTIVO</span>
+                }
+              </td>
+              <td>
+                <div class="flex justify-center items-center gap-3">
+                  <button class="btn-icon" (click)="abrirModalEditar(producto)" 
+                          [matTooltip]="puedeOperar() ? 'Gestionar producto (Lotes/Kardex)' : 'Ver detalle (Lectura)'">
+                    <span class="material-icons-round" [style.color]="puedeOperar() ? '#60a5fa' : '#94a3b8'">
+                      {{ puedeOperar() ? 'edit_note' : 'visibility' }}
+                    </span>
+                  </button>
+
+                  <label class="action-switch" [style.opacity]="puedeOperar() ? 1 : 0.5" [style.pointer-events]="puedeOperar() ? 'auto' : 'none'"
+                         [matTooltip]="producto.activo ? 'Desactivar producto' : 'Activar producto'">
+                    <input type="checkbox"
+                           [checked]="producto.activo"
+                           [disabled]="!puedeOperar()"
+                           (change)="confirmarCambioEstado(producto)">
+                    <span class="action-slider"></span>
+                  </label>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="text-center py-8" style="color: var(--text-muted)">
+                No se encontraron productos.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-bar">
+      <span class="text-sm" style="color: var(--text-muted)">
+        Mostrando {{ productos.length }} de {{ totalElements }} productos
+      </span>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary btn-sm"
+                [disabled]="currentPage === 0"
+                (click)="cambiarPagina(currentPage - 1)">
+          Anterior
+        </button>
+        <button class="btn btn-secondary btn-sm"
+                [disabled]="currentPage >= totalPages - 1"
+                (click)="cambiarPagina(currentPage + 1)">
+          Siguiente
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
