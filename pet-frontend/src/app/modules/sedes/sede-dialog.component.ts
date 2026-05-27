@@ -27,53 +27,8 @@ export interface SedeDialogData {
     MatFormFieldModule,
     MatInputModule
   ],
-  template: `
-    <h2 mat-dialog-title class="dialog-title">
-      <span class="material-icons-round text-primary">
-        {{ isEdit() ? 'edit' : 'storefront' }}
-      </span>
-      {{ isEdit() ? 'Editar Sede' : 'Nueva Sede' }}
-    </h2>
-    
-    <mat-dialog-content>
-      <form [formGroup]="form" class="flex flex-col gap-4 py-4">
-        
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Nombre de la Sede</mat-label>
-          <mat-icon matPrefix>store</mat-icon>
-          <input matInput formControlName="nombre" placeholder="Ej. Sede Central" (input)="form.get('nombre')?.setValue($event.target.value.toUpperCase(), {emitEvent: false})" />
-          <mat-error *ngIf="form.get('nombre')?.hasError('required')">El nombre es obligatorio</mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Dirección</mat-label>
-          <mat-icon matPrefix>location_on</mat-icon>
-          <input matInput formControlName="direccion" placeholder="Ej. Av. Principal 123" />
-          <mat-error *ngIf="form.get('direccion')?.hasError('required')">La dirección es obligatoria</mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Teléfono</mat-label>
-          <mat-icon matPrefix>phone</mat-icon>
-          <input matInput formControlName="telefono" placeholder="Ej. 987654321" required maxlength="9" (keydown)="soloNumeros($event)"/>
-          <mat-error *ngIf="form.get('telefono')?.hasError('required')">El teléfono es obligatorio</mat-error>
-        </mat-form-field>
-
-      </form>
-    </mat-dialog-content>
-
-    <mat-dialog-actions align="end" class="p-4">
-      <button mat-stroked-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button color="primary" [disabled]="form.invalid || loading()" (click)="guardar()">
-        <mat-icon>save</mat-icon> {{ isEdit() ? 'Guardar Cambios' : 'Registrar Sede' }}
-      </button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    :host { display: block; min-width: 400px; }
-    .dialog-title { display: flex; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 8px; }
-    ::ng-deep .mat-mdc-text-field-wrapper { background-color: var(--bg-card) !important; }
-  `]
+  templateUrl: './sede-dialog.component.html',
+  styleUrls: ['./sede-dialog.component.css']
 })
 export class SedeDialogComponent implements OnInit {
   isEdit = signal(false);
