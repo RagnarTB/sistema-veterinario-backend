@@ -1,0 +1,98 @@
+<div class="dashboard-container fade-in-up">
+  <div class="dashboard-header">
+    <div>
+      <h2>Dashboard Analítico</h2>
+      <p class="text-muted">Resumen general de tu veterinaria</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Cargando datos del dashboard...</p>
+    </div>
+  } @else {
+    <!-- ROW 1: Tarjetas de resumen -->
+    <div class="summary-cards">
+      <!-- Card Ventas -->
+      <div class="summary-card premium-card">
+        <div class="card-icon gradient-primary">
+          <span class="material-icons-round">attach_money</span>
+        </div>
+        <div class="card-info">
+          <span class="card-title">Ventas del Mes</span>
+          <span class="card-value">{{ resumen()?.totalVentasMes | currency }}</span>
+        </div>
+      </div>
+
+      <!-- Card Clientes Activos -->
+      <div class="summary-card premium-card">
+        <div class="card-icon gradient-accent">
+          <span class="material-icons-round">group</span>
+        </div>
+        <div class="card-info">
+          <span class="card-title">Clientes Activos</span>
+          <span class="card-value">{{ resumen()?.totalClientesActivos | number }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 2: Gráficos y Tablas -->
+    <div class="dashboard-grid">
+      <!-- Columna Izquierda: Gráfico Top Productos -->
+      <div class="dashboard-panel premium-card">
+        <h3 class="panel-title">Top 5 Productos Más Vendidos</h3>
+
+        <div class="chart-wrapper">
+          <canvas
+            baseChart
+            [data]="chartData"
+            [options]="chartOptions"
+            [type]="chartType"
+          >
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Columna Derecha: Rendimiento Veterinarios -->
+      <div class="dashboard-panel premium-card">
+        <h3 class="panel-title">Rendimiento Veterinarios (Citas)</h3>
+
+        <div class="table-container">
+          <table mat-table [dataSource]="veterinarios()" class="custom-table">
+            <!-- Nombre Column -->
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef> Veterinario / Email </th>
+              <td mat-cell *matCellDef="let element">
+                <div class="vet-cell">
+                  <div class="vet-avatar">
+                    <span class="material-icons-round">person</span>
+                  </div>
+                  <span class="vet-name">{{element.emailVeterinario}}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Citas Column -->
+            <ng-container matColumnDef="citas">
+              <th mat-header-cell *matHeaderCellDef style="text-align: right"> Citas Completadas </th>
+              <td mat-cell *matCellDef="let element" style="text-align: right">
+                <span class="badge-count">{{element.totalCitas}}</span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="premium-row"></tr>
+          </table>
+        </div>
+
+        @if (veterinarios().length === 0) {
+          <div class="empty-state">
+            <span class="material-icons-round">analytics</span>
+            <p>No hay datos de citas registrados aún.</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
