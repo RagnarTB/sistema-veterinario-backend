@@ -1,0 +1,261 @@
+:host { 
+  display: block; 
+  width: 100%;
+  max-width: 650px; 
+  box-sizing: border-box;
+}
+
+/* Encabezados y Títulos */
+.dialog-title { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+  font-size: 1.3rem;
+  font-weight: 600; 
+  padding: 20px 24px 10px 24px;
+  margin: 0;
+
+  .title-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* Área de contenido */
+.dialog-content-scroll { 
+  max-height: 65vh; 
+  overflow-y: auto; 
+  padding: 16px 24px !important; 
+}
+
+/* Formularios estructurados en Grid */
+.form-grid { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 4px 16px; 
+  padding: 8px 0;
+}
+
+.col-span-2 { grid-column: span 2; }
+.w-full { width: 100%; }
+
+/* Contenedor de búsqueda DNI */
+.dni-search-container { 
+  display: flex; 
+  gap: 12px; 
+  align-items: flex-start; 
+  margin-bottom: 4px;
+
+  .dni-field { 
+    flex: 1; 
+  }
+}
+
+/* Estilización de Botones */
+.btn-search-dni, .btn-validar-colegiatura { 
+  height: 52px; /* Alineación perfecta con el outline de Angular Material */
+  font-weight: 600; 
+  font-size: 0.95rem; 
+  border-radius: 8px; 
+  padding: 0 18px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  gap: 8px;
+  box-shadow: none !important;
+}
+
+.btn-large {
+  height: 44px;
+  padding: 0 20px !important;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.dialog-actions-padding {
+  padding: 16px 24px 24px 24px !important;
+  gap: 12px;
+}
+
+/* Banners profesionales */
+.ascenso-banner {
+  display: flex; 
+  gap: 14px; 
+  align-items: flex-start;
+  background: rgba(33, 150, 243, 0.06);
+  border: 1px solid rgba(33, 150, 243, 0.25);
+  border-left: 4px solid #2196F3;
+  border-radius: 8px; 
+  padding: 14px 16px; 
+  margin-bottom: 20px;
+
+  .banner-icon { color: #2196F3; font-size: 24px; width: 24px; height: 24px; }
+  .banner-text {
+    strong { font-size: 0.95rem; color: #1565C0; }
+    p { margin: 4px 0 0; opacity: 0.85; font-size: 0.85rem; line-height: 1.4; }
+  }
+}
+
+.confirmacion-banner { 
+  background: rgba(76, 175, 80, 0.06); 
+  border-color: rgba(76, 175, 80, 0.25);
+  border-left-color: #4CAF50;
+
+  .banner-icon { color: #4CAF50; }
+  .banner-text strong { color: #2E7D32; }
+}
+
+/* Sección Veterinaria */
+.vet-section {
+  background: rgba(156, 39, 176, 0.03); 
+  border: 1px solid rgba(156, 39, 176, 0.15);
+  border-radius: 10px; 
+  padding: 16px; 
+  margin: 12px 0;
+
+  .vet-section-title { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    font-weight: 600; 
+    color: #9C27B0; 
+    margin-bottom: 14px; 
+    font-size: 0.95rem;
+  }
+  
+  .vet-fields { 
+    display: flex; 
+    gap: 12px; 
+    align-items: flex-start; 
+  }
+  
+  .colegiatura-field { flex: 1; }
+  
+  .btn-validar-colegiatura { 
+    background: #9C27B0 !important; 
+    color: white !important; 
+    
+    &:disabled {
+      background: rgba(0,0,0,0.12) !important;
+      color: rgba(0,0,0,0.26) !important;
+    }
+  }
+}
+
+.colegiatura-resultado {
+  display: flex; 
+  gap: 10px; 
+  align-items: center; 
+  padding: 12px 14px; 
+  border-radius: 6px; 
+  margin-top: 12px;
+  font-size: 0.9rem;
+
+  p { margin: 2px 0 0; font-size: 0.85rem; opacity: 0.9; }
+  
+  &.valido { background: rgba(76, 175, 80, 0.1); color: #1E4620; }
+  &.invalido { background: rgba(244, 67, 54, 0.1); color: #8A1F1F; }
+}
+
+/* Contenedor Resumen (Confirmación) */
+.resumen-container { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 24px; 
+  padding: 8px 0;
+}
+
+.resumen-seccion {
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding-bottom: 16px;
+  
+  &:last-child { border: none; }
+
+  h3 { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    font-size: 0.95rem; 
+    font-weight: 600; 
+    margin: 0 0 14px 0; 
+    color: rgba(0,0,0,0.75);
+
+    mat-icon { font-size: 20px; width: 20px; height: 20px; opacity: 0.7; }
+  }
+}
+
+.resumen-grid { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 14px 16px; 
+}
+
+.resumen-item { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 2px;
+
+  .label { 
+    font-size: 0.75rem; 
+    color: rgba(0,0,0,0.45);
+    font-weight: 500;
+    text-transform: uppercase; 
+    letter-spacing: 0.3px; 
+  }
+  .value { 
+    font-weight: 500; 
+    font-size: 0.95rem; 
+    color: rgba(0,0,0,0.85);
+  }
+}
+
+/* Badges y Chips */
+.roles-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.rol-chip { 
+  background: rgba(33, 150, 243, 0.08); 
+  color: #1565C0; 
+  padding: 4px 12px; 
+  border: 1px solid rgba(33, 150, 243, 0.15);
+  border-radius: 16px; 
+  font-size: 0.8rem; 
+  font-weight: 500; 
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: max-content;
+  
+  &.bg-green { background: #E8F5E9; color: #2E7D32; }
+  &.bg-red { background: #FFEBEE; color: #C62828; }
+}
+
+/* Animaciones y Tabs */
+.modern-tabs {
+  margin: -8px -24px 16px -24px;
+}
+.tab-padding { padding: 16px 24px; }
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Adaptabilidad Mobile */
+@media (max-width: 600px) {
+  :host { min-width: 100%; }
+  .form-grid, .resumen-grid { grid-template-columns: 1fr; }
+  .col-span-2 { grid-column: span 1; }
+  .dni-search-container { flex-direction: column; align-items: stretch; .btn-search-dni { height: 48px; } }
+  .dialog-content-scroll { padding: 12px 16px !important; }
+  .dialog-title { padding: 16px 16px 8px 16px; }
+  .dialog-actions-padding { padding: 12px 16px 16px 16px !important; }
+}
