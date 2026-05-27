@@ -1,0 +1,339 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <h2 class="dialog-title">
+      <span class="material-icons-round header-icon">settings</span>
+      Gestión de Catálogos
+    </h2>
+    <button class="btn-close" (click)="dialogRef.close()" title="Cerrar ventana">
+      <span class="material-icons-round">close</span>
+    </button>
+  </div>
+
+  <div class="dialog-content">
+    <mat-tab-group animationDuration="220ms" class="custom-tab-group">
+
+      <mat-tab label="Categorías">
+        <div class="tab-body">
+          
+          <div class="action-bar">
+            <input [(ngModel)]="nuevaCategoriaNombre" class="form-control" placeholder="Nombre de la categoría..." style="flex: 1;">
+            <button class="btn btn-add" (click)="agregarCategoria()" [disabled]="!nuevaCategoriaNombre.trim()">
+              <span class="material-icons-round">add</span> Agregar
+            </button>
+          </div>
+
+          <div class="section-title text-active">Categorías Activas</div>
+          <div class="table-container mb-5">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Descripción</th>
+                  <th class="text-center" style="width: 110px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (cat of categoriasActivas(); track cat.id) {
+                  <tr>
+                    <td>
+                      @if (editandoCatId === cat.id) {
+                        <input [(ngModel)]="editCatNombre" class="form-control table-input">
+                      } @else {
+                        <span class="font-semibold text-primary">{{ cat.nombre }}</span>
+                      }
+                    </td>
+                    <td>
+                      @if (editandoCatId === cat.id) {
+                        <input [(ngModel)]="editCatDesc" class="form-control table-input">
+                      } @else {
+                        <span class="text-muted text-sm">{{ cat.descripcion || '—' }}</span>
+                      }
+                    </td>
+                    <td>
+                      <div class="actions-wrapper">
+                        @if (editandoCatId === cat.id) {
+                          <button class="btn-table-action action-save" (click)="guardarCategoria(cat)" title="Guardar"><span class="material-icons-round">check</span></button>
+                          <button class="btn-table-action action-cancel" (click)="editandoCatId = null" title="Cancelar"><span class="material-icons-round">close</span></button>
+                        } @else {
+                          <button class="btn-table-action action-edit" (click)="iniciarEditCategoria(cat)" title="Editar"><span class="material-icons-round">edit</span></button>
+                          <button class="btn-table-action action-disable" (click)="eliminarCat(cat)" title="Desactivar"><span class="material-icons-round">block</span></button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="3" class="text-empty">No hay categorías activas</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section-title text-inactive">Categorías Desactivadas</div>
+          <div class="table-container">
+            <table class="custom-table table-disabled-mode">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Descripción</th>
+                  <th class="text-center" style="width: 110px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (cat of categoriasInactivas(); track cat.id) {
+                  <tr>
+                    <td><span class="font-medium text-primary">{{ cat.nombre }}</span></td>
+                    <td><span class="text-muted text-sm">{{ cat.descripcion || '—' }}</span></td>
+                    <td>
+                      <div class="actions-wrapper">
+                        <button class="btn-table-action action-restore" (click)="activarCat(cat)" title="Reactivar"><span class="material-icons-round">settings_backup_restore</span></button>
+                        <button class="btn-table-action action-delete" (click)="eliminarCat(cat)" title="Eliminar Permanente"><span class="material-icons-round">delete_forever</span></button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="3" class="text-empty">No hay categorías desactivadas</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Unidades de Medida">
+        <div class="tab-body">
+          
+          <div class="action-bar flex-wrap">
+            <input [(ngModel)]="nuevaUnidadNombre" class="form-control" placeholder="Nombre de la unidad..." style="flex: 2; min-width: 150px;">
+            <input [(ngModel)]="nuevaUnidadAbrev" class="form-control" placeholder="Abrev." style="width: 90px;">
+            <label class="custom-checkbox-label">
+              <input type="checkbox" [(ngModel)]="nuevaUnidadDec" class="custom-checkbox">
+              <span>Decimales</span>
+            </label>
+            <button class="btn btn-add" (click)="agregarUnidad()" [disabled]="!nuevaUnidadNombre.trim()">
+              <span class="material-icons-round">add</span> Agregar
+            </button>
+          </div>
+
+          <div class="section-title text-active">Unidades Activas</div>
+          <div class="table-container mb-5">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Abrev.</th>
+                  <th class="text-center" style="width: 90px;">Dec.</th>
+                  <th class="text-center" style="width: 110px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (uni of unidadesActivas(); track uni.id) {
+                  <tr>
+                    <td>
+                      @if (editandoUniId === uni.id) {
+                        <input [(ngModel)]="editUniNombre" class="form-control table-input">
+                      } @else {
+                        <span class="font-semibold text-primary">{{ uni.nombre }}</span>
+                      }
+                    </td>
+                    <td>
+                      @if (editandoUniId === uni.id) {
+                        <input [(ngModel)]="editUniAbrev" class="form-control table-input" style="width: 70px;">
+                      } @else {
+                        <span class="badge-neutral">{{ uni.abreviatura }}</span>
+                      }
+                    </td>
+                    <td class="text-center">
+                      @if (editandoUniId === uni.id) {
+                        <input type="checkbox" [(ngModel)]="editUniDec" class="custom-checkbox">
+                      } @else {
+                        <span class="material-icons-round" [style.color]="uni.permiteDecimales ? '#4ade80' : '#f87171'" style="font-size: 20px;">
+                          {{ uni.permiteDecimales ? 'check_circle' : 'cancel' }}
+                        </span>
+                      }
+                    </td>
+                    <td>
+                      <div class="actions-wrapper">
+                        @if (editandoUniId === uni.id) {
+                          <button class="btn-table-action action-save" (click)="guardarUnidad(uni)" title="Guardar"><span class="material-icons-round">check</span></button>
+                          <button class="btn-table-action action-cancel" (click)="editandoUniId = null" title="Cancelar"><span class="material-icons-round">close</span></button>
+                        } @else {
+                          <button class="btn-table-action action-edit" (click)="iniciarEditUnidad(uni)" title="Editar"><span class="material-icons-round">edit</span></button>
+                          <button class="btn-table-action action-disable" (click)="eliminarUni(uni)" title="Desactivar"><span class="material-icons-round">block</span></button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="text-empty">No hay unidades activas</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section-title text-inactive">Unidades Desactivadas</div>
+          <div class="table-container">
+            <table class="custom-table table-disabled-mode">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Abrev.</th>
+                  <th class="text-center" style="width: 110px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (uni of unidadesInactivas(); track uni.id) {
+                  <tr>
+                    <td><span class="font-medium text-primary">{{ uni.nombre }}</span></td>
+                    <td><span class="badge-neutral">{{ uni.abreviatura }}</span></td>
+                    <td>
+                      <div class="actions-wrapper">
+                        <button class="btn-table-action action-restore" (click)="activarUni(uni)" title="Reactivar"><span class="material-icons-round">settings_backup_restore</span></button>
+                        <button class="btn-table-action action-delete" (click)="eliminarUni(uni)" title="Eliminar Permanente"><span class="material-icons-round">delete_forever</span></button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="3" class="text-empty">No hay unidades desactivadas</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Proveedores">
+        <div class="tab-body">
+          
+          <div class="form-card-box">
+            <div class="form-card-title">Nuevo Proveedor</div>
+            
+            <div class="form-row mb-3">
+              <div class="form-group size-ruc">
+                <label class="form-label">RUC *</label>
+                <div class="input-with-btn">
+                  <input [(ngModel)]="nuevoProvRuc" class="form-control" maxlength="11" (keypress)="soloNumeros($event)" placeholder="Ej. 20601030013">
+                  <button class="btn-inline-search" (click)="buscarRuc()" [disabled]="nuevoProvRuc.length !== 11 || buscandoRuc()">
+                    <span class="material-icons-round">search</span>
+                  </button>
+                </div>
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label">Razón Social</label>
+                <input [(ngModel)]="nuevoProvNombre" class="form-control readonly-input" placeholder="Se completará automáticamente..." readonly>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label class="form-label">Dirección</label>
+                <input [(ngModel)]="nuevoProvDireccion" class="form-control readonly-input" placeholder="Se completará automáticamente..." readonly>
+              </div>
+              <div class="form-group size-phone">
+                <label class="form-label">Teléfono</label>
+                <input [(ngModel)]="nuevoProvTelefono" class="form-control" placeholder="999999999" (keypress)="soloNumeros($event)" maxlength="9">
+              </div>
+              <div class="form-group items-end justify-end">
+                <button class="btn btn-add h-10" (click)="agregarProveedor()" [disabled]="!nuevoProvNombre.trim()">
+                  <span class="material-icons-round">add</span> Agregar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title text-active">Proveedores Activos</div>
+          <div class="table-container mb-5">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th style="width: 120px;">RUC</th>
+                  <th>Razón Social</th>
+                  <th>Teléfono</th>
+                  <th class="text-center" style="width: 110px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (prov of proveedoresActivos(); track prov.id) {
+                  <tr>
+                    <td><span class="text-mono">{{ prov.ruc || '—' }}</span></td>
+                    <td>
+                      @if (editandoProvId === prov.id) {
+                        <input [(ngModel)]="editProvNombre" class="form-control table-input">
+                      } @else {
+                        <span class="font-semibold text-primary">{{ prov.razonSocial }}</span>
+                      }
+                    </td>
+                    <td>
+                      @if (editandoProvId === prov.id) {
+                        <input [(ngModel)]="editProvTelefono" class="form-control table-input" (keypress)="soloNumeros($event)" maxlength="9" style="width: 110px;">
+                      } @else {
+                        <span class="text-sm">{{ prov.telefono || '—' }}</span>
+                      }
+                    </td>
+                    <td>
+                      <div class="actions-wrapper">
+                        @if (editandoProvId === prov.id) {
+                          <button class="btn-table-action action-save" (click)="guardarProveedor(prov)" title="Guardar"><span class="material-icons-round">check</span></button>
+                          <button class="btn-table-action action-cancel" (click)="editandoProvId = null" title="Cancelar"><span class="material-icons-round">close</span></button>
+                        } @else {
+                          <button class="btn-table-action action-edit" (click)="iniciarEditProveedor(prov)" title="Editar"><span class="material-icons-round">edit</span></button>
+                          <button class="btn-table-action action-disable" (click)="eliminarProv(prov)" title="Desactivar"><span class="material-icons-round">block</span></button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="text-empty">No hay proveedores activos</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section-title text-inactive">Proveedores Desactivados</div>
+          <div class="table-container">
+            <table class="custom-table table-disabled-mode">
+              <thead>
+                <tr>
+                  <th style="width: 120px;">RUC</th>
+                  <th>Razón Social</th>
+                  <th class="text-center" style="width: 110px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (prov of proveedoresInactivos(); track prov.id) {
+                  <tr>
+                    <td><span class="text-mono text-muted">{{ prov.ruc }}</span></td>
+                    <td><span class="font-medium text-primary">{{ prov.razonSocial }}</span></td>
+                    <td>
+                      <div class="actions-wrapper">
+                        <button class="btn-table-action action-restore" (click)="activarProv(prov)" title="Reactivar"><span class="material-icons-round">settings_backup_restore</span></button>
+                        <button class="btn-table-action action-delete" (click)="eliminarProv(prov)" title="Eliminar Permanente"><span class="material-icons-round">delete_forever</span></button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="3" class="text-empty">No hay proveedores desactivados</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </div>
+</div>

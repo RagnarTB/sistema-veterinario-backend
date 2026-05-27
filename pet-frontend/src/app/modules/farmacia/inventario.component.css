@@ -1,0 +1,142 @@
+/* --- BUSCADOR Y FILTROS --- */
+.search-box { 
+  position: relative; 
+}
+
+.search-icon {
+  position: absolute; 
+  left: 12px; 
+  top: 50%; 
+  transform: translateY(-50%);
+  color: var(--text-muted); 
+  font-size: 20px;
+}
+
+.search-input { 
+  padding-left: 40px !important; 
+}
+
+/* --- COMPORTAMIENTO DE LA TABLA --- */
+.table-row-hover { 
+  transition: background 0.15s; 
+}
+
+.table-row-hover:hover { 
+  background: var(--bg-tertiary); 
+}
+
+/* --- BADGES DE STOCK MÍNIMO --- */
+.stock-minimo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 20px;
+  color: #60a5fa;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stock-minimo-badge:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #60a5fa;
+  transform: translateY(-1px);
+}
+
+.stock-minimo-badge .material-icons-round {
+  font-size: 16px;
+}
+
+/* --- NUEVO: BADGE DE ESTADO PROFESIONAL --- */
+.badge-status {
+  display: inline-block;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 6px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.badge-status.active {
+  background-color: #e6f7ed; /* Fondo verde muy sutil */
+  color: #10b981;            /* Texto verde esmeralda */
+}
+
+.badge-status.inactive {
+  background-color: #f3f4f6; /* Fondo gris sutil */
+  color: #9ca3af;            /* Texto gris atenuado */
+}
+
+/* --- NUEVO: SWITCH DESLIZABLE COMPACTO EN ACCIONES --- */
+.action-switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.action-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.action-slider {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #cbd5e1; /* Gris apagado por defecto */
+  transition: 0.3s ease;
+  border-radius: 20px;
+}
+
+.action-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: 0.3s ease;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* Color cuando el switch se activa (Combina con los azules de tu Sede Central) */
+input:checked + .action-slider {
+  background-color: #60a5fa;
+}
+
+input:focus + .action-slider {
+  box-shadow: 0 0 1px #60a5fa;
+}
+
+input:checked + .action-slider:before {
+  transform: translateX(18px);
+}
+
+/* --- PÁGINACIÓN --- */
+.pagination-bar {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+}
+
+.page-header .flex {
+  gap: 16px !important; 
+}
+
+.btn-sm { 
+  padding: 0.35rem 0.85rem !important; 
+  font-size: 0.8rem; 
+}
+
