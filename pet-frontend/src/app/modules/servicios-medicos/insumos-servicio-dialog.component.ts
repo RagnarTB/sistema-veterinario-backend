@@ -33,7 +33,7 @@ export class InsumosServicioDialogComponent implements OnInit {
   insumos = signal<ServicioMedicoInsumoResponse[]>([]);
   filteredProducts = signal<Producto[]>([]);
   loadingSearch = signal(false);
-  
+
   searchQuery = '';
   selectedProduct: Producto | null = null;
   newInsumo = {

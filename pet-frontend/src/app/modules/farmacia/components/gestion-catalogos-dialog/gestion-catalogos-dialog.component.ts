@@ -22,7 +22,7 @@ export class GestionCatalogosDialogComponent implements OnInit {
   // Computed filters
   categoriasActivas = computed(() => this.todasCategorias().filter(c => c.activo));
   categoriasInactivas = computed(() => this.todasCategorias().filter(c => !c.activo));
-  
+
   unidadesActivas = computed(() => this.todasUnidades().filter(u => u.activo));
   unidadesInactivas = computed(() => this.todasUnidades().filter(u => !u.activo));
 
@@ -59,7 +59,7 @@ export class GestionCatalogosDialogComponent implements OnInit {
     private dialog: MatDialog,
     private catalogoService: CatalogoService,
     private snackBar: MatSnackBar
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.cargar();
@@ -111,8 +111,8 @@ export class GestionCatalogosDialogComponent implements OnInit {
       width: '400px',
       data: {
         title: cat.activo ? 'Desactivar Categoría' : 'Eliminar Permanentemente',
-        message: cat.activo 
-          ? `¿Está seguro de desactivar la categoría "${cat.nombre}"?` 
+        message: cat.activo
+          ? `¿Está seguro de desactivar la categoría "${cat.nombre}"?`
           : `¿Está seguro de ELIMINAR PERMANENTEMENTE la categoría "${cat.nombre}"? Esta acción no se puede deshacer.`,
         confirmText: cat.activo ? 'Desactivar' : 'Eliminar',
         isDestructive: true
@@ -134,14 +134,14 @@ export class GestionCatalogosDialogComponent implements OnInit {
 
   // ========== UNIDADES ==========
   agregarUnidad() {
-    this.catalogoService.crearUnidad({ 
-      nombre: this.nuevaUnidadNombre.trim(), 
+    this.catalogoService.crearUnidad({
+      nombre: this.nuevaUnidadNombre.trim(),
       abreviatura: this.nuevaUnidadAbrev.trim() || '?',
       permiteDecimales: this.nuevaUnidadDec
     }).subscribe({
-      next: () => { 
+      next: () => {
         this.nuevaUnidadNombre = ''; this.nuevaUnidadAbrev = ''; this.nuevaUnidadDec = false;
-        this.cargar(); this.msg('Unidad creada'); 
+        this.cargar(); this.msg('Unidad creada');
       },
       error: () => this.msg('Error al crear unidad')
     });
@@ -155,8 +155,8 @@ export class GestionCatalogosDialogComponent implements OnInit {
   }
 
   guardarUnidad(uni: UnidadMedida) {
-    this.catalogoService.actualizarUnidad(uni.id, { 
-      nombre: this.editUniNombre, 
+    this.catalogoService.actualizarUnidad(uni.id, {
+      nombre: this.editUniNombre,
       abreviatura: this.editUniAbrev,
       permiteDecimales: this.editUniDec
     }).subscribe({
@@ -177,8 +177,8 @@ export class GestionCatalogosDialogComponent implements OnInit {
       width: '400px',
       data: {
         title: uni.activo ? 'Desactivar Unidad' : 'Eliminar Permanentemente',
-        message: uni.activo 
-          ? `¿Está seguro de desactivar la unidad "${uni.nombre}"?` 
+        message: uni.activo
+          ? `¿Está seguro de desactivar la unidad "${uni.nombre}"?`
           : `¿Está seguro de ELIMINAR PERMANENTEMENTE la unidad "${uni.nombre}"? Esta acción no se puede deshacer.`,
         confirmText: uni.activo ? 'Desactivar' : 'Eliminar',
         isDestructive: true
@@ -261,8 +261,8 @@ export class GestionCatalogosDialogComponent implements OnInit {
       width: '400px',
       data: {
         title: prov.activo ? 'Desactivar Proveedor' : 'Eliminar Permanentemente',
-        message: prov.activo 
-          ? `¿Está seguro de desactivar al proveedor "${prov.razonSocial}"?` 
+        message: prov.activo
+          ? `¿Está seguro de desactivar al proveedor "${prov.razonSocial}"?`
           : `¿Está seguro de ELIMINAR PERMANENTEMENTE al proveedor "${prov.razonSocial}"? Esta acción no se puede deshacer.`,
         confirmText: prov.activo ? 'Desactivar' : 'Eliminar',
         isDestructive: true

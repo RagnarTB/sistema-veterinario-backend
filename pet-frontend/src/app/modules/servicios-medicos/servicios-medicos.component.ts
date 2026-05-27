@@ -54,7 +54,7 @@ export class ServiciosMedicosComponent implements OnInit {
     private service: ServicioMedicoService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.cargar();
