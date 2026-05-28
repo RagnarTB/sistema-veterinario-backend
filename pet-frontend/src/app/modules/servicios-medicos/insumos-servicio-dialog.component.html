@@ -35,7 +35,7 @@
             <span class="material-icons-round field-icon">search</span>
             <input 
               type="text" 
-              class="vet-control-input" 
+              class="vet-control-input text-padding-left" 
               placeholder="Escriba nombre o marca..."
               [matAutocomplete]="auto"
               [(ngModel)]="searchQuery"
@@ -79,7 +79,7 @@
           >
         </div>
 
-        <div class="vet-form-field col-span-2 justify-end">
+        <div class="vet-form-field col-span-2 logic-button-align">
           <button 
             class="vet-btn-submit" 
             (click)="addInsumo()" 
@@ -104,16 +104,16 @@
         <table class="vet-modal-table">
           <thead>
             <tr>
-              <th style="text-align: left; padding-left: 24px;">Insumo</th>
-              <th style="text-align: center; width: 18%;">Cant. Sugerida</th>
-              <th style="text-align: left; width: 30%;">Observaciones</th>
-              <th style="text-align: center; width: 15%;">Estado</th>
-              <th style="text-align: center; width: 15%; padding-right: 24px;">Acciones</th>
+              <th style="text-align: left; padding-left: 20px; width: 35%;">Insumo</th>
+              <th style="text-align: center; width: 15%;">Cant. Sugerida</th>
+              <th style="text-align: left; width: 25%;">Observaciones</th>
+              <th style="text-align: center; width: 13%;">Estado</th>
+              <th style="text-align: center; width: 12%; padding-right: 20px;">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let insumo of insumos(); trackBy: trackByInsumoId" [class.row-disabled]="!insumo.activo">
-              <td style="padding-left: 24px;">
+              <td style="padding-left: 20px;">
                 <div class="vet-prod-info">
                   <span class="vet-prod-name">{{ insumo.productoNombre }}</span>
                   <span class="vet-prod-unit">{{ insumo.unidadVentaNombre }}</span>
@@ -132,10 +132,10 @@
                   {{ insumo.activo ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
-              <td style="padding-right: 24px;">
+              <td style="padding-right: 20px;">
                 <div class="vet-modal-actions">
                   <button class="modal-action-btn toggle" (click)="toggleEstado(insumo)" [title]="insumo.activo ? 'Desactivar' : 'Reactivar'">
-                    <span class="material-icons-round" [style.color]="insumo.activo ? '#ef4444' : '#10b981'">
+                    <span class="material-icons-round" [style.color]="insumo.activo ? '#ef4444' : '#0d9488'">
                       {{ insumo.activo ? 'block' : 'settings_backup_restore' }}
                     </span>
                   </button>
@@ -162,7 +162,7 @@
   </div>
 
   <div class="vet-modal-footer">
-    <button mat-flat-button class="vet-btn-close-modal" (click)="onClose()">
+    <button class="vet-btn-close-modal" (click)="onClose()">
       Finalizar Gestión
     </button>
   </div>
