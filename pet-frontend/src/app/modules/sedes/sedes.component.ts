@@ -36,7 +36,6 @@ export class SedesComponent implements OnInit {
   
   displayedColumns: string[] = ['nombre', 'telefono', 'estado', 'acciones'];
   
-  
   dataSource = signal<SedeResponse[]>([]);
   totalElements = signal(0);
   pageSize = signal(10);
@@ -50,12 +49,11 @@ export class SedesComponent implements OnInit {
     private dialog: MatDialog,
     private snack: MatSnackBar
   ) {
-    // Escucha del buscador con Debounce para no saturar el servidor con peticiones por cada tecla
     this.searchControl.valueChanges.pipe(
       debounceTime(400),
       distinctUntilChanged()
     ).subscribe(() => {
-      this.pageIndex.set(0); // Reiniciar a la primera página tras una nueva búsqueda
+      this.pageIndex.set(0); 
       this.cargarSedes();
     });
   }
@@ -64,9 +62,6 @@ export class SedesComponent implements OnInit {
     this.cargarSedes();
   }
 
-  /**
-   * Obtiene la lista paginada de sedes desde el servicio
-   */
   cargarSedes(): void {
     this.loading.set(true);
     const searchTerm = this.searchControl.value || '';
@@ -84,18 +79,12 @@ export class SedesComponent implements OnInit {
     });
   }
 
-  /**
-   * Escucha los cambios del paginado de Angular Material
-   */
   onPageChange(event: PageEvent): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
     this.cargarSedes();
   }
 
-  /**
-   * Abre el formulario modal para Crear o Editar una Sede
-   */
   abrirModal(sede?: SedeResponse): void {
     const dialogRef = this.dialog.open(SedeDialogComponent, {
       width: '500px',
@@ -108,9 +97,6 @@ export class SedesComponent implements OnInit {
     });
   }
 
-  /**
-   * Cambia el estado lógico de la sede mediante modal de confirmación
-   */
   cambiarEstado(sede: SedeResponse): void {
     const nuevoEstado = !sede.activo;
     
@@ -141,9 +127,6 @@ export class SedesComponent implements OnInit {
     });
   }
 
-  /**
-   * Ejecuta la eliminación física/permanente en la base de datos
-   */
   eliminarFisico(sede: SedeResponse): void {
     const dialogRef = this.dialog.open(ModalConfirmacionComponent, {
       width: '400px',
@@ -172,3 +155,5 @@ export class SedesComponent implements OnInit {
     });
   }
 }
+
+

@@ -55,6 +55,8 @@ export class ServicioMedicoDialogComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.dialogRef.close();
+    if (this.dialogRef.close) {
+      this.dialogRef.close();
+    }
   }
 }
