@@ -77,23 +77,22 @@
             Acciones 
           </th>
           <td mat-cell *matCellDef="let element" style="padding: 16px 24px; border-bottom: 1px solid #f1f5f9; text-align: right; white-space: nowrap;">
-            <div style="display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end;">
+            <div style="display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end;">
               
-              <button mat-icon-button type="button" class="btn-vet-action text-blue" style="color: #2563eb;" (click)="abrirModal(element)" title="Editar">
-                <mat-icon style="font-size: 18px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;">edit</mat-icon>
+              <button mat-icon-button type="button" class="btn-vet-action action-blue" (click)="abrirModal(element)" title="Editar">
+                <mat-icon>edit</mat-icon>
               </button>
               
-              <button mat-icon-button type="button" class="btn-vet-action" 
-                      [style.color]="element.activo ? '#d97706' : '#059669'"
+              <button mat-icon-button type="button" class="btn-vet-action"
+                      [class.action-orange]="element.activo"
+                      [class.action-green]="!element.activo"
                       (click)="cambiarEstado(element)" 
                       [title]="element.activo ? 'Desactivar' : 'Activar'">
-                <mat-icon style="font-size: 18px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;">
-                  {{ element.activo ? 'block' : 'check_circle' }}
-                </mat-icon>
+                <mat-icon>{{ element.activo ? 'block' : 'check_circle' }}</mat-icon>
               </button>
               
-              <button mat-icon-button type="button" class="btn-vet-action text-red" style="color: #dc2626;" (click)="eliminarFisico(element)" title="Eliminar Permanentemente">
-                <mat-icon style="font-size: 18px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;">delete_forever</mat-icon>
+              <button mat-icon-button type="button" class="btn-vet-action action-red" (click)="eliminarFisico(element)" title="Eliminar Permanentemente">
+                <mat-icon>delete_forever</mat-icon>
               </button>
               
             </div>
@@ -124,3 +123,5 @@
     </div>
   </div>
 </div>
+
+
