@@ -80,6 +80,7 @@ class PacienteControllerTest {
                                 "Firulais",
                                 "Perro",
                                 "Mestizo",
+                                "MACHO",
                                 LocalDate.of(2020, 1, 15),
                                 1L,
                                 "Juan",

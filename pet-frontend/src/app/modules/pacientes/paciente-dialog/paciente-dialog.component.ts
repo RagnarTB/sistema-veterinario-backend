@@ -67,6 +67,7 @@ export class PacienteDialogComponent implements OnInit {
       nombre: [this.data?.nombre || '', Validators.required],
       especieId: [{ value: null, disabled: this.isEdit }, Validators.required],
       raza: [this.data?.raza || ''],
+      sexo: [this.data?.sexo || 'MACHO', Validators.required],
       fechaNacimiento: [{ value: this.data?.fechaNacimiento ? new Date(this.data.fechaNacimiento) : null, disabled: this.isEdit }, Validators.required],
       clienteId: [{ value: this.data?.clienteId || null, disabled: this.isEdit }, Validators.required]
     });

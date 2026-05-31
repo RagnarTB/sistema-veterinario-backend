@@ -58,11 +58,11 @@ export class ProductoDialogComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<ProductoDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { 
-      isEditing: boolean; 
-      producto?: any; 
-      sedeId: number; 
-      readOnly?: boolean 
+    @Inject(MAT_DIALOG_DATA) public data: {
+      isEditing: boolean;
+      producto?: any;
+      sedeId: number;
+      readOnly?: boolean
     },
     private productoService: ProductoService,
     private catalogoService: CatalogoService,
@@ -85,11 +85,34 @@ export class ProductoDialogComponent implements OnInit {
   ngOnInit() {
     this.cargarCatalogos();
 
+    // Lógica para el factor de conversión
+    this.form.get('unidadCompraId')?.valueChanges.subscribe(() => this.verificarUnidadesYFactor());
+    this.form.get('unidadVentaId')?.valueChanges.subscribe(() => this.verificarUnidadesYFactor());
+
     if (this.data.isEditing && this.data.producto) {
       this.form.patchValue(this.data.producto);
+      this.verificarUnidadesYFactor();
       if (this.data.readOnly) this.form.disable();
       this.cargarLotes();
       this.cargarMovimientos();
+    }
+  }
+
+  verificarUnidadesYFactor() {
+    if (this.data.readOnly) return; // Si es readonly no tocamos nada
+    const compraId = this.form.get('unidadCompraId')?.value;
+    const ventaId = this.form.get('unidadVentaId')?.value;
+    const factorCtrl = this.form.get('factorConversion');
+
+    if (!compraId || !ventaId || !factorCtrl) return;
+
+    if (compraId === ventaId) {
+      // Si compra y venta es la misma unidad, factor 1 obligatorio
+      factorCtrl.setValue(1);
+      factorCtrl.disable();
+      this.snackBar.open('Factor fijado a 1 porque la unidad de compra y venta es la misma', 'OK', { duration: 3000 });
+    } else {
+      factorCtrl.enable();
     }
   }
 
@@ -126,10 +149,11 @@ export class ProductoDialogComponent implements OnInit {
     this.cargando.set(true);
 
     // Los datos ya se normalizan en el backend, pero los mandamos limpios
+    const rawValues = this.form.getRawValue(); // Usa getRawValue para incluir controles disabled
     const values = {
-      ...this.form.value,
-      nombre: this.normalizar(this.form.value.nombre),
-      marca: this.normalizar(this.form.value.marca)
+      ...rawValues,
+      nombre: this.normalizar(rawValues.nombre),
+      marca: this.normalizar(rawValues.marca)
     };
 
     const obs$ = this.data.isEditing
@@ -160,14 +184,14 @@ export class ProductoDialogComponent implements OnInit {
           return { ...lote, ultimoMotivo: ultimaEdicion?.motivo };
         });
         this.lotes.set(lotesEnriquecidos);
-        
+
         // Actualizar el stock actual en memoria para que las salidas reflejen el valor correcto
         const totalStock = res.reduce((acc, lote) => acc + (lote.stockRestante || 0), 0);
         if (this.data.producto) {
           this.data.producto.stockActual = totalStock;
         }
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -238,7 +262,7 @@ export class ProductoDialogComponent implements OnInit {
     const sedeId = this.data.sedeId || Number(localStorage.getItem('vet_sede_id')) || 1;
     this.inventarioService.obtenerMovimientos(this.data.producto.id, sedeId).subscribe({
       next: (res) => this.movimientos.set(res),
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -283,7 +307,7 @@ export class ProductoDialogComponent implements OnInit {
     const provOriginal = this.proveedores().find(p => p.razonSocial === this.loteOriginal.proveedorNombre);
     const idProvOriginal = provOriginal ? provOriginal.id : null;
 
-    const huboCambios = 
+    const huboCambios =
       this.loteEditData.numeroLote !== this.loteOriginal.numeroLote ||
       this.loteEditData.fechaVencimiento !== (this.loteOriginal.fechaVencimiento || '') ||
       this.loteEditData.proveedorId !== idProvOriginal;

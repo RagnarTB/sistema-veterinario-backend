@@ -2,7 +2,7 @@ package com.veterinaria.dtos;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List; // ¡No olvides este import!
+import java.util.List;
 
 import com.veterinaria.modelos.Enums.EstadoCita;
 
@@ -19,9 +19,13 @@ public class CitaResponseDTO {
     private LocalTime horaInicio;
     private LocalTime horaFin;
     private String servicioNombre;
+    private Long servicioId;
     private Long veterinarioId;
+    private String veterinarioNombre;
     private String motivo;
     private EstadoCita estado;
     private List<Long> pacienteIds;
     private Long sedeId;
+    private String sedeNombre;
+    private List<PacienteResumenDTO> pacientes;
 }

@@ -17,6 +17,32 @@ public class HospitalizacionController {
 
     private final HospitalizacionServicio hospitalizacionServicio;
 
+    @PostMapping("/{id}/monitoreo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')")
+    public ResponseEntity<com.veterinaria.dtos.HistorialHospitalizacionResponseDTO> registrarMonitoreo(
+            @PathVariable Long id,
+            @Valid @RequestBody com.veterinaria.dtos.HistorialHospitalizacionRequestDTO requestDTO) {
+        if (!id.equals(requestDTO.getHospitalizacionId())) {
+            throw new IllegalArgumentException("ID en ruta no coincide con el cuerpo");
+        }
+        return ResponseEntity.ok(hospitalizacionServicio.registrarMonitoreo(requestDTO));
+    }
+
+    @GetMapping("/activas")
+    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO', 'RECEPCIONISTA')")
+    public ResponseEntity<java.util.List<HospitalizacionResponseDTO>> listarActivas(@RequestParam(required = false) Long sedeId) {
+        return ResponseEntity.ok(hospitalizacionServicio.listarHospitalizacionesActivas(sedeId));
+    }
+
+    @GetMapping("/sugerencia-jaula")
+    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO', 'RECEPCIONISTA')")
+    public ResponseEntity<com.veterinaria.dtos.SugerenciaJaulaResponseDTO> sugerirJaula(
+            @RequestParam Long pacienteId,
+            @RequestParam Long sedeId,
+            @RequestParam(required = false) java.math.BigDecimal pesoActual) {
+        return ResponseEntity.ok(hospitalizacionServicio.sugerirJaula(pacienteId, sedeId, pesoActual));
+    }
+
     @PostMapping("/ingreso")
     @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')")
     public ResponseEntity<HospitalizacionResponseDTO> ingresarPaciente(@Valid @RequestBody HospitalizacionRequestDTO requestDTO) {
@@ -45,5 +71,19 @@ public class HospitalizacionController {
     public ResponseEntity<HospitalizacionResponseDTO> registrarFallecimiento(@PathVariable Long id) {
         HospitalizacionResponseDTO response = hospitalizacionServicio.registrarFallecimiento(id);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/gravedad")
+    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')")
+    public ResponseEntity<HospitalizacionResponseDTO> cambiarGravedad(
+            @PathVariable Long id,
+            @RequestParam String nivel) {
+        return ResponseEntity.ok(hospitalizacionServicio.cambiarGravedad(id, nivel));
+    }
+
+    @GetMapping("/{id}/historial")
+    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO', 'RECEPCIONISTA')")
+    public ResponseEntity<java.util.List<com.veterinaria.dtos.HistorialHospitalizacionResponseDTO>> listarHistorial(@PathVariable Long id) {
+        return ResponseEntity.ok(hospitalizacionServicio.listarHistorial(id));
     }
 }

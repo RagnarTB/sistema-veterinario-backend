@@ -42,6 +42,9 @@ public class AtencionMedicaServicioTest {
     @Mock
     private EmpleadoRepositorio empleadoRepositorio;
 
+    @Mock
+    private com.veterinaria.respositorios.VentaRepositorio ventaRepositorio;
+
     @InjectMocks
     private AtencionMedicaServicio atencionMedicaServicio;
 
@@ -61,6 +64,7 @@ public class AtencionMedicaServicioTest {
 
         com.veterinaria.modelos.Usuario pacienteUsuario = new com.veterinaria.modelos.Usuario();
         pacienteUsuario.setNombre("Juan");
+        paciente = new Paciente();
         paciente.setId(100L);
         paciente.setNombre("Boby");
 

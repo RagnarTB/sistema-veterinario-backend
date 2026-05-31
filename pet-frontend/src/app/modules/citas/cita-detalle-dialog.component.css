@@ -1,0 +1,50 @@
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.info-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+.info-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.estado-agendada {
+    color: #64748b;
+    background: rgba(100, 116, 139, 0.1);
+}
+
+.estado-confirmada {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.estado-sala-espera {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.estado-consultorio {
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+}
+
+.estado-completada {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.estado-cancelada,
+.estado-no-asistio {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}

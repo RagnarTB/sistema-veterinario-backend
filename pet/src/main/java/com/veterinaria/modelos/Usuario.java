@@ -14,16 +14,28 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "usuarios")
-@Data
-
+@Getter
+@Setter
 @NoArgsConstructor
-
 public class Usuario {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Usuario)) return false;
+        Usuario usuario = (Usuario) o;
+        return id != null && id.equals(usuario.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -37,8 +49,11 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 8)
     private String dni;
 
-    @Column(nullable = false)
+    // Teléfono ahora es opcional para soportar clientes rápidos
     private String telefono;
+
+    @Column(length = 255)
+    private String direccion;
 
 
     // El email será nuestro "username" para el login
@@ -69,5 +84,12 @@ public class Usuario {
 
     @Column(name = "google_vinculado")
     private Boolean googleVinculado = false;
+
+    // Campos para recuperación de contraseña
+    @Column(name = "reset_password_token", unique = true)
+    private String resetPasswordToken;
+
+    @Column(name = "reset_password_token_expiration")
+    private java.time.LocalDateTime resetPasswordTokenExpiration;
 
 }

@@ -22,8 +22,11 @@ public class ClienteRequestDTO {
     @Size(max = 30, message = "El DNI no puede superar 30 caracteres")
     private String dni;
     @Email(message = "Debe ser un correo válido")
-    @NotBlank(message = "El email es obligatorio")
     @Size(max = 254, message = "El email no puede superar 254 caracteres")
     private String email;
 
+    @Size(max = 255, message = "La dirección no puede superar 255 caracteres")
+    private String direccion;
+
 }
+

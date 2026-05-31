@@ -71,6 +71,14 @@ export class CompletarRegistroComponent implements OnInit {
         }
       });
     }
+
+    // Limpiar datos RENIEC si el DNI se borra o edita (< 8 dígitos)
+    this.form.get('dni')?.valueChanges.subscribe((val: string) => {
+      if ((val || '').toString().trim().length < 8) {
+        this.form.get('nombre')?.enable();
+        this.form.patchValue({ nombre: '', apellido: '' });
+      }
+    });
   }
 
   get f() { return this.form.controls; }
@@ -107,7 +115,7 @@ export class CompletarRegistroComponent implements OnInit {
       event.preventDefault();
     }
   }
-  
+
   soloNumeros(event: KeyboardEvent): void {
     const teclas_permitidas = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
     const patron = /^[0-9]$/;

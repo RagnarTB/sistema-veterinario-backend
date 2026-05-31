@@ -116,18 +116,16 @@ public class CitaServicioTest {
         
         when(citaRepositorio.existeCruceDeHorario(eq(1L), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class), eq(-1L), anyList())).thenReturn(true);
 
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> citaServicio.guardar(requestDTO));
-        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
-        assertTrue(exception.getReason().contains("El veterinario ya tiene una cita ocupando este horario."));
+        com.veterinaria.excepciones.BusinessLogicException exception = assertThrows(com.veterinaria.excepciones.BusinessLogicException.class, () -> citaServicio.guardar(requestDTO));
+        assertTrue(exception.getMessage().contains("El veterinario ya tiene una cita ocupando este horario."));
     }
 
     @Test
     void guardar_FallaFechaPasada() {
         requestDTO.setFecha(LocalDate.now().minusDays(1)); // Ayer
 
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> citaServicio.guardar(requestDTO));
-        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-        assertTrue(exception.getReason().contains("No se permiten citas en el pasado"));
+        com.veterinaria.excepciones.BusinessLogicException exception = assertThrows(com.veterinaria.excepciones.BusinessLogicException.class, () -> citaServicio.guardar(requestDTO));
+        assertTrue(exception.getMessage().contains("No se permiten citas en el pasado"));
     }
 
     @Test

@@ -1,0 +1,303 @@
+<div class="page-container fade-in-up" style="max-width: 1400px;">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title"> Agenda de Citas</h1>
+            <p class="page-subtitle">Gestión centralizada de la clínica veterinaria</p>
+        </div>
+        <div class="flex items-center gap-md">
+            <div style="min-width: 220px;">
+                <div style="position: relative;">
+                    <span class="material-icons-round"
+                        style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #14b8b8; font-size: 18px;">storefront</span>
+                    <select class="form-control" [ngModel]="sedeSeleccionada()" (ngModelChange)="onSedeChange($event)"
+                        style="padding-left: 36px; border-color: #14b8b8; font-weight: 600; cursor: pointer; height: 40px; font-size: 0.85rem;">
+                        <option [ngValue]="null" disabled>Sede de Trabajo...</option>
+                        @for (s of sedes(); track s.id) {
+                        <option [ngValue]="s.id">{{ s.nombre }}</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" (click)="abrirWizard()">
+                <span class="material-icons-round">add_circle</span> Nueva Cita
+            </button>
+        </div>
+    </div>
+
+    @if (!sedeSeleccionada()) {
+    <div class="card p-8 text-center flex flex-col items-center justify-center" style="min-height: 400px;">
+        <span class="material-icons-round text-muted" style="font-size: 64px; margin-bottom: 16px;">domain</span>
+        <h3 class="font-bold text-lg">Seleccione una sede</h3>
+        <p class="text-secondary">Debe elegir una sede de trabajo para visualizar la agenda.</p>
+    </div>
+    } @else {
+
+    <mat-tab-group class="mb-2" (selectedIndexChange)="onTabChange($event)" [selectedIndex]="tabActivo()">
+        <mat-tab label="Vista Agenda"></mat-tab>
+        <mat-tab label="Tablero Recepción"></mat-tab>
+        <mat-tab label="Listado Histórico"></mat-tab>
+    </mat-tab-group>
+
+    @if (loading() && citas().length === 0) {
+    <div class="card p-8 flex justify-center items-center mt-4" style="min-height: 300px;">
+        <mat-spinner diameter="40"></mat-spinner>
+    </div>
+    } @else {
+
+    @if (tabActivo() === 0) {
+    <div class="agenda-grid">
+
+        <div class="flex flex-col gap-4">
+            <div class="card p-4">
+                <span class="text-xs font-bold text-muted uppercase mb-3 block">Filtros de Agenda</span>
+
+                <div class="form-group mb-4">
+                    <label class="form-label">Veterinario</label>
+                    <select class="form-control" [ngModel]="vetSeleccionado()" (ngModelChange)="onVetChange($event)">
+                        <option [ngValue]="null">Todos los doctores</option>
+                        @for (v of veterinarios(); track v.id) {
+                        <option [ngValue]="v.id">Dr(a). {{ v.nombre }} {{ v.apellido }}</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label class="form-label">Estado de la Cita</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="chip-filter" [class.active]="!estadoFiltro()"
+                            (click)="onEstadoFiltro(null)">Todas</button>
+                        @for (e of estadosActivos; track e) {
+                        <button class="chip-filter" [class.active]="estadoFiltro() === e" [ngClass]="getEstadoColor(e)"
+                            (click)="onEstadoFiltro(e)">
+                            {{ getEstadoLabel(e) }}
+                        </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-4"
+                style="background: var(--color-primary-50); border: 1px solid var(--color-primary-200);">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-icons-round text-primary" style="font-size: 20px;">today</span>
+                    <span class="font-bold text-sm" style="color: var(--color-primary-800)">Citas para {{
+                        fechaFormateada() }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-secondary font-medium">Total programado:</span>
+                    <span class="badge badge-confirmada" style="font-size: 0.75rem;">{{ citas().length }}</span>
+                </div>
+            </div>
+
+            <div class="card p-2">
+                <mat-calendar [selected]="fechaDate()" (selectedChange)="onFechaDateChange($event)"
+                    class="custom-calendar"></mat-calendar>
+            </div>
+        </div>
+
+        <div class="min-w-0">
+            @if (loading()) {
+            <div class="flex justify-center p-8"><mat-spinner diameter="30"></mat-spinner></div>
+            } @else if (citas().length === 0) {
+            <div class="card p-12 text-center text-muted flex flex-col items-center justify-center h-full">
+                <span class="material-icons-round mb-4"
+                    style="font-size: 64px; color: var(--border-color);">event_available</span>
+                <h3 class="font-bold text-lg mb-2" style="color: var(--text-primary);">Día libre de citas</h3>
+                <p class="text-sm mb-6">No hay citas programadas para esta fecha y filtros seleccionados.</p>
+                <button class="btn btn-primary" (click)="abrirWizard()">Agendar Primera Cita</button>
+            </div>
+            } @else {
+            <div class="flex flex-col gap-3">
+                @for (cita of citas(); track cita.id) {
+                <div class="card p-4 cita-card cursor-pointer flex items-center justify-between gap-4"
+                    [ngStyle]="{'border-left-color': getEstadoHexColor(cita.estado)}" (click)="abrirDetalle(cita)"
+                    [class.opacity-50]="esEstadoFinal(cita.estado)">
+
+                    <div class="flex items-center gap-4 w-full">
+                        <div class="flex flex-col items-center justify-center min-w-[80px] border-r pr-4">
+                            <span class="text-lg font-bold" style="color: var(--text-primary); line-height: 1;">{{
+                                cita.horaInicio.substring(0,5) }}</span>
+                            <span class="text-xs text-muted mt-1">{{ cita.horaFin.substring(0,5) }}</span>
+                        </div>
+
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-bold text-md m-0" style="color: var(--text-primary)">{{
+                                    cita.servicioNombre }}</h3>
+                                <span class="badge" [ngClass]="getEstadoColor(cita.estado)">{{
+                                    getEstadoLabel(cita.estado) }}</span>
+                            </div>
+                            <p class="text-xs text-secondary mb-2 flex items-center gap-1">
+                                <span class="material-icons-round text-muted" style="font-size:14px">person</span>
+                                Dr(a). {{ cita.veterinarioNombre }}
+                                <span class="mx-1 text-muted">•</span>
+                                <span class="material-icons-round text-muted"
+                                    style="font-size:14px">account_circle</span> {{ cita.pacientes[0]?.clienteNombre ||
+                                '—' }}
+                            </p>
+
+                            <div class="flex flex-wrap gap-1">
+                                @for (p of cita.pacientes; track p.id; let i = $index) {
+                                @if (i < 3) { <span class="badge bg-surface text-secondary flex items-center gap-1"
+                                    style="font-size: 0.7rem;">
+                                    <span class="material-icons-round" style="font-size:12px">pets</span> {{ p.nombre }}
+                                    </span>
+                                    }
+                                    }
+                                    @if (cita.pacientes.length > 3) {
+                                    <span class="badge bg-surface text-muted" style="font-size: 0.7rem;">+{{
+                                        cita.pacientes.length - 3 }}</span>
+                                    }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2 min-w-[120px]">
+                        @if (getSiguienteEstado(cita.estado); as next) {
+                        <button class="btn btn-primary btn-sm w-full text-xs" (click)="avanzarEstado(cita, $event)">
+                            Avanzar <span class="material-icons-round" style="font-size: 14px;">arrow_forward</span>
+                        </button>
+                        }
+                        <button class="btn btn-secondary btn-sm w-full text-xs">Detalle</button>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+    </div>
+    }
+
+    @if (tabActivo() === 1) {
+    <div class="flex justify-between items-center mt-4 mb-4">
+        <h2 class="font-bold text-lg" style="color: var(--text-primary)">Recepción del {{ fechaFormateada() }}</h2>
+        <input type="date" class="form-control" style="width: auto;" [ngModel]="fechaSeleccionada()"
+            (ngModelChange)="onFechaChange($event)">
+    </div>
+
+    <div class="flex overflow-x-auto gap-4 pb-4">
+        @for (col of kanbanCols; track col.estado) {
+        <div class="card p-3 kanban-col flex flex-col h-[calc(100vh-280px)] flex-1"
+            [ngStyle]="{'border-top-color': getEstadoHexColor(col.estado)}">
+            <div class="flex items-center justify-between mb-3 border-bottom pb-2">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons-round" style="font-size:16px" [ngClass]="getEstadoColor(col.estado)">{{
+                        getEstadoIcon(col.estado) }}</span>
+                    <h3 class="font-bold text-sm m-0">{{ col.label }}</h3>
+                </div>
+                <span class="badge bg-surface">{{ getKanbanCitas(col.estado).length }}</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto pr-1 flex flex-col gap-3 custom-scrollbar">
+                @for (cita of getKanbanCitas(col.estado); track cita.id) {
+                <div class="kanban-card p-3 rounded-md cursor-pointer" (click)="abrirDetalle(cita)">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="badge bg-surface font-bold text-xs">{{ cita.horaInicio.substring(0,5) }}</span>
+                        <span class="text-xs text-muted">{{ cita.veterinarioNombre.split(' ')[0] }}</span>
+                    </div>
+                    <p class="font-bold text-sm mb-1 leading-tight">{{ cita.servicioNombre }}</p>
+                    <p class="text-xs text-secondary mb-2 truncate">
+                        @for (p of cita.pacientes; track p.id; let i = $index) {
+                        @if (i < 2) { {{ p.nombre }}{{ i < cita.pacientes.length - 1 && i < 1 ? ', ' : '' }} } } </p>
+                            @if (getSiguienteEstado(cita.estado); as next) {
+                            <button class="btn btn-sm w-full py-1 text-xs justify-center btn-secondary"
+                                (click)="avanzarEstado(cita, $event)">
+                                {{ getEstadoLabel(next) }} <span class="material-icons-round"
+                                    style="font-size:12px">arrow_forward</span>
+                            </button>
+                            }
+                </div>
+                } @empty {
+                <div class="flex flex-col items-center justify-center h-32 text-muted opacity-50">
+                    <span class="material-icons-round text-2xl mb-1">inbox</span>
+                    <span class="text-xs">Vacío</span>
+                </div>
+                }
+            </div>
+        </div>
+        }
+    </div>
+    }
+
+    @if (tabActivo() === 2) {
+    <div class="card p-4 mt-4 mb-4 flex flex-wrap gap-4 items-end bg-surface">
+        <div class="form-group mb-0 flex-1 min-w-[200px]">
+            <label class="form-label text-xs">Buscar</label>
+            <div style="position: relative;">
+                <span class="material-icons-round"
+                    style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--text-muted);">search</span>
+                <input type="text" class="form-control" style="padding-left: 34px;"
+                    placeholder="Paciente, dueño, veterinario..." [ngModel]="busqueda()"
+                    (ngModelChange)="onBusquedaChange($event)">
+            </div>
+        </div>
+        <div class="form-group mb-0 w-[180px]">
+            <label class="form-label text-xs">Filtrar Fecha</label>
+            <input type="date" class="form-control" [ngModel]="fechaSeleccionada()"
+                (ngModelChange)="onFechaChange($event)">
+        </div>
+        <div class="form-group mb-0 w-[180px]">
+            <label class="form-label text-xs">Estado</label>
+            <select class="form-control" [ngModel]="estadoFiltro()" (ngModelChange)="onEstadoFiltro($event)">
+                <option [ngValue]="null">Todos</option>
+                @for (e of estadosActivos; track e) { <option [ngValue]="e">{{ getEstadoLabel(e) }}</option> }
+            </select>
+        </div>
+    </div>
+
+    <div class="card overflow-hidden p-0">
+        <div class="tabla-container">
+            <table class="table w-full">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Horario</th>
+                        <th>Servicio</th>
+                        <th>Veterinario</th>
+                        <th>Pacientes</th>
+                        <th>Estado</th>
+                        <th class="text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (cita of citas(); track cita.id) {
+                    <tr class="cursor-pointer transition-colors hover:bg-gray-50" (click)="abrirDetalle(cita)">
+                        <td class="font-medium text-sm">{{ cita.fecha }}</td>
+                        <td class="text-sm">{{ cita.horaInicio.substring(0,5) }} - {{ cita.horaFin.substring(0,5) }}
+                        </td>
+                        <td class="text-sm">{{ cita.servicioNombre }}</td>
+                        <td class="text-sm">{{ cita.veterinarioNombre }}</td>
+                        <td class="text-sm">
+                            @for (p of cita.pacientes; track p.id; let i = $index) {
+                            @if (i < 2) { <span class="badge bg-surface text-secondary text-xs mr-1">{{ p.nombre
+                                }}</span> }
+                                }
+                                @if (cita.pacientes.length > 2) { <span class="text-xs text-muted">+{{
+                                    cita.pacientes.length - 2 }}</span> }
+                        </td>
+                        <td>
+                            <span class="badge text-xs" [ngClass]="getEstadoColor(cita.estado)">{{
+                                getEstadoLabel(cita.estado) }}</span>
+                        </td>
+                        <td class="text-right">
+                            <button class="btn-icon" matTooltip="Ver detalle">
+                                <span class="material-icons-round">visibility</span>
+                            </button>
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td colspan="7" class="text-center py-8 text-muted">No se encontraron citas con los filtros
+                            actuales.</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <mat-paginator [length]="totalElements()" [pageSize]="pageSize()" [pageSizeOptions]="[10,25,50]"
+            (page)="onPageChange($event)" showFirstLastButtons class="border-top"></mat-paginator>
+    </div>
+    }
+    }
+    }
+</div>

@@ -24,12 +24,15 @@ public class CajaServicio {
         private final CajaRepositorio cajaRepositorio;
         private final VentaRepositorio ventaRepositorio;
         private final SedeRepositorio sedeRepositorio;
+        private final com.veterinaria.respositorios.PagoVentaRepositorio pagoVentaRepositorio;
 
         public CajaServicio(CajaRepositorio cajaRepositorio, VentaRepositorio ventaRepositorio,
-                        SedeRepositorio sedeRepositorio) {
+                        SedeRepositorio sedeRepositorio,
+                        com.veterinaria.respositorios.PagoVentaRepositorio pagoVentaRepositorio) {
                 this.cajaRepositorio = cajaRepositorio;
                 this.ventaRepositorio = ventaRepositorio;
                 this.sedeRepositorio = sedeRepositorio;
+                this.pagoVentaRepositorio = pagoVentaRepositorio;
         }
 
         @Transactional
@@ -83,11 +86,12 @@ public class CajaServicio {
                 cajaAbierta.setEstado("CERRADA");
                 cajaAbierta.setFechaCierre(ahora);
 
-                BigDecimal totalVentas = ventaRepositorio.sumarVentasPorCaja(cajaAbierta.getId());
+                BigDecimal totalVentas = pagoVentaRepositorio.sumarPagosPorCaja(cajaAbierta.getId());
                 totalVentas = (totalVentas == null) ? BigDecimal.ZERO : totalVentas;
 
                 BigDecimal ingresosExtras = cajaAbierta.getMovimientos().stream()
                                 .filter(m -> m.getTipoMovimiento() == TipoMovimiento.INGRESO)
+                                .filter(m -> m.getConcepto() == null || !m.getConcepto().startsWith("Pago Venta"))
                                 .map(m -> m.getMonto())
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -113,5 +117,17 @@ public class CajaServicio {
                                 ingresosExtras,
                                 egresosExtras,
                                 saldoCalculado);
+        }
+
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
+        public com.veterinaria.dtos.CajaEstadoResponseDTO obtenerEstadoCaja(Long sedeId, Empleado empleadoActual) {
+                java.util.Optional<CajaDiaria> cajaOpt = cajaRepositorio.findByEmpleadoIdAndSedeIdAndEstado(empleadoActual.getId(), sedeId, "ABIERTA");
+                if (cajaOpt.isPresent()) {
+                        CajaDiaria c = cajaOpt.get();
+                        String nombreCompleto = c.getEmpleado().getUsuario().getNombre() + " " + c.getEmpleado().getUsuario().getApellido();
+                        return new com.veterinaria.dtos.CajaEstadoResponseDTO(true, c.getId(), c.getSaldoInicial(), c.getFechaApertura(), nombreCompleto);
+                } else {
+                        return new com.veterinaria.dtos.CajaEstadoResponseDTO(false, null, null, null, null);
+                }
         }
 }

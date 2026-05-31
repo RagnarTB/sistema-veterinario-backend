@@ -88,6 +88,14 @@ export class AuthService {
     return this.http.post<MensajeResponse>(`${this.apiUrl}/cambiar-password`, dto);
   }
 
+  solicitarRecuperacionPassword(email: string): Observable<MensajeResponse> {
+    return this.http.post<MensajeResponse>(`${this.apiUrl}/olvide-password`, { email });
+  }
+
+  resetearPassword(token: string, newPassword: string): Observable<MensajeResponse> {
+    return this.http.post<MensajeResponse>(`${this.apiUrl}/reset-password`, { token, newPassword });
+  }
+
   confirmarCuenta(token: string, password: string): Observable<MensajeResponse> {
     return this.http.post<MensajeResponse>(`${this.apiUrl}/confirmar-token`, { token, password });
   }
@@ -118,15 +126,16 @@ export class AuthService {
   // ── Helpers de roles ────────────────────────────────────────────────
 
   hasRole(rol: RolNombre): boolean {
-    return this._activeRole() === rol || this._roles().includes(rol);
+    return this._activeRole() === rol;
   }
 
   hasAnyRole(...roles: RolNombre[]): boolean {
-    return roles.some((r) => this._roles().includes(r));
+    const active = this._activeRole();
+    return active ? roles.includes(active) : false;
   }
 
   isAdmin(): boolean {
-    return this._activeRole() === 'ROLE_ADMIN' || this._roles().includes('ROLE_ADMIN');
+    return this._activeRole() === 'ROLE_ADMIN';
   }
 
   setActiveRole(rol: RolNombre): void {

@@ -2,6 +2,7 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { RouterModule } from '@angular/router';
 
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -27,6 +28,7 @@ import { EspeciesDialogComponent } from './especies-dialog/especies-dialog.compo
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     ReactiveFormsModule,
     MatTableModule,
     MatPaginatorModule,
@@ -76,7 +78,7 @@ export class PacientesComponent implements OnInit {
   cargarPacientes() {
     this.loading.set(true);
     const search = this.searchControl.value || '';
-    
+
     this.pacienteService.listar(this.pageIndex(), this.pageSize(), search, this.estadoActual()).subscribe({
       next: (pageData) => {
         this.dataSource.set(pageData.content);

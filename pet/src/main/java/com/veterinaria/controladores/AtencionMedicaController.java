@@ -30,7 +30,7 @@ public class AtencionMedicaController {
     private AtencionMedicaServicio atencionMedicaServicio;
 
     @PostMapping
-    @PreAuthorize("hasRole('VETERINARIO')") // candado para abrir el metodo segun el rol
+    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')") // candado para abrir el metodo segun el rol
     public ResponseEntity<AtencionMedicaResponseDTO> crearAtencionMedica(
             @Valid @RequestBody AtencionMedicaRequestDTO dto) { // CORRECCIÓN: Usamos el RequestDTO correcto
         AtencionMedicaResponseDTO respuesta = atencionMedicaServicio.guardar(dto);
@@ -60,5 +60,11 @@ public class AtencionMedicaController {
     public ResponseEntity<Void> eliminarAtencion(@PathVariable Long id) {
         atencionMedicaServicio.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/cita/{citaId}/paciente/{pacienteId}")
+    public ResponseEntity<AtencionMedicaResponseDTO> buscarPorCitaYPaciente(
+            @PathVariable Long citaId, @PathVariable Long pacienteId) {
+        return ResponseEntity.ok(atencionMedicaServicio.buscarPorCitaYPaciente(citaId, pacienteId));
     }
 }

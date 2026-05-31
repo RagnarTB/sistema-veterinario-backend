@@ -49,6 +49,10 @@ public class ExternoController {
             data.setExisteEnBd(true);
             data.setEmail(u.getEmail());
             data.setTelefono(u.getTelefono());
+            // Incluir el ID del cliente si existe para vincular automáticamente
+            if (u.getCliente() != null) {
+                data.setClienteId(u.getCliente().getId());
+            }
             // Sobrescribimos o asignamos el nombre del sistema
             data.setFirstName(u.getNombre());
             data.setFirstLastName(u.getApellido());

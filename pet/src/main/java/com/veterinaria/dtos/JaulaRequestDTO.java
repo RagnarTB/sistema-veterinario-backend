@@ -10,8 +10,11 @@ public class JaulaRequestDTO {
     @NotBlank(message = "El número de jaula es obligatorio")
     private String numero;
 
-    @NotBlank(message = "El tipo es obligatorio")
-    private String tipo;
+    private Long categoriaId;
+
+    private Long tamanoId;
+
+    private Boolean alertaContagio = false;
 
     @NotBlank(message = "El estado es obligatorio")
     private String estado;

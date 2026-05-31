@@ -9,6 +9,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.veterinaria.dtos.ClienteRapidoRequestDTO;
+import com.veterinaria.dtos.ClienteRapidoResponseDTO;
 import com.veterinaria.dtos.ClienteRequestDTO;
 import com.veterinaria.dtos.ClienteResponseDTO;
 import com.veterinaria.servicios.ClienteServicio;
@@ -37,6 +39,17 @@ public class ClienteController {
     public ResponseEntity<ClienteResponseDTO> crearCliente(@Valid @RequestBody ClienteRequestDTO dto) {
         ClienteResponseDTO respuesta = clienteServicio.guardar(dto);
 
+        return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
+    }
+
+    // =========================================================
+    // CLIENTE RÁPIDO: Crea usuario mínimo + cliente + mascotas
+    // =========================================================
+    @PostMapping("/rapido")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPCIONISTA')")
+    public ResponseEntity<ClienteRapidoResponseDTO> crearClienteRapido(
+            @Valid @RequestBody ClienteRapidoRequestDTO dto) {
+        ClienteRapidoResponseDTO respuesta = clienteServicio.crearClienteRapido(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
     }
 

@@ -19,14 +19,22 @@ public class Jaula {
     @Column(nullable = false, unique = true)
     private String numero;
 
-    @Column(nullable = false)
-    private String tipo;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_jaula_id", nullable = false)
+    private CategoriaJaula categoria;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tamano_jaula_id", nullable = false)
+    private TamanoJaula tamano;
 
     @Column(nullable = false)
     private String estado;
 
     @Column(nullable = false)
     private Boolean activo = true;
+
+    @Column(nullable = false)
+    private Boolean alertaContagio = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sede_id", nullable = false)

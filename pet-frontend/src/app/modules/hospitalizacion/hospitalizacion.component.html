@@ -1,0 +1,234 @@
+<mat-sidenav-container style="height: 100%; background: transparent;">
+  <mat-sidenav-content>
+    <div class="page-container" style="padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+          <h1 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0;">Mapa de Jaulas y Pacientes</h1>
+          <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Gestione la infraestructura de
+            hospitalizaci&oacute;n en tiempo real.</p>
+        </div>
+        <div style="display: flex; gap: 16px; align-items: center;">
+          <div style="position: relative;">
+            <span class="material-icons-round"
+              style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #60a5fa; font-size: 18px;">storefront</span>
+            <select [(ngModel)]="sedeActualId" (change)="onSedeChange()" class="form-control"
+              style="padding-left: 36px; padding-right: 16px; padding-top: 8px; padding-bottom: 8px; border: 1px solid #cbd5e1; border-radius: 8px; color: #1e293b; font-weight: 600; cursor: pointer; outline: none; background: white;">
+              @for (sede of sedes(); track sede.id) {
+              <option [ngValue]="sede.id">{{ sede.nombre }}</option>
+              }
+            </select>
+          </div>
+          <button (click)="abrirIngresoModal()" class="btn btn-primary"
+            style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; border: none; border-radius: 8px; background: #3b82f6; color: white; cursor: pointer; font-weight: 600;">
+            <span class="material-icons-round" style="font-size: 18px;">add</span>
+            Nuevo Ingreso
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="loading()" style="display: flex; justify-content: center; padding: 48px;">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <div *ngIf="!loading() && jaulasGrid().length === 0" class="card"
+        style="padding: 48px; text-align: center; color: #64748b;">
+        <span class="material-icons-round"
+          style="font-size: 64px; color: #cbd5e1; display: block; margin-bottom: 16px;">grid_off</span>
+        <h2 style="font-size: 20px; font-weight: 600; margin: 0 0 8px 0;">No hay jaulas en esta Sede</h2>
+        <p style="margin: 0;">Dir&iacute;jase al m&oacute;dulo "Gesti&oacute;n de Jaulas" para crear la infraestructura
+          f&iacute;sica primero.</p>
+      </div>
+
+      <!-- Grid de Jaulas Fisicas -->
+      <div *ngIf="!loading() && jaulasGrid().length > 0"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; padding-bottom: 32px;">
+
+        <div *ngFor="let g of jaulasGrid()" class="card" [ngStyle]="{
+               'border-left': '4px solid ' + getBorderColor(g.jaula.estado, g.estaOcupada),
+               'display': 'flex',
+               'flex-direction': 'column',
+               'overflow': 'hidden',
+               'transition': 'transform 0.2s, box-shadow 0.2s'
+             }">
+
+          <!-- Header Jaula -->
+          <div
+            style="padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: 700; color: #1e293b; font-size: 18px;">Jaula #{{ g.jaula.numero }}</span>
+              <span
+                style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #e2e8f0; color: #475569;">{{
+                g.jaula.categoriaNombre }}</span>
+            </div>
+
+            <!-- Estado Visual Jaula -->
+            <span *ngIf="!g.estaOcupada"
+              style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b;">
+              {{ g.jaula.estado }}
+            </span>
+            <span *ngIf="g.estaOcupada"
+              style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #2563eb;">
+              OCUPADA
+            </span>
+          </div>
+
+          <!-- Body -->
+          <div style="padding: 16px; flex: 1; display: flex; flex-direction: column;">
+
+            <!-- CONTENIDO SI ESTA OCUPADA -->
+            <ng-container *ngIf="g.estaOcupada">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <h4
+                  style="font-weight: 700; font-size: 18px; margin: 0; cursor: pointer; display: flex; align-items: center; gap: 8px;"
+                  (click)="abrirHistorial(g.paciente)">
+                  {{ g.paciente.pacienteNombre }}
+                  <span style="font-size: 13px; font-weight: 400; color: #64748b;">({{ g.paciente.pacienteEspecie
+                    }})</span>
+                </h4>
+                <span [ngStyle]="getGravedadStyle(g.paciente.nivelGravedad)"
+                  style="padding: 2px 10px; font-size: 11px; border-radius: 999px; font-weight: 700;">
+                  {{ g.paciente.nivelGravedad || 'ESTABLE' }}
+                </span>
+              </div>
+
+              <p style="font-size: 14px; color: #475569; margin: 0 0 12px 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;"
+                title="{{ g.paciente.motivoIngreso }}">{{ g.paciente.motivoIngreso }}</p>
+
+              <div style="margin-top: auto;">
+                <div [ngStyle]="{
+                    'font-size': '12px',
+                    'padding': '8px',
+                    'border-radius': '6px',
+                    'display': 'flex',
+                    'align-items': 'center',
+                    'justify-content': 'space-between',
+                    'background': g.paciente.monitoreoAtrasado ? '#fef2f2' : '#f8fafc',
+                    'color': g.paciente.monitoreoAtrasado ? '#b91c1c' : '#64748b',
+                    'font-weight': g.paciente.monitoreoAtrasado ? '700' : '400'
+                  }">
+                  <span><strong style="color: #475569;">Monitoreo:</strong> Cada {{ g.paciente.frecuenciaMonitoreoHoras
+                    }}h</span>
+                  <span *ngIf="g.paciente.monitoreoAtrasado" style="display: flex; align-items: center; gap: 4px;">
+                    <span class="material-icons-round" style="font-size: 14px;">warning</span> ATRASADO
+                  </span>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- CONTENIDO SI ESTA VACIA -->
+            <ng-container *ngIf="!g.estaOcupada">
+              <div
+                style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #94a3b8; padding: 16px 0;">
+                <span class="material-icons-round"
+                  style="font-size: 40px; margin-bottom: 8px; opacity: 0.5;">pets</span>
+                <p style="font-size: 14px; margin: 0;" *ngIf="g.jaula.estado === 'DISPONIBLE'">Lista para recibir
+                  pacientes.</p>
+                <p style="font-size: 14px; margin: 0;" *ngIf="g.jaula.estado === 'MANTENIMIENTO'">Jaula en
+                  mantenimiento.</p>
+                <p style="font-size: 14px; margin: 0;" *ngIf="g.jaula.estado === 'EN_DESINFECCION'">Jaula en limpieza y
+                  desinfecci&oacute;n.</p>
+              </div>
+            </ng-container>
+
+          </div>
+
+          <!-- Acciones -->
+          <div
+            style="padding: 12px 16px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; gap: 8px;">
+
+            <!-- Acciones Ocupada -->
+            <ng-container *ngIf="g.estaOcupada">
+              <button (click)="abrirHistorial(g.paciente)"
+                style="font-size: 12px; display: flex; align-items: center; color: #475569; background: white; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+                <span class="material-icons-round" style="font-size: 14px; margin-right: 4px;">history</span> Historial
+              </button>
+              <div style="display: flex; gap: 8px;">
+                <button (click)="abrirMonitoreoModal(g.paciente)"
+                  style="font-size: 12px; font-weight: 500; background: #dbeafe; color: #1d4ed8; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer;">
+                  Control
+                </button>
+                <button (click)="darDeAlta(g.paciente.id)"
+                  style="font-size: 12px; font-weight: 500; background: #dcfce7; color: #15803d; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer;">
+                  Alta
+                </button>
+              </div>
+            </ng-container>
+
+            <!-- Acciones Vacia -->
+            <ng-container *ngIf="!g.estaOcupada">
+              <button *ngIf="g.jaula.estado === 'DISPONIBLE'" (click)="abrirIngresoModal(g.jaula)"
+                style="font-size: 12px; font-weight: 700; color: #4f46e5; background: #eef2ff; padding: 6px 12px; border-radius: 6px; width: 100%; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 4px;">
+                <span class="material-icons-round" style="font-size: 14px;">login</span> Asignar Paciente
+              </button>
+
+              <div style="display: flex; width: 100%; gap: 8px;" *ngIf="g.jaula.estado !== 'DISPONIBLE'">
+                <button (click)="cambiarEstadoJaula(g.jaula.id, 'DISPONIBLE')"
+                  style="flex: 1; font-size: 12px; font-weight: 500; color: #15803d; background: #f0fdf4; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer;">
+                  Marcar Disponible
+                </button>
+              </div>
+
+              <div style="display: flex; gap: 4px;" *ngIf="g.jaula.estado === 'DISPONIBLE'">
+                <button (click)="cambiarEstadoJaula(g.jaula.id, 'EN_DESINFECCION')" title="Enviar a Limpieza"
+                  style="font-size: 12px; background: #fff7ed; color: #ea580c; padding: 6px; border-radius: 6px; border: none; cursor: pointer;">
+                  <span class="material-icons-round" style="font-size: 14px;">cleaning_services</span>
+                </button>
+                <button (click)="cambiarEstadoJaula(g.jaula.id, 'MANTENIMIENTO')" title="Mantenimiento"
+                  style="font-size: 12px; background: #e2e8f0; color: #475569; padding: 6px; border-radius: 6px; border: none; cursor: pointer;">
+                  <span class="material-icons-round" style="font-size: 14px;">build</span>
+                </button>
+              </div>
+            </ng-container>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-sidenav-content>
+
+  <!-- Sidenav para el Historial (Kardex) -->
+  <mat-sidenav #sidenav mode="over" position="end" [opened]="sidenavAbierto" (closed)="cerrarHistorial()"
+    style="width: 420px; max-width: 100vw; background: white; box-shadow: -4px 0 24px rgba(0,0,0,0.1);">
+    <div style="height: 100%; display: flex; flex-direction: column;">
+      <div
+        style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+        <div>
+          <h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 0;">Historial Cl&iacute;nico</h2>
+          <p style="font-size: 13px; color: #64748b; margin: 4px 0 0 0;" *ngIf="pacienteSeleccionado">{{
+            pacienteSeleccionado.pacienteNombre }} - Jaula {{ pacienteSeleccionado.jaulaNumero }}</p>
+        </div>
+        <button mat-icon-button (click)="cerrarHistorial()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div style="padding: 16px; flex: 1; overflow-y: auto; background: #f8fafc;">
+        <div *ngIf="historialPaciente.length === 0" style="text-align: center; color: #64748b; padding: 32px;">
+          No hay registros en el historial de esta hospitalizaci&oacute;n.
+        </div>
+        <div style="position: relative; border-left: 2px solid #bfdbfe; margin-left: 16px;">
+          <div *ngFor="let h of historialPaciente" style="margin-bottom: 24px; margin-left: 24px; position: relative;">
+            <div
+              style="position: absolute; width: 16px; height: 16px; background: #3b82f6; border-radius: 50%; left: -33px; top: 4px; border: 2px solid white;">
+            </div>
+            <div
+              style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                <span style="font-weight: 700; font-size: 13px; color: #1e293b;">{{ h.tipoAccion }}</span>
+                <span style="font-size: 11px; color: #94a3b8;">{{ h.fechaHora | date:'short' }}</span>
+              </div>
+              <p style="font-size: 13px; color: #475569; margin: 0 0 8px 0;">{{ h.descripcion }}</p>
+              <div *ngIf="h.productoNombre"
+                style="font-size: 12px; background: #eff6ff; color: #1d4ed8; padding: 8px; border-radius: 4px; display: flex; justify-content: space-between;">
+                <span>{{ h.productoNombre }}</span>
+                <span style="font-weight: 600;">{{ h.cantidadAplicada }} u</span>
+              </div>
+              <div style="font-size: 11px; color: #94a3b8; margin-top: 8px; text-align: right;">
+                Por: {{ h.registradoPorNombre }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-sidenav>
+</mat-sidenav-container>

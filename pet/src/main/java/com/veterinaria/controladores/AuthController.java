@@ -102,4 +102,16 @@ public class AuthController {
         AuthResponseDTO respuesta = authLoginServicio.seleccionarRol(email, dto.getRol());
         return ResponseEntity.ok(respuesta);
     }
+
+    @PostMapping("/olvide-password")
+    public ResponseEntity<MensajeResponseDTO> solicitarRecuperacionPassword(@Valid @RequestBody com.veterinaria.dtos.OlvidePasswordRequestDTO dto) {
+        MensajeResponseDTO respuesta = authLoginServicio.solicitarRecuperacionPassword(dto.getEmail());
+        return ResponseEntity.ok(respuesta);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<MensajeResponseDTO> resetearPassword(@Valid @RequestBody com.veterinaria.dtos.ResetPasswordRequestDTO dto) {
+        MensajeResponseDTO respuesta = authLoginServicio.resetearPassword(dto.getToken(), dto.getNewPassword());
+        return ResponseEntity.ok(respuesta);
+    }
 }

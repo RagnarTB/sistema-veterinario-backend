@@ -1,12 +1,18 @@
-import { Component, signal, computed, HostListener } from '@angular/core';
+import { Component, signal, computed, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../core/services/auth.service';
+import { HospitalizacionWebsocketService } from '../../core/services/hospitalizacion-websocket.service';
 import { RolNombre } from '../../core/models/models';
+import { CambiarPasswordDialogComponent } from './cambiar-password-dialog.component';
+import { Subscription } from 'rxjs';
 
 interface NavItem {
   label: string;
@@ -35,11 +41,16 @@ interface NavGroup {
     MatMenuModule,
     MatButtonModule,
     MatDividerModule,
+    MatDialogModule,
+    MatBadgeModule,
+    MatSnackBarModule
   ],
+
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.css'],
+
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnInit, OnDestroy {
   isCollapsed = signal(false);
   isMobileOpen = signal(false);
   showMobileOverlay = computed(() => this.isMobileOpen());
@@ -73,7 +84,7 @@ export class MainLayoutComponent {
       expanded: false,
       children: [
         { label: 'Panel Internados', route: '/app/hospitalizacion', icon: 'bed' },
-        { label: 'Gestión de Jaulas', route: '/app/jaulas', icon: 'grid_view' },
+        { label: 'Gestión de Jaulas', route: '/app/jaulas', icon: 'grid_view' }
       ]
     },
     {
@@ -92,6 +103,8 @@ export class MainLayoutComponent {
       expanded: false,
       children: [
         { label: 'Caja Diaria', route: '/app/caja', icon: 'payments' },
+        { label: 'Cuentas por Cobrar', route: '/app/finanzas/deudas', icon: 'receipt_long' },
+        { label: 'Historial de Ventas', route: '/app/finanzas/ventas', icon: 'history' },
       ]
     },
     {
@@ -135,7 +148,44 @@ export class MainLayoutComponent {
     }
   }
 
-  constructor(public authService: AuthService) {}
+  constructor(
+    public authService: AuthService, 
+    private dialog: MatDialog,
+    private wsService: HospitalizacionWebsocketService,
+    private snackBar: MatSnackBar
+  ) { }
+
+  private wsSubscription?: Subscription;
+  unreadAlertsCount = signal(0);
+
+  ngOnInit() {
+    // Conectar WebSocket si es veterinario
+    if (this.authService.hasAnyRole('ROLE_VETERINARIO', 'ROLE_ADMIN')) {
+      this.wsService.connect();
+      this.wsSubscription = this.wsService.getAlerts().subscribe(mensaje => {
+        if (mensaje) {
+          this.unreadAlertsCount.update(c => c + 1);
+          this.snackBar.open(mensaje, 'Cerrar', {
+            duration: 8000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top',
+            panelClass: ['bg-red-500', 'text-white']
+          });
+        }
+      });
+    }
+  }
+
+  ngOnDestroy() {
+    this.wsService.disconnect();
+    if (this.wsSubscription) {
+      this.wsSubscription.unsubscribe();
+    }
+  }
+
+  clearAlerts() {
+    this.unreadAlertsCount.set(0);
+  }
 
   toggleSidebar(): void {
     if (window.innerWidth <= 768) {
@@ -151,6 +201,12 @@ export class MainLayoutComponent {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  abrirDialogoPassword() {
+    this.dialog.open(CambiarPasswordDialogComponent, {
+      width: '400px'
+    });
   }
 
   getRolLabel(): string {
@@ -178,7 +234,7 @@ export class MainLayoutComponent {
   cambiarRol(rol: string) {
     // Si ya estamos en el rol, no hacer nada
     if (rol === this.authService.activeRole()) return;
-    
+
     // Llamar al backend para regenerar el token
     this.authService.seleccionarRol(rol).subscribe({
       next: () => {

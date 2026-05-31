@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface JaulaRepositorio extends JpaRepository<Jaula, Long> {
     List<Jaula> findBySedeIdAndEstadoAndActivoTrue(Long sedeId, String estado);
+    List<Jaula> findBySedeIdAndActivoTrue(Long sedeId);
     List<Jaula> findByActivoTrue();
 }

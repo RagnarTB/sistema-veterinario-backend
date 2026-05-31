@@ -16,4 +16,6 @@ public interface UsuarioRepositorio extends JpaRepository<Usuario, Long> {
 
     boolean existsByRoles_Id(Long rolId);
 
+    Optional<Usuario> findByResetPasswordToken(String resetPasswordToken);
+
 }

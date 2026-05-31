@@ -1,22 +1,25 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatTabsModule } from '@angular/material/tabs';
+
+// Importar los componentes hijos que irán en las pestañas
+import { ListaJaulasComponent } from './lista-jaulas/lista-jaulas';
+import { CategoriaJaulaComponent } from './configuracion/categoria-jaula/categoria-jaula.component';
+import { TamanoJaulaComponent } from './configuracion/tamano-jaula/tamano-jaula.component';
+import { RangoPesoJaulaComponent } from './configuracion/rango-peso-jaula/rango-peso-jaula.component';
 
 @Component({
   selector: 'app-jaulas',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="page-container fade-in-up p-6">
-      <div class="page-header mb-6">
-        <h1 class="text-2xl font-bold text-[var(--text-primary)]">Gestión de Jaulas</h1>
-        <p class="text-[var(--text-muted)]">Módulo en construcción...</p>
-      </div>
-      <div class="card p-8 text-center text-gray-500">
-        <span class="material-icons-round text-6xl mb-4 text-gray-300">grid_view</span>
-        <h2 class="text-xl font-semibold">Panel de Jaulas</h2>
-        <p>Próximamente podrá gestionar las jaulas de hospitalización aquí.</p>
-      </div>
-    </div>
-  `
+  imports: [
+    CommonModule, 
+    MatTabsModule,
+    ListaJaulasComponent,
+    CategoriaJaulaComponent,
+    TamanoJaulaComponent,
+    RangoPesoJaulaComponent
+  ],
+  templateUrl: './jaulas.component.html',
+  styleUrls: ['./jaulas.component.css']
 })
 export class JaulasComponent {}

@@ -39,4 +39,12 @@ public class CajaController {
         CierreCajaResponseDTO resumen = cajaServicio.cerrarCaja(sedeId, empleadoActual);
         return ResponseEntity.ok(resumen);
     }
+
+    @GetMapping("/estado")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPCIONISTA')")
+    public ResponseEntity<com.veterinaria.dtos.CajaEstadoResponseDTO> obtenerEstadoCaja(@RequestParam Long sedeId) {
+        Empleado empleadoActual = empleadoAutenticadoService.obtenerEmpleadoActual();
+        com.veterinaria.dtos.CajaEstadoResponseDTO estado = cajaServicio.obtenerEstadoCaja(sedeId, empleadoActual);
+        return ResponseEntity.ok(estado);
+    }
 }

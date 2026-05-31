@@ -23,6 +23,10 @@ public class PacienteRequestDTO {
 
     @Size(max = 150, message = "La raza no puede superar 150 caracteres")
     private String raza;
+
+    @Size(max = 20, message = "El sexo no puede superar 20 caracteres")
+    private String sexo;
+
     @NotNull(message = "La fecha de nacimiento es obligatoria")
     @PastOrPresent(message = "La fecha de nacimiento no puede ser en el futuro")
     private LocalDate fechaNacimiento;

@@ -180,7 +180,35 @@ public class AuthRegistroServicio {
 
         java.util.Optional<Usuario> usuarioDni = usuarioRepositorio.findByDni(dto.getDni());
         if (usuarioDni.isPresent() && !usuarioDni.get().getId().equals(usuario.getId())) {
-            throw new BusinessLogicException("El DNI ya se encuentra registrado por otro usuario");
+            Usuario usrExistente = usuarioDni.get();
+            Cliente cliExistente = usrExistente.getCliente();
+
+            if (usrExistente.getPassword() == null && cliExistente != null && Boolean.TRUE.equals(cliExistente.getEsInvitado())) {
+                // Es un cliente invitado (registrado rápido). Realizar fusión para conservar su historial (citas, mascotas, etc)
+                String tempEmail = usuario.getEmail();
+                String tempPass = usuario.getPassword();
+                
+                // Liberar el email del usuario temporal para evitar ConstraintViolation
+                usuario.setEmail(java.util.UUID.randomUUID().toString() + "@temp.com");
+                usuarioRepositorio.saveAndFlush(usuario);
+                
+                // Eliminar entidades temporales
+                clienteRepositorio.delete(cliente);
+                usuarioRepositorio.delete(usuario);
+                usuarioRepositorio.flush();
+                
+                // Actualizar usuario existente con credenciales
+                usrExistente.setEmail(tempEmail);
+                if (tempPass != null) {
+                    usrExistente.setPassword(tempPass);
+                }
+                
+                usuario = usrExistente;
+                cliente = cliExistente;
+                cliente.setEsInvitado(false);
+            } else {
+                throw new BusinessLogicException("El DNI ya se encuentra registrado por otro usuario");
+            }
         }
 
         cliente.setActivo(true);

@@ -31,4 +31,7 @@ public class ReniecResponseDTO {
 
     @JsonProperty("telefono")
     private String telefono;
+
+    @JsonProperty("cliente_id")
+    private Long clienteId;
 }

@@ -25,9 +25,16 @@ public class RecetaController {
     }
 
     @GetMapping("/atencion/{atencionId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO', 'RECEPCIONISTA')")
     public ResponseEntity<RecetaResponseDTO> obtenerRecetaPorAtencion(@PathVariable Long atencionId) {
         RecetaResponseDTO response = recetaServicio.obtenerPorAtencionMedica(atencionId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO', 'RECEPCIONISTA')")
+    public ResponseEntity<RecetaResponseDTO> obtenerRecetaPorId(@PathVariable Long id) {
+        RecetaResponseDTO response = recetaServicio.obtenerPorId(id);
         return ResponseEntity.ok(response);
     }
 }

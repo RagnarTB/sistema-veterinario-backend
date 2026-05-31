@@ -296,14 +296,27 @@ public class EmpleadoServicio {
         
         Usuario usuario = empleado.getUsuario();
 
+        // Proteger al administrador principal
         if (usuario.getEmail().equals("admin@veterinaria.com")) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El administrador principal no puede ser desactivado o alterado de estado.");
         }
 
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication() != null ? 
+                                 SecurityContextHolder.getContext().getAuthentication().getName() : "";
+
+        // Regla 1: Bloquear auto-modificación de estado
+        if (usuario.getEmail().equals(currentUsername)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No puedes modificar tu propio estado de activación.");
+        }
+
+        // Regla 2: Solo el admin principal puede activar/desactivar otros administradores
+        boolean esAdmin = usuario.getRoles().stream().anyMatch(r -> r.getNombre().equals("ROLE_ADMIN"));
+        if (esAdmin && !currentUsername.equals("admin@veterinaria.com")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo el administrador principal (admin@veterinaria.com) puede modificar el estado de otros administradores.");
+        }
+
         if (estado) {
-            // El admin acaba de darle click a "Activar"
             if (!usuario.getActivo() && usuario.getPassword() == null) {
-                // Generar nuevo token y reenviar
                 String tokenStr = java.util.UUID.randomUUID().toString();
                 VerificationToken verificationToken = new VerificationToken(
                         tokenStr, 
@@ -318,7 +331,6 @@ public class EmpleadoServicio {
             }
         } else {
             empleado.setActivo(false);
-            // Solo desactivamos el LOGIN si NO es cliente
             if (usuario != null && usuario.getCliente() == null) {
                 usuario.setActivo(false);
                 usuarioRepositorio.save(usuario);

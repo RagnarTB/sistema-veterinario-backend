@@ -73,4 +73,29 @@ class AtencionMedicaControllerTest {
                 .content(jsonRequest))
                 .andExpect(status().isCreated());
     }
+
+    // --- TEST 3: EL ADMIN (Debe ser aceptado) ---
+    @Test
+    @WithMockUser(roles = "ADMIN") // Simulamos ser Admin
+    void adminSiPuedeCrearAtencionMedica() throws Exception {
+        String jsonRequest = """
+                {
+                    "pacienteId": 10,
+                    "sintomas": "Fiebre y letargo",
+                    "diagnostico": "Parvovirus",
+                    "tratamiento": "Suero y antibióticos",
+                    "peso": 12.5,
+                    "temperatura": 39.5,
+                    "frecuenciaCardiaca": 110,
+                    "citaId": 1
+                }
+                """;
+
+        // Como es admin, esperamos que el sistema también procese la petición y devuelva
+        // 201 CREATED
+        mockMvc.perform(post("/api/atenciones")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonRequest))
+                .andExpect(status().isCreated());
+    }
 }

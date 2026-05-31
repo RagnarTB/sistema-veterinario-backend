@@ -165,4 +165,43 @@ public class AuthLoginServicio {
 
         return new AuthResponseDTO(token, refreshToken, email, java.util.Collections.singletonList(rolSeleccionado), sedeIds);
     }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.veterinaria.servicios.EmailServicio emailServicio;
+
+    @Transactional
+    public MensajeResponseDTO solicitarRecuperacionPassword(String email) {
+        Usuario usuario = usuarioRepositorio.findByEmail(email)
+                .orElseThrow(() -> new BusinessLogicException("Si el correo existe, se ha enviado un enlace de recuperación."));
+
+        if (Boolean.TRUE.equals(usuario.getGoogleVinculado()) && (usuario.getPassword() == null || usuario.getPassword().isEmpty())) {
+            throw new BusinessLogicException("Tu cuenta está vinculada a Google. Por favor, utiliza el botón de 'Iniciar sesión con Google' para acceder.");
+        }
+
+        String token = java.util.UUID.randomUUID().toString();
+        usuario.setResetPasswordToken(token);
+        usuario.setResetPasswordTokenExpiration(java.time.LocalDateTime.now().plusHours(1));
+        usuarioRepositorio.save(usuario);
+
+        emailServicio.enviarCorreoRecuperacionPassword(email, token);
+
+        return new MensajeResponseDTO("Si el correo existe, se ha enviado un enlace de recuperación.");
+    }
+
+    @Transactional
+    public MensajeResponseDTO resetearPassword(String token, String nuevaPassword) {
+        Usuario usuario = usuarioRepositorio.findByResetPasswordToken(token)
+                .orElseThrow(() -> new BusinessLogicException("El enlace de recuperación es inválido o ha expirado."));
+
+        if (usuario.getResetPasswordTokenExpiration().isBefore(java.time.LocalDateTime.now())) {
+            throw new BusinessLogicException("El enlace de recuperación ha expirado.");
+        }
+
+        usuario.setPassword(passwordEncoder.encode(nuevaPassword));
+        usuario.setResetPasswordToken(null);
+        usuario.setResetPasswordTokenExpiration(null);
+        usuarioRepositorio.save(usuario);
+
+        return new MensajeResponseDTO("Contraseña restablecida exitosamente.");
+    }
 }

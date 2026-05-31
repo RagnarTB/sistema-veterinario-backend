@@ -64,7 +64,7 @@ export class InventarioComponent implements OnInit {
   cargarSedes() {
     this.sedeService.listarActivas().subscribe({
       next: (res) => this.sedes.set(res),
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -104,7 +104,7 @@ export class InventarioComponent implements OnInit {
     const dialogRef = this.dialog.open(ProductoDialogComponent, {
       width: '800px',
       disableClose: true,
-      data: { 
+      data: {
         isEditing: false,
         sedeId: this.sedeSeleccionadaId,
         readOnly: !this.puedeOperar()
@@ -120,8 +120,8 @@ export class InventarioComponent implements OnInit {
     const dialogRef = this.dialog.open(ProductoDialogComponent, {
       width: '800px',
       disableClose: true,
-      data: { 
-        isEditing: true, 
+      data: {
+        isEditing: true,
         producto,
         sedeId: this.sedeSeleccionadaId,
         readOnly: !this.puedeOperar()
@@ -180,9 +180,9 @@ export class InventarioComponent implements OnInit {
 
     const dialogRef = this.dialog.open(StockMinimoDialogComponent, {
       width: '400px',
-      data: { 
-        productoNombre: producto.nombre, 
-        stockMinimoActual: producto.stockMinimo || 0 
+      data: {
+        productoNombre: producto.nombre,
+        stockMinimoActual: producto.stockMinimo || 0
       }
     });
 
