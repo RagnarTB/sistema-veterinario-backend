@@ -44,6 +44,7 @@ public class PacienteServicio {
                 paciente.setNombre(dto.getNombre());
                 paciente.setEspecie(especie);
                 paciente.setRaza(dto.getRaza());
+                paciente.setSexo(dto.getSexo());
                 paciente.setFechaNacimiento(dto.getFechaNacimiento());
                 paciente.setCliente(dueno);
 
@@ -87,6 +88,7 @@ public class PacienteServicio {
                 pacienteDb.setNombre(dto.getNombre());
                 pacienteDb.setEspecie(especie); // Asignamos el objeto Especie
                 pacienteDb.setRaza(dto.getRaza());
+                pacienteDb.setSexo(dto.getSexo());
                 pacienteDb.setFechaNacimiento(dto.getFechaNacimiento());
                 pacienteDb.setCliente(dueno);
 
@@ -110,6 +112,7 @@ public class PacienteServicio {
                                 paciente.getNombre(),
                                 paciente.getEspecie().getNombre(), // Extraemos el nombre de la especie
                                 paciente.getRaza(),
+                                paciente.getSexo(),
                                 paciente.getFechaNacimiento(),
                                 paciente.getCliente().getId(),
                                 paciente.getCliente().getUsuario().getNombre() + " " + paciente.getCliente().getUsuario().getApellido(),

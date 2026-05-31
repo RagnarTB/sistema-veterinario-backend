@@ -15,6 +15,7 @@ public class PacienteResponseDTO {
     // EL CAMBIO, Renombramos la variable para ser super especificos
     private String especieNombre;
     private String raza;
+    private String sexo;
     private LocalDate fechaNacimiento;
     private Long clienteId;
     private String clienteNombre;

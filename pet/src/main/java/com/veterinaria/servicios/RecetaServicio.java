@@ -65,6 +65,13 @@ public class RecetaServicio {
         return mapearADTO(receta);
     }
 
+    @Transactional(readOnly = true)
+    public RecetaResponseDTO obtenerPorId(Long id) {
+        RecetaMedica receta = recetaRepositorio.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Receta no encontrada con ID: " + id));
+        return mapearADTO(receta);
+    }
+
     private RecetaResponseDTO mapearADTO(RecetaMedica receta) {
         RecetaResponseDTO dto = new RecetaResponseDTO();
         dto.setId(receta.getId());

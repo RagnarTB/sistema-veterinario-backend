@@ -50,14 +50,12 @@ public class JaulaServicioTest {
         jaula = new Jaula();
         jaula.setId(1L);
         jaula.setNumero("J-01");
-        jaula.setTipo("Perro Grande");
         jaula.setEstado("DISPONIBLE");
         jaula.setSede(sede);
         jaula.setActivo(true);
 
         requestDTO = new JaulaRequestDTO();
         requestDTO.setNumero("J-01");
-        requestDTO.setTipo("Perro Grande");
         requestDTO.setEstado("DISPONIBLE");
         requestDTO.setSedeId(1L);
     }
@@ -150,3 +148,4 @@ public class JaulaServicioTest {
         verify(jaulaRepositorio, never()).save(jaula);
     }
 }
+

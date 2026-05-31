@@ -38,8 +38,4 @@ public class DesparasitacionRequestDTO {
     @NotNull(message = "El ID del paciente es obligatorio")
     @Positive(message = "El ID del paciente debe ser positivo")
     private Long pacienteId;
-
-    @NotNull(message = "El ID del empleado es obligatorio")
-    @Positive(message = "El ID del empleado debe ser positivo")
-    private Long empleadoId;
 }

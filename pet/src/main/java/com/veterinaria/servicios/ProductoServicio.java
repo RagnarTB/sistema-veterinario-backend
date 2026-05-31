@@ -61,6 +61,9 @@ public class ProductoServicio {
             producto.setUnidadVenta(unidadRepositorio.findById(dto.getUnidadVentaId()).orElse(null));
         }
 
+        // Validar coherencia entre unidades y factor de conversión
+        validarUnidadesYFactor(dto.getUnidadCompraId(), dto.getUnidadVentaId(), dto.getFactorConversion());
+
         Producto productoGuardado = productoRepositorio.save(producto);
         return mapearAResponseDTO(productoGuardado, sedeId);
     }
@@ -120,6 +123,9 @@ public class ProductoServicio {
             productodb.setUnidadVenta(null);
         }
 
+        // Validar coherencia entre unidades y factor de conversión
+        validarUnidadesYFactor(dto.getUnidadCompraId(), dto.getUnidadVentaId(), dto.getFactorConversion());
+
         Producto productoGuardado = productoRepositorio.save(productodb);
         return mapearAResponseDTO(productoGuardado, sedeId);
     }
@@ -143,6 +149,70 @@ public class ProductoServicio {
         return alertas.stream()
                 .map(inv -> this.mapearAResponseDTO(inv.getProducto(), inv.getSede().getId()))
                 .collect(Collectors.toList());
+    }
+
+    // =========================
+    // VALIDAR COHERENCIA UNIDADES Y FACTOR
+    // =========================
+    private void validarUnidadesYFactor(Long compraId, Long ventaId, java.math.BigDecimal factor) {
+        if (compraId == null || ventaId == null) {
+            return;
+        }
+        com.veterinaria.modelos.UnidadMedida compra = unidadRepositorio.findById(compraId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unidad de compra no válida"));
+        com.veterinaria.modelos.UnidadMedida venta = unidadRepositorio.findById(ventaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unidad de venta no válida"));
+
+        // Regla 1: Unidades idénticas → factor DEBE ser 1
+        if (compra.getId().equals(venta.getId())) {
+            if (factor != null && factor.compareTo(java.math.BigDecimal.ONE) != 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Si la unidad de compra y venta son iguales, el factor de conversión debe ser 1. No se permiten decimales ni otros valores.");
+            }
+            return;
+        }
+
+        String cNombre = compra.getNombre() != null ? compra.getNombre().toLowerCase() : "";
+        String vNombre = venta.getNombre() != null ? venta.getNombre().toLowerCase() : "";
+        String cAbrev = compra.getAbreviatura() != null ? compra.getAbreviatura().toLowerCase() : "";
+
+        // Tipos de unidades base/continuas que NO deben convertirse a otras
+        boolean isCompraBase = cNombre.contains("unidad") || cNombre.contains("und") 
+                || cNombre.contains("kit") || cNombre.contains("prueba");
+        boolean isCompraContinuo = cNombre.contains("mililitro") || cNombre.contains("kilogramo")
+                || cNombre.contains("metro") || cAbrev.equals("ml") || cAbrev.equals("kg") || cAbrev.equals("m");
+
+        // Regla 2: Unidades base o continuas no pueden convertirse a otras unidades distintas
+        if (isCompraBase || isCompraContinuo) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La unidad de compra '" + compra.getNombre() + "' no permite conversión a otras unidades. "
+                    + "La unidad de compra y venta deben ser idénticas para este tipo de unidad.");
+        }
+
+        // Regla 3: Unidades granel/blíster/caja pueden convertirse, pero:
+        // si la unidad de VENTA no permite decimales (es discreta), el factor debe ser entero
+        boolean isCompraGranel = cNombre.contains("caja") || cNombre.contains("blíster") 
+                || cNombre.contains("blister") || cNombre.contains("saco") || cNombre.contains("frasco")
+                || cNombre.contains("paquete") || cNombre.contains("sobre") || cNombre.contains("ampolla");
+
+        if (isCompraGranel) {
+            if (factor == null || factor.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El factor de conversión debe ser un número positivo mayor a 0.");
+            }
+            // Si la unidad de venta es discreta (tableta, unidad, píldora, etc.)
+            boolean ventaDiscreta = vNombre.contains("tableta") || vNombre.contains("píldora")
+                    || vNombre.contains("comprimido") || vNombre.contains("cápsula")
+                    || vNombre.contains("unidad") || vNombre.contains("und");
+            if (ventaDiscreta) {
+                // El factor debe ser entero positivo (sin decimales)
+                if (factor.stripTrailingZeros().scale() > 0) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "La unidad de venta '" + venta.getNombre() + "' es discreta y no permite decimales. "
+                            + "El factor de conversión debe ser un número entero positivo (ej: 12, 24, 100).");
+                }
+            }
+        }
     }
 
     private String normalizarTexto(String texto) {

@@ -58,8 +58,12 @@ public class HospitalizacionServicioTest {
         jaula.setId(1L);
         jaula.setEstado("DISPONIBLE");
 
+        com.veterinaria.modelos.Usuario doctorUsuario = new com.veterinaria.modelos.Usuario();
+        doctorUsuario.setNombre("Dr. House");
+        doctorUsuario.setApellido("Gregory");
         veterinario = new Empleado();
         veterinario.setId(1L);
+        veterinario.setUsuario(doctorUsuario);
 
         hospitalizacion = new Hospitalizacion();
         hospitalizacion.setId(10L);

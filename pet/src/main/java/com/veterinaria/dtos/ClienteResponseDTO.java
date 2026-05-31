@@ -17,5 +17,6 @@ public class ClienteResponseDTO {
     private String email;
     private Boolean activo;
     private Boolean verificado;
+    private String direccion;
 
 }

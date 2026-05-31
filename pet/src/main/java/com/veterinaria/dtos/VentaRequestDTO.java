@@ -9,21 +9,38 @@ import lombok.Data;
 
 @Data
 public class VentaRequestDTO {
-    @NotNull(message = "El ID del cliente es obligatorio")
     @Positive(message = "El ID del cliente debe ser positivo")
-    private Long clienteId;
-
-    // No pedimos pacienteId porque el cliente podría venir solo a comprar comida
-    // No pedimos total, fecha ni hora (eso lo calcula el Backend por seguridad)
+    private Long clienteId; // Ahora opcional (venta sin cliente registrado)
 
     @NotNull(message = "La sede es obligatoria")
     @Positive(message = "El ID de sede debe ser positivo")
     private Long sedeId;
 
-    @NotNull(message = "El método de pago es obligatorio")
+    // MetodoPago legacy: si viene, se guarda para compatibilidad.
+    // Los pagos reales se registran vía POST /api/ventas/{id}/pago
     private com.veterinaria.modelos.Enums.MetodoPago metodoPago;
+
+    // Tipo de comprobante
+    private com.veterinaria.modelos.Enums.TipoComprobante tipoComprobante;
+
+    @jakarta.validation.constraints.Size(max = 20)
+    private String ruc;
+
+    @jakarta.validation.constraints.Size(max = 255)
+    private String razonSocial;
+
+    @jakarta.validation.constraints.Size(max = 255)
+    private String direccionFacturacion;
+
+    // Opcional: vincular con una cita (cobro de servicios desde Atenciones)
+    @Positive(message = "El ID de cita debe ser positivo")
+    private Long citaId;
+
+    // Lista de pagos inmediatos (split payment)
+    @Valid
+    private List<PagoRequestDTO> pagos;
 
     @NotEmpty(message = "La venta debe tener al menos un detalle")
     @Valid
     private List<DetalleVentaRequestDTO> detalles;
-}
+}

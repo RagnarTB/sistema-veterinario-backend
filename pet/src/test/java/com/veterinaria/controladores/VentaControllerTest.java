@@ -79,13 +79,13 @@ class VentaControllerTest {
                 new BigDecimal("35.00"),
                 new BigDecimal("35.00"));
 
-        VentaResponseDTO respuestaMock = new VentaResponseDTO(
-                1L,
-                1L,
-                LocalDateTime.now(),
-                new BigDecimal("75.00"),
-                com.veterinaria.modelos.Enums.MetodoPago.EFECTIVO,
-                List.of(detalle1, detalle2));
+        VentaResponseDTO respuestaMock = new VentaResponseDTO();
+        respuestaMock.setId(1L);
+        respuestaMock.setClienteId(1L);
+        respuestaMock.setFechaHora(LocalDateTime.now());
+        respuestaMock.setTotal(new BigDecimal("75.00"));
+        respuestaMock.setMetodoPago(com.veterinaria.modelos.Enums.MetodoPago.EFECTIVO);
+        respuestaMock.setDetalles(List.of(detalle1, detalle2));
 
         when(ventaServicio.guardar(any(VentaRequestDTO.class), any(com.veterinaria.modelos.Empleado.class))).thenReturn(respuestaMock);
 

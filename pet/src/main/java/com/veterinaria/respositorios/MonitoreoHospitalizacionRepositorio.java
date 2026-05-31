@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface MonitoreoHospitalizacionRepositorio extends JpaRepository<MonitoreoHospitalizacion, Long> {
     List<MonitoreoHospitalizacion> findByHospitalizacionIdOrderByFechaHoraDesc(Long hospitalizacionId);
+    java.util.Optional<MonitoreoHospitalizacion> findTopByHospitalizacionIdOrderByFechaHoraDesc(Long hospitalizacionId);
 }

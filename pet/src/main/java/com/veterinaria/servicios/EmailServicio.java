@@ -54,4 +54,24 @@ public class EmailServicio {
             System.err.println("Error enviando el correo SMTP: " + e.getMessage());
         }
     }
+    public void enviarCorreoRecuperacionPassword(String toEmail, String token) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("no-reply@veterinaria.com");
+            message.setTo(toEmail);
+            message.setSubject("Recuperación de Contraseña - VetCare");
+
+            String urlRecuperacion = "http://localhost:4200/reset-password?token=" + token;
+
+            message.setText("Hola,\n\n"
+                    + "Hemos recibido una solicitud para restablecer tu contraseña.\n"
+                    + "Por favor, haz clic en el siguiente enlace para crear una nueva contraseña:\n\n"
+                    + urlRecuperacion + "\n\n"
+                    + "Si no solicitaste este cambio, puedes ignorar este correo de forma segura.\nEl enlace expirará en 1 hora.");
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("Error enviando el correo SMTP: " + e.getMessage());
+        }
+    }
 }

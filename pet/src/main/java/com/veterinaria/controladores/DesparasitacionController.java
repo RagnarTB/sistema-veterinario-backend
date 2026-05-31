@@ -32,4 +32,11 @@ public class DesparasitacionController {
         List<DesparasitacionResponseDTO> response = desparasitacionServicio.listarPorPaciente(pacienteId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/proximas")
+    @PreAuthorize("hasAnyRole('ADMIN', 'VETERINARIO', 'RECEPCIONISTA')")
+    public ResponseEntity<List<DesparasitacionResponseDTO>> listarProximasDosis() {
+        List<DesparasitacionResponseDTO> response = desparasitacionServicio.listarProximasDosis();
+        return ResponseEntity.ok(response);
+    }
 }

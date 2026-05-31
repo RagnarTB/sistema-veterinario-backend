@@ -22,15 +22,14 @@ public class VacunaServicio {
 
     private final VacunaRepositorio vacunaRepositorio;
     private final PacienteRepositorio pacienteRepositorio;
-    private final EmpleadoRepositorio empleadoRepositorio;
+    private final EmpleadoAutenticadoService empleadoAutenticadoService;
 
     @Transactional
     public VacunaResponseDTO guardar(VacunaRequestDTO requestDTO) {
         Paciente paciente = pacienteRepositorio.findById(requestDTO.getPacienteId())
                 .orElseThrow(() -> new EntityNotFoundException("Paciente no encontrado con ID: " + requestDTO.getPacienteId()));
 
-        Empleado empleado = empleadoRepositorio.findById(requestDTO.getEmpleadoId())
-                .orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con ID: " + requestDTO.getEmpleadoId()));
+        Empleado empleado = empleadoAutenticadoService.obtenerEmpleadoActual();
 
         Vacuna vacuna = new Vacuna();
         vacuna.setNombreVacuna(requestDTO.getNombreVacuna());
@@ -65,5 +64,13 @@ public class VacunaServicio {
         dto.setEmpleadoId(vacuna.getEmpleado().getId());
         dto.setEmpleadoNombre(vacuna.getEmpleado().getUsuario().getNombre() + " " + vacuna.getEmpleado().getUsuario().getApellido());
         return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public List<VacunaResponseDTO> listarProximasDosis() {
+        java.time.LocalDate hoy = java.time.LocalDate.now();
+        java.time.LocalDate enDosSemanas = hoy.plusDays(14);
+        List<Vacuna> proximas = vacunaRepositorio.findByFechaProximaDosisBetweenOrderByFechaProximaDosisAsc(hoy, enDosSemanas);
+        return proximas.stream().map(this::mapearADTO).collect(Collectors.toList());
     }
 }

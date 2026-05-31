@@ -3,20 +3,20 @@ package com.veterinaria.servicios;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import com.veterinaria.excepciones.ResourceNotFoundException;
 import com.veterinaria.excepciones.BusinessLogicException;
 
 import com.veterinaria.dtos.CitaRequestDTO;
 import com.veterinaria.dtos.CitaResponseDTO;
+import com.veterinaria.dtos.PacienteResumenDTO;
 import com.veterinaria.dtos.SlotDisponibilidadDTO;
 import com.veterinaria.modelos.Cita;
 import com.veterinaria.modelos.Cliente;
@@ -67,8 +67,16 @@ public class CitaServicio {
                 ServicioMedico servicio = servicioRepositorio.findById(dto.getServicioId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado"));
 
+                if (servicio.getActivo() != null && !servicio.getActivo()) {
+                        throw new BusinessLogicException("El servicio médico seleccionado está desactivado.");
+                }
+
                 Empleado veterinario = empleadoRepositorio.findById(dto.getVeterinarioId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Veterinario no encontrado"));
+
+                if (!veterinario.getActivo()) {
+                        throw new BusinessLogicException("El veterinario seleccionado está desactivado.");
+                }
 
                 Sede sede = sedeRepositorio.findById(dto.getSedeId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada"));
@@ -78,7 +86,12 @@ public class CitaServicio {
                         throw new ResourceNotFoundException("No se encontraron los pacientes");
                 }
 
-                // Validación: todos los pacientes deben pertenecer al mismo cliente
+                for (Paciente p : pacientes) {
+                        if (!p.getActivo()) {
+                                throw new BusinessLogicException("El paciente \"" + p.getNombre() + "\" está desactivado y no puede ser agendado.");
+                        }
+                }
+
                 Cliente clienteBase = pacientes.get(0).getCliente();
                 if (pacientes.stream().anyMatch(p -> !p.getCliente().equals(clienteBase))) {
                         throw new BusinessLogicException("Todos los pacientes de la cita deben pertenecer al mismo cliente. No se permiten mascotas de distintos dueños en una misma cita.");
@@ -89,17 +102,11 @@ public class CitaServicio {
                                 * cantidadMascotas;
                 LocalTime horaFinCalculada = dto.getHoraInicio().plusMinutes(tiempoTotalOcupado);
 
-                // Mitigación de carrera: tomamos lock sobre las citas del día antes de chequear y guardar.
                 citaRepositorio.buscarCitasAgendadasDelDiaConLock(veterinario.getId(), dto.getFecha(), ESTADOS_IGNORADOS);
 
-                // Pasamos -1L porque al ser una cita NUEVA, no hay ningún ID real que ignorar
                 boolean existeCruce = citaRepositorio.existeCruceDeHorario(
-                                veterinario.getId(),
-                                dto.getFecha(),
-                                dto.getHoraInicio(),
-                                horaFinCalculada,
-                                -1L,
-                                ESTADOS_IGNORADOS);
+                                veterinario.getId(), dto.getFecha(), dto.getHoraInicio(),
+                                horaFinCalculada, -1L, ESTADOS_IGNORADOS);
 
                 if (existeCruce) {
                         throw new BusinessLogicException("El veterinario ya tiene una cita ocupando este horario.");
@@ -121,8 +128,36 @@ public class CitaServicio {
         }
 
         public Page<CitaResponseDTO> listar(Long sedeId, String buscar, Pageable pageable) {
+                if (pageable.getSort().isUnsorted()) {
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                                        Sort.by("fecha").ascending().and(Sort.by("horaInicio").ascending()));
+                }
                 Page<Cita> pagina;
                 if (buscar != null && !buscar.trim().isEmpty()) {
+                        pagina = citaRepositorio.buscarEnSede(sedeId, buscar, pageable);
+                } else {
+                        pagina = citaRepositorio.findBySedeId(sedeId, pageable);
+                }
+                return pagina.map(this::mapearAResponse);
+        }
+
+        public Page<CitaResponseDTO> listarConFiltros(Long sedeId, LocalDate fecha, EstadoCita estado,
+                        Long veterinarioId, String buscar, Pageable pageable) {
+                if (pageable.getSort().isUnsorted()) {
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                                        Sort.by("fecha").ascending().and(Sort.by("horaInicio").ascending()));
+                }
+                Page<Cita> pagina;
+
+                if (fecha != null && veterinarioId != null && estado != null) {
+                        pagina = citaRepositorio.findBySedeIdAndFechaAndVeterinarioIdAndEstado(sedeId, fecha, veterinarioId, estado, pageable);
+                } else if (fecha != null && veterinarioId != null) {
+                        pagina = citaRepositorio.findBySedeIdAndFechaAndVeterinarioId(sedeId, fecha, veterinarioId, pageable);
+                } else if (fecha != null && estado != null) {
+                        pagina = citaRepositorio.findBySedeIdAndFechaAndEstado(sedeId, fecha, estado, pageable);
+                } else if (fecha != null) {
+                        pagina = citaRepositorio.findBySedeIdAndFecha(sedeId, fecha, pageable);
+                } else if (buscar != null && !buscar.trim().isEmpty()) {
                         pagina = citaRepositorio.buscarEnSede(sedeId, buscar, pageable);
                 } else {
                         pagina = citaRepositorio.findBySedeId(sedeId, pageable);
@@ -145,8 +180,16 @@ public class CitaServicio {
                 ServicioMedico servicio = servicioRepositorio.findById(dto.getServicioId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado"));
 
+                if (servicio.getActivo() != null && !servicio.getActivo()) {
+                        throw new BusinessLogicException("El servicio médico seleccionado está desactivado.");
+                }
+
                 Empleado veterinario = empleadoRepositorio.findById(dto.getVeterinarioId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Veterinario no encontrado"));
+
+                if (!veterinario.getActivo()) {
+                        throw new BusinessLogicException("El veterinario seleccionado está desactivado.");
+                }
 
                 Sede sede = sedeRepositorio.findById(dto.getSedeId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada"));
@@ -156,28 +199,26 @@ public class CitaServicio {
                         throw new ResourceNotFoundException("No se encontraron los pacientes");
                 }
 
+                for (Paciente p : pacientes) {
+                        if (!p.getActivo()) {
+                                throw new BusinessLogicException("El paciente \"" + p.getNombre() + "\" está desactivado y no puede ser agendado.");
+                        }
+                }
+
                 Cliente clienteBase = pacientes.get(0).getCliente();
                 if (pacientes.stream().anyMatch(p -> !p.getCliente().equals(clienteBase))) {
                         throw new BusinessLogicException("Todos los pacientes de la cita deben pertenecer al mismo cliente.");
                 }
 
-                // Recalculamos tiempos por si cambió de servicio (ej. de Consulta a Cirugía)
                 int cantidadMascotas = dto.getPacienteIds().size();
-                int tiempoTotalOcupado = (servicio.getDuracionMinutos() + servicio.getBufferMinutos())
-                                * cantidadMascotas;
+                int tiempoTotalOcupado = (servicio.getDuracionMinutos() + servicio.getBufferMinutos()) * cantidadMascotas;
                 LocalTime horaFinCalculada = dto.getHoraInicio().plusMinutes(tiempoTotalOcupado);
 
                 citaRepositorio.buscarCitasAgendadasDelDiaConLock(veterinario.getId(), dto.getFecha(), ESTADOS_IGNORADOS);
 
-                // AQUÍ ESTÁ LA MAGIA: Pasamos el 'id' de la cita actual para que el sistema la
-                // ignore en la búsqueda de cruces
                 boolean existeCruce = citaRepositorio.existeCruceDeHorario(
-                                veterinario.getId(),
-                                dto.getFecha(),
-                                dto.getHoraInicio(),
-                                horaFinCalculada,
-                                id,
-                                ESTADOS_IGNORADOS);
+                                veterinario.getId(), dto.getFecha(), dto.getHoraInicio(),
+                                horaFinCalculada, id, ESTADOS_IGNORADOS);
 
                 if (existeCruce) {
                         throw new BusinessLogicException("No se puede reprogramar: El veterinario ya tiene otro compromiso en ese horario.");
@@ -201,7 +242,6 @@ public class CitaServicio {
                 Cita citaDb = citaRepositorio.findById(id)
                                 .orElseThrow(() -> new ResourceNotFoundException("Cita no encontrada con ID: " + id));
 
-                // solo se puede borrar si está AGENDADA
                 if (citaDb.getEstado() != EstadoCita.AGENDADA) {
                         throw new BusinessLogicException("No se puede eliminar una cita que ya fue " + citaDb.getEstado()
                                                         + ". Estado actual: " + citaDb.getEstado());
@@ -216,97 +256,140 @@ public class CitaServicio {
                                 .map(Paciente::getId)
                                 .collect(Collectors.toList());
 
+                List<PacienteResumenDTO> pacientesResumen = cita.getPacientes().stream()
+                                .map(p -> {
+                                        String clienteNombre = null;
+                                        Long clienteId = null;
+                                        if (p.getCliente() != null) {
+                                                clienteId = p.getCliente().getId();
+                                                if (p.getCliente().getUsuario() != null) {
+                                                        clienteNombre = p.getCliente().getUsuario().getNombre()
+                                                                + " " + p.getCliente().getUsuario().getApellido();
+                                                }
+                                        }
+                                        return new PacienteResumenDTO(
+                                                p.getId(),
+                                                p.getNombre(),
+                                                p.getEspecie() != null ? p.getEspecie().getNombre() : null,
+                                                p.getSexo(),
+                                                clienteId,
+                                                clienteNombre);
+                                })
+                                .collect(Collectors.toList());
+
+                String veterinarioNombre = "";
+                if (cita.getVeterinario() != null && cita.getVeterinario().getUsuario() != null) {
+                        veterinarioNombre = cita.getVeterinario().getUsuario().getNombre()
+                                        + " " + cita.getVeterinario().getUsuario().getApellido();
+                }
+
                 return new CitaResponseDTO(
                                 cita.getId(),
                                 cita.getFecha(),
                                 cita.getHoraInicio(),
                                 cita.getHoraFin(),
-                                cita.getServicio().getNombre(), // En el orden correcto (5)
-                                cita.getVeterinario().getId(), // En el orden correcto (6)
-                                cita.getMotivo(), // En el orden correcto (7)
-                                cita.getEstado(), // En el orden correcto (8)
-                                pacientesIds, // (9)
-                                cita.getSede().getId());
+                                cita.getServicio().getNombre(),
+                                cita.getServicio().getId(),
+                                cita.getVeterinario().getId(),
+                                veterinarioNombre,
+                                cita.getMotivo(),
+                                cita.getEstado(),
+                                pacientesIds,
+                                cita.getSede().getId(),
+                                cita.getSede().getNombre(),
+                                pacientesResumen);
         }
 
-        // EL MOTOR DE DISPONIBILIDAD
         public List<SlotDisponibilidadDTO> obtenerDisponibilidad(Long veterinarioId, LocalDate fecha, Long servicioId,
                         Long sedeId, int cantidadPacientes) {
+                return obtenerDisponibilidad(veterinarioId, fecha, servicioId, sedeId, cantidadPacientes, null);
+        }
+
+        public List<SlotDisponibilidadDTO> obtenerDisponibilidad(Long veterinarioId, LocalDate fecha, Long servicioId,
+                        Long sedeId, int cantidadPacientes, Long citaIdExcluir) {
 
                 if (cantidadPacientes < 1) {
                         throw new BusinessLogicException("cantidadPacientes debe ser >= 1");
                 }
 
-                // 1. Si el día es feriado o el doctor pidió permiso, devolvemos lista vacía
-                // inmediatamente
                 if (diaBloqueadoRepositorio.estaBloqueadoElDia(fecha, veterinarioId)) {
                         return List.of();
                 }
 
-                // 2. Buscamos el horario de trabajo del doctor para ese día (ej. LUNES) en esa
-                // sede
                 HorarioVeterinario horario = horarioRepositorio
                                 .findByVeterinarioIdAndDiaSemanaAndSedeId(veterinarioId, fecha.getDayOfWeek(), sedeId)
                                 .orElse(null);
 
                 if (horario == null) {
-                        return List.of(); // Ese día no trabaja
+                        return List.of();
                 }
 
-                // 3. Calculamos cuánto dura la atención completa
                 ServicioMedico servicio = servicioRepositorio.findById(servicioId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado"));
-                int duracionPorPaciente = servicio.getDuracionMinutos() + servicio.getBufferMinutos();
+                int duracionPorPaciente = (servicio.getDuracionMinutos() != null ? servicio.getDuracionMinutos() : 0) 
+                                        + (servicio.getBufferMinutos() != null ? servicio.getBufferMinutos() : 0);
+                
+                // Seguridad: Si el servicio tiene duración 0, forzar al menos 15 minutos para evitar bucle infinito
+                if (duracionPorPaciente <= 0) {
+                        duracionPorPaciente = 15;
+                }
+                
                 int duracionTotal = duracionPorPaciente * cantidadPacientes;
 
-                // 4. Traemos todas las citas que ya tiene el doctor ese día
-                List<Cita> citasDelDia = citaRepositorio.buscarCitasAgendadasDelDia(veterinarioId, fecha,
-                                ESTADOS_IGNORADOS);
+                List<Cita> citasDelDia = citaRepositorio.buscarCitasAgendadasDelDia(veterinarioId, fecha, ESTADOS_IGNORADOS);
+
+                if (citaIdExcluir != null) {
+                        citasDelDia = citasDelDia.stream()
+                                .filter(c -> !c.getId().equals(citaIdExcluir))
+                                .collect(Collectors.toList());
+                }
 
                 List<SlotDisponibilidadDTO> slotsDisponibles = new java.util.ArrayList<>();
                 LocalTime horaActual = horario.getHoraEntrada();
-                if (fecha.equals(LocalDate.now()) && LocalTime.now().isAfter(horaActual)) {
-                        horaActual = LocalTime.now().withSecond(0).withNano(0);
+                
+                // Si es hoy, empezar desde la hora actual o la hora de entrada, lo que sea posterior
+                if (fecha.equals(LocalDate.now())) {
+                        LocalTime ahora = LocalTime.now().withSecond(0).withNano(0);
+                        if (ahora.isAfter(horaActual)) {
+                                horaActual = ahora;
+                        }
                 }
 
-                // 5. El Bucle Principal: Iteramos minuto a minuto generando bloques
-                while (horaActual.plusMinutes(duracionTotal).compareTo(horario.getHoraSalida()) <= 0) {
+                int iteraciones = 0;
+                while (horaActual.plusMinutes(duracionTotal).compareTo(horario.getHoraSalida()) <= 0 && iteraciones < 500) {
+                        iteraciones++;
                         LocalTime finSlot = horaActual.plusMinutes(duracionTotal);
 
-                        // A. ¿Choca con el refrigerio? (Si tiene refrigerio configurado)
                         boolean chocaConRefrigerio = false;
                         if (horario.getInicioRefrigerio() != null && horario.getFinRefrigerio() != null) {
                                 if (horaActual.isBefore(horario.getFinRefrigerio())
                                                 && finSlot.isAfter(horario.getInicioRefrigerio())) {
                                         chocaConRefrigerio = true;
-                                        // Saltamos el tiempo directo al fin del refrigerio para ahorrar iteraciones
                                         horaActual = horario.getFinRefrigerio();
                                         continue;
                                 }
                         }
 
-                        // B. ¿Choca con alguna cita existente?
                         boolean chocaConCita = false;
                         for (Cita cita : citasDelDia) {
                                 if (horaActual.isBefore(cita.getHoraFin()) && finSlot.isAfter(cita.getHoraInicio())) {
                                         chocaConCita = true;
-                                        // Saltamos el tiempo al final de esa cita para buscar el siguiente hueco
+                                        // Avanzar a la hora fin de la cita para no quedar atrapado
                                         horaActual = cita.getHoraFin();
                                         break;
                                 }
                         }
 
-                        // C. Si sobrevivió a las validaciones, ¡Tenemos un hueco libre!
                         if (!chocaConRefrigerio && !chocaConCita) {
                                 slotsDisponibles.add(new SlotDisponibilidadDTO(horaActual, finSlot));
-                                horaActual = horaActual.plusMinutes(duracionTotal);
+                                // Avanzar al menos duracionPorPaciente o 15 minutos para el siguiente slot
+                                horaActual = horaActual.plusMinutes(Math.max(15, duracionPorPaciente));
                         }
                 }
 
                 return slotsDisponibles;
         }
 
-        // MÉTODO PARA EL TABLERO DE RECEPCIÓN
         @Transactional
         public void cambiarEstado(Long id, EstadoCita nuevoEstado) {
                 Cita citaDb = citaRepositorio.findById(id)
@@ -314,15 +397,11 @@ public class CitaServicio {
 
                 validarTransicionEstado(citaDb.getEstado(), nuevoEstado);
                 citaDb.setEstado(nuevoEstado);
-
                 citaRepositorio.save(citaDb);
         }
 
         private static void validarFechaHoraNoPasado(LocalDate fecha, LocalTime horaInicio) {
-                if (fecha == null || horaInicio == null) {
-                        return; // Bean Validation se encarga; aquí evitamos NPE.
-                }
-
+                if (fecha == null || horaInicio == null) return;
                 if (fecha.isBefore(LocalDate.now())) {
                         throw new BusinessLogicException("No se permiten citas en el pasado");
                 }
@@ -335,7 +414,6 @@ public class CitaServicio {
                 if (actual == null || nuevo == null) {
                         throw new BusinessLogicException("Estado inválido");
                 }
-
                 if (!actual.puedeTransitarA(nuevo)) {
                         throw new BusinessLogicException("Transición de estado inválida: " + actual + " -> " + nuevo);
                 }

@@ -1,5 +1,6 @@
 package com.veterinaria.controladores;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +45,18 @@ public class CitaController {
     public ResponseEntity<Page<CitaResponseDTO>> listarCitas(
             @RequestParam Long sedeId,
             @RequestParam(required = false) String buscar,
+            @RequestParam(required = false) LocalDate fecha,
+            @RequestParam(required = false) EstadoCita estado,
+            @RequestParam(required = false) Long veterinarioId,
             Pageable pageable) {
-        Page<CitaResponseDTO> citas = citaServicio.listar(sedeId, buscar, pageable);
+
+        Page<CitaResponseDTO> citas;
+        // Si hay filtros avanzados, usar el método con filtros
+        if (fecha != null || estado != null || veterinarioId != null) {
+            citas = citaServicio.listarConFiltros(sedeId, fecha, estado, veterinarioId, buscar, pageable);
+        } else {
+            citas = citaServicio.listar(sedeId, buscar, pageable);
+        }
         return ResponseEntity.ok(citas);
     }
 
@@ -59,14 +70,12 @@ public class CitaController {
     public ResponseEntity<CitaResponseDTO> actualizarCita(@PathVariable Long id,
             @Valid @RequestBody CitaRequestDTO dto) {
         CitaResponseDTO citaActualizada = citaServicio.actualizar(id, dto);
-
         return ResponseEntity.ok(citaActualizada);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarCita(@PathVariable Long id) {
         citaServicio.eliminar(id);
-
         return ResponseEntity.noContent().build();
     }
 
@@ -76,14 +85,11 @@ public class CitaController {
             @RequestParam java.time.LocalDate fecha,
             @RequestParam Long servicioId,
             @RequestParam Long sedeId,
-            @RequestParam(defaultValue = "1") int cantidadPacientes) {
+            @RequestParam(defaultValue = "1") int cantidadPacientes,
+            @RequestParam(required = false) Long citaIdExcluir) {
 
         List<SlotDisponibilidadDTO> slots = citaServicio.obtenerDisponibilidad(
-                veterinarioId,
-                fecha,
-                servicioId,
-                sedeId,
-                cantidadPacientes);
+                veterinarioId, fecha, servicioId, sedeId, cantidadPacientes, citaIdExcluir);
         return ResponseEntity.ok(slots);
     }
 

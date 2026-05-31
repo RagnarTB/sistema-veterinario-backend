@@ -50,17 +50,17 @@ class CitaControllerTest {
                 """;
 
         // 1. Configuramos el Mock para que devuelva un DTO válido
-        CitaResponseDTO respuestaMock = new CitaResponseDTO(
-                1L,
-                LocalDate.of(2026, 10, 15),
-                LocalTime.of(10, 0),
-                LocalTime.of(10, 30),
-                "Vacunación",
-                2L,
-                "Primera vacuna para la camada de gatitos",
-                EstadoCita.AGENDADA,
-                List.of(1L, 2L, 3L, 4L),
-                1L);
+        CitaResponseDTO respuestaMock = new CitaResponseDTO();
+        respuestaMock.setId(1L);
+        respuestaMock.setFecha(LocalDate.of(2026, 10, 15));
+        respuestaMock.setHoraInicio(LocalTime.of(10, 0));
+        respuestaMock.setHoraFin(LocalTime.of(10, 30));
+        respuestaMock.setServicioNombre("Vacunación");
+        respuestaMock.setVeterinarioId(2L);
+        respuestaMock.setMotivo("Primera vacuna para la camada de gatitos");
+        respuestaMock.setEstado(EstadoCita.AGENDADA);
+        respuestaMock.setPacienteIds(List.of(1L, 2L, 3L, 4L));
+        respuestaMock.setSedeId(1L);
 
         when(citaServicio.guardar(any(CitaRequestDTO.class))).thenReturn(respuestaMock);
 

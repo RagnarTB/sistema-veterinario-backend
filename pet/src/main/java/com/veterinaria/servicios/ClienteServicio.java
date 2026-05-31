@@ -1,14 +1,26 @@
 package com.veterinaria.servicios;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.veterinaria.dtos.ClienteRapidoRequestDTO;
+import com.veterinaria.dtos.ClienteRapidoResponseDTO;
 import com.veterinaria.dtos.ClienteRequestDTO;
 import com.veterinaria.dtos.ClienteResponseDTO;
+import com.veterinaria.dtos.MascotaRapidaDTO;
+import com.veterinaria.dtos.PacienteResumenDTO;
 import com.veterinaria.modelos.Cliente;
+import com.veterinaria.modelos.Especie;
+import com.veterinaria.modelos.Paciente;
+import com.veterinaria.modelos.Usuario;
 import com.veterinaria.respositorios.ClienteRepositorio;
+import com.veterinaria.respositorios.EspecieRepositorio;
+import com.veterinaria.respositorios.PacienteRepositorio;
 
 import jakarta.transaction.Transactional;
 
@@ -20,17 +32,156 @@ public class ClienteServicio {
     private com.veterinaria.respositorios.RolRespositorio rolRespositorio;
     private com.veterinaria.respositorios.VerificationTokenRepositorio tokenRepositorio;
     private EmailServicio emailServicio;
+    private final EspecieRepositorio especieRepositorio;
+    private final PacienteRepositorio pacienteRepositorio;
 
     public ClienteServicio(ClienteRepositorio clienteRepositorio, 
                            com.veterinaria.respositorios.UsuarioRepositorio usuarioRepositorio,
                            com.veterinaria.respositorios.RolRespositorio rolRespositorio,
                            com.veterinaria.respositorios.VerificationTokenRepositorio tokenRepositorio, 
-                           EmailServicio emailServicio) {
+                           EmailServicio emailServicio,
+                           EspecieRepositorio especieRepositorio,
+                           PacienteRepositorio pacienteRepositorio) {
         this.clienteRepositorio = clienteRepositorio;
         this.usuarioRepositorio = usuarioRepositorio;
         this.rolRespositorio = rolRespositorio;
         this.tokenRepositorio = tokenRepositorio;
         this.emailServicio = emailServicio;
+        this.especieRepositorio = especieRepositorio;
+        this.pacienteRepositorio = pacienteRepositorio;
+    }
+
+    // =========================================================
+    // CREAR CLIENTE RÁPIDO (sin email/password, con mascotas)
+    // =========================================================
+    @Transactional
+    public ClienteRapidoResponseDTO crearClienteRapido(ClienteRapidoRequestDTO dto) {
+
+        // 1. Buscar si ya existe un usuario con ese DNI
+        Usuario usuario = usuarioRepositorio.findByDni(dto.getDni()).orElse(null);
+
+        if (usuario != null) {
+            // Si ya tiene email y password → es un cliente registrado completo
+            if (usuario.getEmail() != null && usuario.getPassword() != null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Este DNI ya pertenece a un cliente registrado. Búsquelo en la lista de clientes.");
+            }
+
+            // Si ya existe como invitado → reusar (idempotente)
+            Cliente clienteExistente = clienteRepositorio.findByUsuarioId(usuario.getId()).orElse(null);
+            if (clienteExistente != null) {
+                // Actualizar datos por si cambiaron
+                usuario.setNombre(dto.getNombre());
+                usuario.setApellido(dto.getApellido());
+                if (dto.getTelefono() != null && !dto.getTelefono().isBlank()) {
+                    usuario.setTelefono(dto.getTelefono());
+                }
+                usuarioRepositorio.save(usuario);
+
+                // Crear las mascotas nuevas (no duplicar existentes)
+                List<PacienteResumenDTO> pacientesCreados = crearMascotasParaCliente(dto.getMascotas(), clienteExistente);
+
+                return new ClienteRapidoResponseDTO(
+                        clienteExistente.getId(),
+                        usuario.getNombre(),
+                        usuario.getApellido(),
+                        usuario.getDni(),
+                        usuario.getTelefono(),
+                        clienteExistente.getEsInvitado(),
+                        pacientesCreados);
+            }
+        }
+
+        // 2. Crear Usuario mínimo (sin password)
+        if (usuario == null) {
+            usuario = new Usuario();
+            usuario.setDni(dto.getDni());
+            usuario.setNombre(dto.getNombre());
+            usuario.setApellido(dto.getApellido());
+            usuario.setTelefono(dto.getTelefono() != null ? dto.getTelefono() : "");
+
+            // Asignar email si viene en el request y no está en uso
+            if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+                if (usuarioRepositorio.findByEmail(dto.getEmail()).isPresent()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "El email proporcionado ya está en uso por otro cliente.");
+                }
+                usuario.setEmail(dto.getEmail());
+            }
+
+            usuario.setDireccion(dto.getDireccion() != null ? dto.getDireccion() : "");
+
+            usuario.setActivo(true);
+
+            // Asignar rol ROLE_CLIENTE
+            com.veterinaria.modelos.Rol rolCliente = rolRespositorio.findByNombre("ROLE_CLIENTE")
+                    .orElseThrow(() -> new RuntimeException("Rol ROLE_CLIENTE no encontrado"));
+            usuario.getRoles().add(rolCliente);
+            usuario = usuarioRepositorio.save(usuario);
+        }
+
+        // 3. Crear Cliente con esInvitado=true
+        Cliente cliente = new Cliente();
+        cliente.setUsuario(usuario);
+        cliente.setEsInvitado(true);
+        cliente.setActivo(true);
+        Cliente clienteGuardado = clienteRepositorio.save(cliente);
+
+        // 4. Crear las mascotas
+        List<PacienteResumenDTO> pacientesCreados = crearMascotasParaCliente(dto.getMascotas(), clienteGuardado);
+
+        // Si se proporcionó email y el cliente fue creado, enviar token de confirmación
+        if (usuario.getEmail() != null && !usuario.getEmail().isBlank() && usuario.getPassword() == null) {
+            String token = java.util.UUID.randomUUID().toString();
+            com.veterinaria.modelos.VerificationToken verificationToken = new com.veterinaria.modelos.VerificationToken(
+                    token, 
+                    clienteGuardado, 
+                    java.time.LocalDateTime.now().plusDays(1)
+            );
+            tokenRepositorio.save(verificationToken);
+            emailServicio.enviarCorreoConfirmacion(usuario.getEmail(), token);
+        }
+
+        return new ClienteRapidoResponseDTO(
+                clienteGuardado.getId(),
+                usuario.getNombre(),
+                usuario.getApellido(),
+                usuario.getDni(),
+                usuario.getTelefono(),
+                true,
+                pacientesCreados);
+    }
+
+    private List<PacienteResumenDTO> crearMascotasParaCliente(List<MascotaRapidaDTO> mascotas, Cliente cliente) {
+        List<PacienteResumenDTO> resultado = new ArrayList<>();
+        String nombreCliente = cliente.getUsuario().getNombre() + " " + cliente.getUsuario().getApellido();
+
+        for (MascotaRapidaDTO mascotaDto : mascotas) {
+            Especie especie = especieRepositorio.findById(mascotaDto.getEspecieId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Especie no encontrada con ID: " + mascotaDto.getEspecieId()));
+
+            Paciente paciente = new Paciente();
+            paciente.setNombre(mascotaDto.getNombre());
+            paciente.setEspecie(especie);
+            paciente.setRaza(mascotaDto.getRaza());
+            paciente.setSexo(mascotaDto.getSexo());
+            paciente.setFechaNacimiento(mascotaDto.getFechaNacimiento());
+            paciente.setCliente(cliente);
+            paciente.setActivo(true);
+
+            Paciente pacienteGuardado = pacienteRepositorio.save(paciente);
+
+            resultado.add(new PacienteResumenDTO(
+                    pacienteGuardado.getId(),
+                    pacienteGuardado.getNombre(),
+                    especie.getNombre(),
+                    pacienteGuardado.getSexo(),
+                    cliente.getId(),
+                    nombreCliente));
+        }
+
+        return resultado;
     }
 
     @Transactional
@@ -48,6 +199,7 @@ public class ClienteServicio {
             usuario.setTelefono(dto.getTelefono());
             usuario.setDni(dto.getDni());
             usuario.setEmail(dto.getEmail());
+            usuario.setDireccion(dto.getDireccion());
             usuario.setActivo(false);
             
             com.veterinaria.modelos.Rol rolCliente = rolRespositorio.findByNombre("ROLE_CLIENTE")
@@ -107,7 +259,8 @@ public class ClienteServicio {
                 u != null ? u.getDni() : "",
                 u != null ? u.getEmail() : "",
                 cliente.getActivo(),
-                verificado);
+                verificado,
+                u != null ? u.getDireccion() : "");
         });
     }
 
@@ -124,7 +277,8 @@ public class ClienteServicio {
                         u != null ? u.getDni() : "",
                         u != null ? u.getEmail() : "",
                         cliente.getActivo(),
-                        verificado);
+                        verificado,
+                        u != null ? u.getDireccion() : "");
                 })
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Cliente no encontrado con ID: " + id));
@@ -142,7 +296,29 @@ public class ClienteServicio {
             u.setApellido(dto.getApellido());
             u.setTelefono(dto.getTelefono());
             u.setDni(dto.getDni());
-            u.setEmail(dto.getEmail());
+            u.setDireccion(dto.getDireccion());
+
+            // Lógica para asignar correo si no tenía y disparar confirmación
+            if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+                if (!dto.getEmail().equals(u.getEmail())) {
+                    if (usuarioRepositorio.findByEmail(dto.getEmail()).isPresent()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El email ya está en uso");
+                    }
+                    u.setEmail(dto.getEmail());
+                    
+                    // Si el usuario es invitado y no tiene password, le enviamos token
+                    if (u.getPassword() == null) {
+                        String token = java.util.UUID.randomUUID().toString();
+                        com.veterinaria.modelos.VerificationToken verificationToken = new com.veterinaria.modelos.VerificationToken(
+                                token, 
+                                clientedb, 
+                                java.time.LocalDateTime.now().plusDays(1)
+                        );
+                        tokenRepositorio.save(verificationToken);
+                        emailServicio.enviarCorreoConfirmacion(u.getEmail(), token);
+                    }
+                }
+            }
             usuarioRepositorio.save(u);
         }
 
@@ -157,7 +333,8 @@ public class ClienteServicio {
                 u != null ? u.getDni() : "",
                 u != null ? u.getEmail() : "",
                 clienteGuardado.getActivo(),
-                verificado
+                verificado,
+                u != null ? u.getDireccion() : ""
         );
     }
 

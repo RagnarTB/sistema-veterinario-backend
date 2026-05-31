@@ -13,8 +13,11 @@ import java.util.Optional;
 public interface HospitalizacionRepositorio extends JpaRepository<Hospitalizacion, Long> {
     Optional<Hospitalizacion> findByPacienteIdAndEstado(Long pacienteId, String estado);
     
+    List<Hospitalizacion> findByEstado(String estado);
+    
     boolean existsByJaulaIdAndEstado(Long jaulaId, String estado);
 
-    @EntityGraph(attributePaths = { "paciente", "medicoAsignado", "jaula" })
+    @EntityGraph(attributePaths = { "paciente", "empleado", "jaula" })
     List<Hospitalizacion> findAll();
 }
+

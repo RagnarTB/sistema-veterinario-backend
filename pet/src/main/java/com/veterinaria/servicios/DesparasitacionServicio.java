@@ -22,15 +22,14 @@ public class DesparasitacionServicio {
 
     private final DesparasitacionRepositorio desparasitacionRepositorio;
     private final PacienteRepositorio pacienteRepositorio;
-    private final EmpleadoRepositorio empleadoRepositorio;
+    private final EmpleadoAutenticadoService empleadoAutenticadoService;
 
     @Transactional
     public DesparasitacionResponseDTO guardar(DesparasitacionRequestDTO requestDTO) {
         Paciente paciente = pacienteRepositorio.findById(requestDTO.getPacienteId())
                 .orElseThrow(() -> new EntityNotFoundException("Paciente no encontrado con ID: " + requestDTO.getPacienteId()));
 
-        Empleado empleado = empleadoRepositorio.findById(requestDTO.getEmpleadoId())
-                .orElseThrow(() -> new EntityNotFoundException("Empleado no encontrado con ID: " + requestDTO.getEmpleadoId()));
+        Empleado empleado = empleadoAutenticadoService.obtenerEmpleadoActual();
 
         Desparasitacion desparasitacion = new Desparasitacion();
         desparasitacion.setTipo(requestDTO.getTipo());
@@ -69,5 +68,13 @@ public class DesparasitacionServicio {
         dto.setEmpleadoId(desparasitacion.getEmpleado().getId());
         dto.setEmpleadoNombre(desparasitacion.getEmpleado().getUsuario().getNombre() + " " + desparasitacion.getEmpleado().getUsuario().getApellido());
         return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public List<DesparasitacionResponseDTO> listarProximasDosis() {
+        java.time.LocalDate hoy = java.time.LocalDate.now();
+        java.time.LocalDate enDosSemanas = hoy.plusDays(14);
+        List<Desparasitacion> proximas = desparasitacionRepositorio.findByFechaProximaDosisBetweenOrderByFechaProximaDosisAsc(hoy, enDosSemanas);
+        return proximas.stream().map(this::mapearADTO).collect(Collectors.toList());
     }
 }

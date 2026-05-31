@@ -31,6 +31,14 @@ public class Hospitalizacion {
     @Column(nullable = false)
     private String estado;
 
+    @Column(nullable = false)
+    private Integer frecuenciaMonitoreoHoras = 4;
+
+    @Column(nullable = false)
+    private String nivelGravedad = "ESTABLE";
+
+    private LocalDateTime proximoMonitoreo;
+
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "paciente_id", nullable = false)

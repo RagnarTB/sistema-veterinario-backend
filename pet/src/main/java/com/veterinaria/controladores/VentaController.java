@@ -47,9 +47,18 @@ public class VentaController {
     }
 
     @PatchMapping("/{id}/anular")
-    @PreAuthorize("hasRole('ADMIN')") // Un cajero normal no debería poder anular sin permiso
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<com.veterinaria.dtos.MensajeResponseDTO> anularVenta(@PathVariable Long id) {
         com.veterinaria.modelos.Empleado empleadoActual = empleadoAutenticadoService.obtenerEmpleadoActual();
         return ResponseEntity.ok(ventaServicio.anularVenta(id, empleadoActual));
+    }
+
+    // Registrar un pago (parcial o total) a una venta existente
+    @PostMapping("/{id}/pago")
+    public ResponseEntity<com.veterinaria.dtos.VentaResponseDTO> registrarPago(
+            @PathVariable Long id,
+            @jakarta.validation.Valid @RequestBody com.veterinaria.dtos.PagoRequestDTO dto) {
+        com.veterinaria.modelos.Empleado empleadoActual = empleadoAutenticadoService.obtenerEmpleadoActual();
+        return ResponseEntity.ok(ventaServicio.registrarPago(id, dto, empleadoActual));
     }
 }

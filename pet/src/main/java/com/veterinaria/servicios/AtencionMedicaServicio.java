@@ -19,19 +19,27 @@ import com.veterinaria.modelos.Enums.EstadoCita;
 import com.veterinaria.respositorios.AtencionMedicaRepositorio;
 import com.veterinaria.respositorios.CitaRepositorio;
 import com.veterinaria.respositorios.EmpleadoRepositorio;
+import com.veterinaria.respositorios.VentaRepositorio;
+import com.veterinaria.modelos.Venta;
+import com.veterinaria.modelos.DetalleVenta;
+import com.veterinaria.modelos.Cliente;
+import java.math.BigDecimal;
 
 @Service
 public class AtencionMedicaServicio {
 
-    private AtencionMedicaRepositorio atencionMedicaRepositorio;
-    private CitaRepositorio citaRepositorio;
+    private final AtencionMedicaRepositorio atencionMedicaRepositorio;
+    private final CitaRepositorio citaRepositorio;
     private final EmpleadoRepositorio empleadoRepositorio;
+    private final VentaRepositorio ventaRepositorio;
 
     public AtencionMedicaServicio(AtencionMedicaRepositorio atencionMedicaRepositorio,
-            CitaRepositorio citaRepositorio, EmpleadoRepositorio empleadoRepositorio) {
+            CitaRepositorio citaRepositorio, EmpleadoRepositorio empleadoRepositorio,
+            VentaRepositorio ventaRepositorio) {
         this.atencionMedicaRepositorio = atencionMedicaRepositorio;
         this.citaRepositorio = citaRepositorio;
         this.empleadoRepositorio = empleadoRepositorio;
+        this.ventaRepositorio = ventaRepositorio;
     }
 
     // CREATE
@@ -91,6 +99,36 @@ public class AtencionMedicaServicio {
         if (atencionesPrevias + 1 == cita.getPacientes().size()) {
             cita.setEstado(EstadoCita.COMPLETADA);
             citaRepositorio.save(cita);
+
+            // Generar automáticamente la venta de servicios médicos
+            Venta ventaServicio = new Venta();
+            ventaServicio.setCita(cita);
+            // Obtener el cliente (primer paciente o validación de dueños)
+            Cliente cliente = null;
+            if (cita.getPacientes() != null && !cita.getPacientes().isEmpty()) {
+                cliente = cita.getPacientes().get(0).getCliente();
+            }
+            ventaServicio.setCliente(cliente);
+            ventaServicio.setFechaHora(java.time.LocalDateTime.now());
+            ventaServicio.setEstado(com.veterinaria.modelos.Enums.EstadoVenta.ACTIVA);
+            ventaServicio.setTipoComprobante(com.veterinaria.modelos.Enums.TipoComprobante.BOLETA);
+
+            BigDecimal precioServicio = (cita.getServicio() != null) ? cita.getServicio().getPrecio() : BigDecimal.ZERO;
+            BigDecimal cantidadPacientes = BigDecimal.valueOf(cita.getPacientes().size());
+            BigDecimal totalVenta = precioServicio.multiply(cantidadPacientes);
+
+            ventaServicio.setTotal(totalVenta);
+            ventaServicio.setMontoPagado(BigDecimal.ZERO);
+            ventaServicio.setSaldoPendiente(totalVenta);
+
+            DetalleVenta detalle = new DetalleVenta();
+            detalle.setServicio(cita.getServicio());
+            detalle.setCantidad(cantidadPacientes);
+            detalle.setPrecioUnitario(precioServicio);
+            detalle.setSubtotal(totalVenta);
+
+            ventaServicio.agregarDetalle(detalle);
+            ventaRepositorio.save(ventaServicio);
         }
 
         AtencionMedica atencionGuardada = atencionMedicaRepositorio.save(atencionMedica);
@@ -110,6 +148,14 @@ public class AtencionMedicaServicio {
                 .map(this::mapearADTO)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Atención médica no encontrada con ID: " + id));
+    }
+
+    // READ (Buscar por Cita y Paciente)
+    public AtencionMedicaResponseDTO buscarPorCitaYPaciente(Long citaId, Long pacienteId) {
+        return atencionMedicaRepositorio.findByCitaIdAndPacienteId(citaId, pacienteId)
+                .map(this::mapearADTO)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No se encontró atención médica registrada para esta cita y paciente."));
     }
 
     // UPDATE

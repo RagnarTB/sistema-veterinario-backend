@@ -55,13 +55,13 @@ public interface CitaRepositorio extends JpaRepository<Cita, Long> {
             @Param("fecha") LocalDate fecha,
             @Param("estadosIgnorados") List<EstadoCita> estadosIgnorados);
 
-    @EntityGraph(attributePaths = { "pacientes", "servicio", "veterinario", "sede" })
+    @EntityGraph(attributePaths = { "pacientes", "pacientes.especie", "pacientes.cliente", "pacientes.cliente.usuario", "servicio", "veterinario", "veterinario.usuario", "sede" })
     Page<Cita> findAll(Pageable pageable);
 
-    @EntityGraph(attributePaths = { "pacientes", "servicio", "veterinario", "sede" })
+    @EntityGraph(attributePaths = { "pacientes", "pacientes.especie", "pacientes.cliente", "pacientes.cliente.usuario", "servicio", "veterinario", "veterinario.usuario", "sede" })
     Page<Cita> findBySedeId(Long sedeId, Pageable pageable);
 
-    @EntityGraph(attributePaths = { "pacientes", "servicio", "veterinario" })
+    @EntityGraph(attributePaths = { "pacientes", "pacientes.especie", "pacientes.cliente", "pacientes.cliente.usuario", "servicio", "veterinario", "veterinario.usuario", "sede" })
     Optional<Cita> findById(Long id);
 
     @Query("SELECT new com.veterinaria.dtos.CitasVeterinarioDTO(usr.email, COUNT(c)) " +
@@ -73,7 +73,7 @@ public interface CitaRepositorio extends JpaRepository<Cita, Long> {
             "ORDER BY COUNT(c) DESC")
     List<CitasVeterinarioDTO> contarCitasCompletadasPorVeterinario();
 
-    @EntityGraph(attributePaths = { "pacientes", "servicio", "veterinario", "sede" })
+    @EntityGraph(attributePaths = { "pacientes", "pacientes.especie", "pacientes.cliente", "pacientes.cliente.usuario", "servicio", "veterinario", "veterinario.usuario", "sede" })
     @Query("SELECT DISTINCT c FROM Cita c " +
             "LEFT JOIN c.pacientes p " +
             "LEFT JOIN p.cliente cl " +
@@ -102,4 +102,17 @@ public interface CitaRepositorio extends JpaRepository<Cita, Long> {
             @Param("fechaInicio") LocalDate fechaInicio, 
             @Param("fechaFin") LocalDate fechaFin, 
             @Param("estados") List<EstadoCita> estados);
+
+    // Filtros avanzados para la agenda
+    @EntityGraph(attributePaths = { "pacientes", "pacientes.especie", "pacientes.cliente", "pacientes.cliente.usuario", "servicio", "veterinario", "veterinario.usuario", "sede" })
+    Page<Cita> findBySedeIdAndFecha(Long sedeId, LocalDate fecha, Pageable pageable);
+
+    @EntityGraph(attributePaths = { "pacientes", "pacientes.especie", "pacientes.cliente", "pacientes.cliente.usuario", "servicio", "veterinario", "veterinario.usuario", "sede" })
+    Page<Cita> findBySedeIdAndFechaAndEstado(Long sedeId, LocalDate fecha, EstadoCita estado, Pageable pageable);
+
+    @EntityGraph(attributePaths = { "pacientes", "pacientes.especie", "pacientes.cliente", "pacientes.cliente.usuario", "servicio", "veterinario", "veterinario.usuario", "sede" })
+    Page<Cita> findBySedeIdAndFechaAndVeterinarioId(Long sedeId, LocalDate fecha, Long veterinarioId, Pageable pageable);
+
+    @EntityGraph(attributePaths = { "pacientes", "pacientes.especie", "pacientes.cliente", "pacientes.cliente.usuario", "servicio", "veterinario", "veterinario.usuario", "sede" })
+    Page<Cita> findBySedeIdAndFechaAndVeterinarioIdAndEstado(Long sedeId, LocalDate fecha, Long veterinarioId, EstadoCita estado, Pageable pageable);
 }
