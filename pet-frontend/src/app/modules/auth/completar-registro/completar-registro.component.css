@@ -1,29 +1,63 @@
 .login-container {
-  width: 100%;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  padding: 2.5rem 2rem;
-  box-shadow: var(--shadow-lg), 0 0 40px rgba(0,189,189,0.06);
-  margin: 0 auto;
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 2.5rem 2rem;
+    box-shadow: var(--shadow-lg), 0 0 40px rgba(0, 189, 189, 0.06);
+    margin: 0 auto;
 }
 
 .login-logo {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, var(--color-primary-800), var(--color-primary-500));
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-  box-shadow: 0 6px 20px rgba(0,189,189,0.3);
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--color-primary-800), var(--color-primary-500));
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 6px 20px rgba(0, 189, 189, 0.3);
 }
 
-.login-logo .material-icons-round { font-size: 28px; color: white; }
-.login-title { font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 0.25rem; }
-.login-sub { font-size: 0.875rem; color: var(--text-muted); text-align: center; margin-bottom: 2rem; }
-.form-group { display: flex; flex-direction: column; }
-.input-wrapper { position: relative; display: flex; align-items: center; }
-.input-icon { position: absolute; left: 12px; font-size: 18px; color: var(--text-muted); pointer-events: none; }
-.form-control.with-icon { padding-left: 2.5rem; }
+.login-logo .material-icons-round {
+    font-size: 28px;
+    color: white;
+}
+
+.login-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 0.25rem;
+}
+
+.login-sub {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 12px;
+    font-size: 18px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.form-control.with-icon {
+    padding-left: 2.5rem;
+}

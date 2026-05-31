@@ -6,7 +6,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/services/auth.service';
@@ -23,12 +23,13 @@ declare var google: any;
     ReactiveFormsModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
+    RouterModule
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
 })
 export class LoginComponent implements OnInit {
-  step = signal(1); 
+  step = signal(1); // 1 = Login, 2 = Select Role, 3 = Register Email
   loading = signal(false);
   showPass = signal(false);
   errorMsg = signal('');
@@ -78,13 +79,16 @@ export class LoginComponent implements OnInit {
 
   renderGoogleButton(retries = 0) {
     if (typeof google !== 'undefined' && google.accounts) {
-      google.accounts.id.initialize({
-        client_id: environment.googleClientId,
-        callback: (response: any) => this.ngZone.run(() => this.handleGoogleCredential(response)),
-        auto_select: false,
-        cancel_on_tap_outside: true
-      });
-      
+      if (!(window as any).googleGsiInitialized) {
+        google.accounts.id.initialize({
+          client_id: environment.googleClientId,
+          callback: (response: any) => this.ngZone.run(() => this.handleGoogleCredential(response)),
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+        (window as any).googleGsiInitialized = true;
+      }
+
       let rendered = false;
       const btn1 = document.getElementById('googleButton');
       if (btn1) {
