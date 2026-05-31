@@ -1,296 +1,301 @@
 :host ::ng-deep .mat-mdc-tab-header {
-  border-bottom: 1px solid var(--border-color, #e2e8f0);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
 }
 
 /* Contenedor Base del Modal */
 .dialog-container {
-  background: var(--bg-surface, #ffffff);
-  border-radius: 16px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  overflow: hidden; /* Evita scrolls globales o desbordamientos extraños */
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  width: 100%;
-  max-width: 550px; /* Ajuste ideal para mantener la proporción de tu captura */
-  margin: 0 auto;
+    background: var(--bg-surface, #ffffff);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    /* Evita scrolls globales o desbordamientos extraños */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    width: 100%;
+    max-width: 550px;
+    /* Ajuste ideal para mantener la proporción de tu captura */
+    margin: 0 auto;
 }
 
 /* Cabecera */
 .dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  background: rgba(34, 197, 94, 0.06);
-  border-bottom: 1px solid rgba(34, 197, 94, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(34, 197, 94, 0.06);
+    border-bottom: 1px solid rgba(34, 197, 94, 0.15);
 }
 
 .dialog-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #16a34a;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
 }
 
 /* Botón Cerrar X */
 .btn-icon {
-  background: transparent;
-  border: none;
-  color: #64748b;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s, color 0.2s;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .btn-icon:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  color: #1e293b;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #1e293b;
 }
 
 /* Contenido Principal (Scroll Eliminado) */
 .dialog-content {
-  padding: 1.25rem 1.5rem 1.5rem 1.5rem; /* Ajustado para mejor balance inferior */
-  overflow: hidden; /* Se elimina el scroll auto y max-height para que fluya natural */
+    padding: 1.25rem 1.5rem 1.5rem 1.5rem;
+    /* Ajustado para mejor balance inferior */
+    overflow: hidden;
+    /* Se elimina el scroll auto y max-height para que fluya natural */
 }
 
 /* Caja Resumen Superior del Producto */
 .product-summary-box {
-  margin-bottom: 1.25rem;
-  padding: 1rem;
-  background: var(--bg-tertiary, #f8fafc);
-  border-radius: 10px;
-  border: 1px solid var(--border-color, #e2e8f0);
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    background: var(--bg-tertiary, #f8fafc);
+    border-radius: 10px;
+    border: 1px solid var(--border-color, #e2e8f0);
 }
 
 .product-label {
-  font-size: 0.85rem;
-  color: var(--text-secondary, #64748b);
-  margin: 0 0 4px 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #64748b);
+    margin: 0 0 4px 0;
 }
 
 .product-name {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-primary, #0f172a);
-  text-transform: capitalize;
-  margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary, #0f172a);
+    text-transform: capitalize;
+    margin: 0;
 }
 
 .product-unit-info {
-  font-size: 0.8rem;
-  color: var(--text-muted, #64748b);
-  margin: 6px 0 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted, #64748b);
+    margin: 6px 0 0 0;
 }
 
 .no-decimals-alert {
-  color: #ef4444;
-  display: block;
-  margin-top: 4px;
-  font-weight: 500;
+    color: #ef4444;
+    display: block;
+    margin-top: 4px;
+    font-weight: 500;
 }
 
 /* Grid del Formulario */
 .form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem; /* Ligeramente más compacto para optimizar espacio */
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    /* Ligeramente más compacto para optimizar espacio */
 }
 
 .col-span-2 {
-  grid-column: span 2;
+    grid-column: span 2;
 }
 
 /* Elementos de Entrada (Inputs y Selects) */
 .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .form-label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-primary, #334155);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary, #334155);
 }
 
 .form-control {
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  font-size: 0.95rem;
-  background-color: #ffffff;
-  border: 1px solid var(--border-color, #cbd5e1);
-  border-radius: 8px;
-  color: var(--text-primary, #1e293b);
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: 8px;
+    color: var(--text-primary, #1e293b);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-control:focus {
-  border-color: #16a34a;
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
 }
 
 .form-control::placeholder {
-  color: #94a3b8;
+    color: #94a3b8;
 }
 
 /* Estilo para inputs de tipo Date */
 .date-picker {
-  margin-top: 4px;
+    margin-top: 4px;
 }
 
 /* Contenedor del Checkbox Personalizado */
 .checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  user-select: none;
-  color: var(--text-primary, #334155);
-  margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    user-select: none;
+    color: var(--text-primary, #334155);
+    margin-top: 2px;
 }
 
 .form-checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: #16a34a;
-  cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: #16a34a;
+    cursor: pointer;
 }
 
 /* Botones y Acciones */
 .dialog-actions {
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
 }
 
 .btn {
-  padding: 0.65rem 1.25rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
+    padding: 0.65rem 1.25rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
 }
 
 .btn-secondary {
-  background: #dc2626; 
-  border-color: #dc2626;
-  color: #ffffff;
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #ffffff;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #b91c1c;
-  border-color: #b91c1c;
+    background: #b91c1c;
+    border-color: #b91c1c;
 }
 
 .btn-primary {
-  background: #16a34a;
-  border-color: #16a34a;
-  color: #ffffff;
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #ffffff;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #15803d;
-  border-color: #15803d;
+    background: #15803d;
+    border-color: #15803d;
 }
 
 .btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .btn-with-icon {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .btn-with-icon .material-icons-round {
-  font-size: 18px;
+    font-size: 18px;
 }
 
 /* --- ESTILOS DE LA SECCIÓN DE CONFIRMACIÓN --- */
 .confirmation-box {
-  background: var(--bg-secondary, #f8fafc);
-  border-radius: 12px;
-  border: 1px solid var(--border-color, #e2e8f0);
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
+    background: var(--bg-secondary, #f8fafc);
+    border-radius: 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
 }
 
 .confirmation-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary, #64748b);
-  text-transform: uppercase;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color, #e2e8f0);
-  padding-bottom: 0.5rem;
-  letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary, #64748b);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    padding-bottom: 0.5rem;
+    letter-spacing: 0.05em;
 }
 
 .confirmation-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
 }
 
 .summary-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .summary-item.full-width {
-  grid-column: span 2;
-  margin-bottom: 0.5rem;
+    grid-column: span 2;
+    margin-bottom: 0.5rem;
 }
 
 .summary-label {
-  font-size: 0.8rem;
-  color: var(--text-muted, #64748b);
+    font-size: 0.8rem;
+    color: var(--text-muted, #64748b);
 }
 
 .summary-value {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-primary, #0f172a);
-  margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary, #0f172a);
+    margin: 0;
 }
 
 .summary-value.core-product {
-  font-size: 1.05rem;
-  font-weight: 600;
+    font-size: 1.05rem;
+    font-weight: 600;
 }
 
 .summary-value.highlight-qty {
-  color: #16a34a;
-  font-weight: 700;
-  font-size: 1.1rem;
+    color: #16a34a;
+    font-weight: 700;
+    font-size: 1.1rem;
 }
 
 /* Alerta de Conversión Interna */
 .conversion-alert {
-  margin-top: 1.25rem;
-  padding: 0.75rem 1rem;
-  background: rgba(37, 99, 235, 0.06);
-  border: 1px solid rgba(37, 99, 235, 0.2);
-  border-radius: 8px;
-  color: #2563eb;
-  font-size: 0.9rem;
+    margin-top: 1.25rem;
+    padding: 0.75rem 1rem;
+    background: rgba(37, 99, 235, 0.06);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    border-radius: 8px;
+    color: #2563eb;
+    font-size: 0.9rem;
 }
 
 .conversion-alert p {
-  margin: 0;
+    margin: 0;
 }

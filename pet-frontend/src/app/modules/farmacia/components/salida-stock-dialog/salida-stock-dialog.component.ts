@@ -9,7 +9,7 @@ import { InventarioService } from '../../services/inventario.service';
   selector: 'app-salida-stock-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatDialogModule],
-  templateUrl: './salida-stock-dialog.component.html',
+  templateUrl: './salida-stock.dialog.component.html',
   styleUrls: ['./salida-stock-dialog.component.css']
 })
 export class SalidaStockDialogComponent {

@@ -63,7 +63,7 @@ export class IngresoStockDialogComponent {
 
   irAConfirmar() {
     if (this.form.invalid) return;
-    
+
     // Validación extra de decimales en frontend
     if (!this.permiteDecimales) {
       const cant = this.form.get('cantidadComprada')?.value;

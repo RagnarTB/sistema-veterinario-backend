@@ -1,0 +1,790 @@
+<div class="page-container fade-in-up" style="max-width: 1600px; position: relative;">
+
+    <!-- LOCK SCREEN SI CAJA ESTÁ CERRADA -->
+    @if (cajaCerradaBlock()) {
+    <div class="lock-overlay flex flex-col items-center justify-center">
+        <div class="card p-8 text-center glassmorphic-lock-card fade-in-up">
+            <div class="lock-icon-container mb-4">
+                <span class="material-icons-round text-danger" style="font-size: 56px;">lock</span>
+            </div>
+            <h2 class="font-bold mb-3" style="color: var(--text-primary);">Punto de Venta Bloqueado</h2>
+            <p class="text-sm text-secondary mb-6" style="line-height: 1.5;">
+                La caja de la sede activa está cerrada para operaciones de cobro y ventas.
+                Por favor, inicie una sesión de caja diaria para poder utilizar la terminal POS.
+            </p>
+            <button class="btn btn-primary w-full justify-center" (click)="irACaja()"
+                style="padding: 12px; font-weight: 700;">
+                <span class="material-icons-round">account_balance_wallet</span>
+                Ir a Control de Caja
+            </button>
+        </div>
+    </div>
+    }
+
+    <!-- CABECERA -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Punto de Venta (POS)</h1>
+            <p class="page-subtitle">Terminal de facturación para farmacia y liquidación de servicios médicos</p>
+        </div>
+
+        <div class="flex items-center gap-md">
+            <div style="min-width: 200px;">
+                <div style="position: relative;">
+                    <span class="material-icons-round"
+                        style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #14b8b8; font-size: 18px;">storefront</span>
+                    <select [(ngModel)]="sedeId" (change)="onSedeChange()" class="form-control"
+                        style="padding-left: 36px; border-color: #14b8b8; font-weight: 600; cursor: pointer; height: 40px; font-size: 0.85rem;"
+                        [disabled]="cartItems.length > 0">
+                        @for (s of sedes; track s.id) {
+                        <option [ngValue]="s.id">{{ s.nombre }}</option>
+                        }
+                        @if (sedes.length === 0) {
+                        <option [ngValue]="1">Sede Central</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary btn-sm" (click)="toggleDrawerPending()">
+                <span class="material-icons-round">receipt_long</span>
+                Tickets Pendientes
+                @if (pendingTickets.length > 0) {
+                <span class="badge badge-sala-espera" style="margin-left: 4px; font-size: 0.65rem;">{{
+                    pendingTickets.length }}</span>
+                }
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN POS GRID -->
+    <div class="pos-layout">
+
+        <!-- COLUMNA IZQUIERDA: CATÁLOGO DE PRODUCTOS -->
+        <div class="catalog-section">
+
+            <!-- BARRA DE BÚSQUEDA Y CATEGORÍAS -->
+            <div class="card p-4 mb-4 flex flex-col gap-sm">
+                <div class="search-bar-container">
+                    <span class="material-icons-round search-icon">search</span>
+                    <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange($event)"
+                        class="form-control search-input"
+                        placeholder="Buscar producto por nombre, marca o indicación..." />
+                    @if (searchQuery) {
+                    <button class="clear-search-btn" (click)="clearSearch()">&times;</button>
+                    }
+                </div>
+            </div>
+
+            <!-- BANNER TICKET CLÍNICO ACTIVO -->
+            @if (citasVentaId) {
+            <div class="clinical-ticket-banner fade-in-up">
+                <div class="flex items-center gap-sm">
+                    <span class="material-icons-round clinical-banner-icon">medical_services</span>
+                    <div>
+                        <span class="clinical-banner-title">🎟️ Ticket Clínico #{{ citasVentaId }} Cargado</span>
+                        <p class="clinical-banner-subtitle">
+                            Servicio: {{ activeClienteName() || 'Cliente Registrado' }}. Liquidando atenciones médicas.
+                        </p>
+                    </div>
+                </div>
+                <button class="btn-remove-ticket" (click)="removeClinicalTicket()">
+                    <span class="material-icons-round">cancel</span>
+                </button>
+            </div>
+            }
+
+            <!-- GRID DE PRODUCTOS -->
+            @if (loadingProducts()) {
+            <div class="card p-8 text-center flex flex-col items-center justify-center" style="min-height: 400px;">
+                <div class="pos-spinner"></div>
+                <span class="text-sm text-secondary">Buscando productos en catálogo...</span>
+            </div>
+            } @else if (products.length === 0) {
+            <div class="card p-8 text-center text-muted flex flex-col justify-center items-center"
+                style="min-height: 400px;">
+                <span class="material-icons-round"
+                    style="font-size: 48px; color: var(--text-muted); margin-bottom: 12px;">inventory_2</span>
+                <p>No se encontraron productos disponibles para esta sede.</p>
+            </div>
+            } @else {
+            <div class="products-grid">
+                @for (prod of products; track prod.id) {
+                <div class="product-pos-card" [ngClass]="{'out-of-stock': (prod.stockActual || 0) <= 0}">
+                    <div class="product-pos-header">
+                        <span class="badge"
+                            [ngClass]="(prod.stockActual || 0) > 0 ? 'badge-agendada' : 'badge-cancelada'">
+                            Stock: {{ prod.stockActual || 0 }}
+                        </span>
+                        <span class="product-price">S/ {{ prod.precio | number:'1.2-2' }}</span>
+                    </div>
+
+                    <div class="product-pos-body">
+                        <h4 class="product-name" [title]="prod.nombre">{{ prod.nombre }}</h4>
+                        <p class="product-brand">{{ prod.marca || 'Marca Genérica' }}</p>
+                    </div>
+
+                    <div class="product-pos-footer">
+                        <button class="btn btn-primary btn-sm w-full justify-center"
+                            [disabled]="(prod.stockActual || 0) <= 0" (click)="addToCart(prod)">
+                            <span class="material-icons-round" style="font-size: 16px;">add_shopping_cart</span>
+                            Agregar al Carrito
+                        </button>
+                    </div>
+                </div>
+                }
+            </div>
+
+            <!-- PAGINADOR RÁPIDO -->
+            @if (totalPages > 1) {
+            <div class="flex justify-between items-center mt-4">
+                <span class="text-xs text-muted">Página {{ currentPage + 1 }} de {{ totalPages }}</span>
+                <div class="flex gap-xs">
+                    <button class="btn btn-secondary btn-sm" [disabled]="currentPage === 0"
+                        (click)="goToPage(currentPage - 1)">Anterior</button>
+                    <button class="btn btn-secondary btn-sm" [disabled]="currentPage === totalPages - 1"
+                        (click)="goToPage(currentPage + 1)">Siguiente</button>
+                </div>
+            </div>
+            }
+            }
+
+        </div>
+
+        <!-- COLUMNA DERECHA: CARRITO ACTIVO -->
+        <div class="cart-section card p-0 overflow-hidden">
+            <div class="cart-header border-bottom">
+                <h3 class="font-bold flex items-center gap-xs">
+                    <span class="material-icons-round text-primary" style="font-size: 22px;">shopping_cart</span>
+                    Canasta Activa
+                </h3>
+                @if (cartItems.length > 0) {
+                <button class="clear-cart-link" (click)="clearCart()">Vaciar</button>
+                }
+            </div>
+
+            <!-- LISTA DE ARTÍCULOS EN CARRITO -->
+            <div class="cart-items-container">
+                @if (cartItems.length === 0) {
+                <div class="empty-cart-view flex flex-col items-center justify-center">
+                    <span class="material-icons-round empty-cart-icon">shopping_bag</span>
+                    <p class="empty-cart-text">El carrito de compras está vacío.</p>
+                    <p class="empty-cart-subtext">Seleccione productos del catálogo a la izquierda o cargue un ticket
+                        pendiente.</p>
+                </div>
+                } @else {
+                <div class="flex flex-col gap-sm p-3">
+                    @for (item of cartItems; track $index) {
+                    <div class="cart-item-card" [ngClass]="{'clinical-service-item': !item.isRetail}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                @if (!item.isRetail) {
+                                <span class="badge badge-consultorio inline-block mb-1"
+                                    style="font-size: 0.6rem; padding: 2px 6px;">Servicio Clínico</span>
+                                }
+                                <h5 class="cart-item-name">{{ item.nombre }}</h5>
+                                <span class="cart-item-unit-price">S/ {{ item.precio | number:'1.2-2' }} c/u</span>
+                            </div>
+                            <span class="cart-item-subtotal">S/ {{ (item.precio * item.cantidad) | number:'1.2-2'
+                                }}</span>
+                        </div>
+
+                        <div class="flex justify-between items-center mt-3">
+                            <div class="qty-control">
+                                <button class="qty-btn" [disabled]="!item.isRetail"
+                                    (click)="decrementQty(item)">-</button>
+                                <span class="qty-value">{{ item.cantidad }}</span>
+                                <button class="qty-btn" [disabled]="!item.isRetail || item.cantidad >= item.maxStock"
+                                    (click)="incrementQty(item)">+</button>
+                            </div>
+
+                            <button class="cart-item-remove" (click)="removeFromCart($index)">
+                                <span class="material-icons-round" style="font-size: 18px;">delete_outline</span>
+                            </button>
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+
+            <!-- RESUMEN Y BOTÓN DE PAGO -->
+            @if (cartItems.length > 0 || esTicketHospitalizacion()) {
+            <div class="cart-footer border-top bg-surface p-4">
+                @if (loadedTicket && loadedTicket.hospitalizacionId) {
+                <div class="flex flex-col gap-xs mb-4 text-xs">
+                    <div class="flex justify-between items-center text-muted">
+                        <span>Total Hospitalización:</span>
+                        <span>S/ {{ getCartTotal() | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-success font-semibold">
+                        <span>Abonado Previamente:</span>
+                        <span>S/ {{ (loadedTicket.montoPagado || 0) | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="flex justify-between items-center font-bold text-danger" style="font-size: 0.9rem;">
+                        <span>Saldo Pendiente a Cobrar:</span>
+                        <span>S/ {{ loadedTicket.saldoPendiente | number:'1.2-2' }}</span>
+                    </div>
+                </div>
+                } @else {
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm font-bold text-secondary">Total a Pagar:</span>
+                    <span class="cart-total-value">S/ {{ getCartTotal() | number:'1.2-2' }}</span>
+                </div>
+                }
+
+                <button class="btn btn-primary w-full justify-center py-3"
+                    style="font-size: 1rem; font-weight: 700; border-radius: var(--radius-lg); box-shadow: var(--shadow-glow);"
+                    (click)="openCheckoutModal()">
+                    <span class="material-icons-round">payment</span>
+                    {{ esTicketHospitalizacion() ? 'Registrar Abono / Pago' : 'Cobrar & Cerrar Venta' }}
+                </button>
+            </div>
+            }
+        </div>
+
+    </div>
+
+    <!-- TICKET DRAWER PARA CITAS COMPLETADAS PENDIENTES (SIDEBAR LATERAL DERECHO DESLIZABLE) -->
+    @if (showPendingDrawer) {
+    <div class="drawer-backdrop" (click)="toggleDrawerPending()"></div>
+    <div class="drawer-panel card p-0 fade-in-right">
+        <div class="drawer-header border-bottom p-4 flex justify-between items-center bg-surface">
+            <h3 class="font-bold flex items-center gap-xs text-secondary">
+                <span class="material-icons-round">receipt_long</span>
+                Tickets Clínicos Pendientes
+            </h3>
+            <button class="btn-close" (click)="toggleDrawerPending()">&times;</button>
+        </div>
+
+        <div class="drawer-body p-4 overflow-y-auto" style="max-height: calc(100vh - 100px);">
+            @if (loadingTickets()) {
+            <div class="text-center py-6">
+                <div class="pos-spinner mx-auto mb-2"></div>
+                <span class="text-xs text-muted">Buscando citas pendientes de cobro...</span>
+            </div>
+            } @else if (pendingTickets.length === 0) {
+            <div class="text-center py-8 text-muted">
+                <span class="material-icons-round"
+                    style="font-size: 40px; color: var(--text-muted); margin-bottom: 8px;">check_circle_outline</span>
+                <p class="text-sm">¡Al día! No se registran tickets clínicos pendientes de cobro.</p>
+            </div>
+            } @else {
+            <div class="flex flex-col gap-sm">
+                @for (ticket of pendingTickets; track ticket.id) {
+                <div class="ticket-pending-card transition-all clickable" (click)="loadPendingTicket(ticket)">
+                    <div class="flex justify-between items-start mb-2">
+                        @if (ticket.hospitalizacionId) {
+                            <span class="badge badge-hospitalizacion inline-block" style="font-size: 0.65rem; background-color: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px;">HOSPITALIZACIÓN EN CURSO</span>
+                        } @else {
+                            <span class="badge badge-sala-espera" style="font-size: 0.65rem;">CONSULTA</span>
+                        }
+                        <span class="ticket-date text-xxs text-muted">{{ ticket.fechaHora | date:'shortTime' }}</span>
+                    </div>
+
+                    <h5 class="ticket-client-name font-bold mb-1 text-sm">{{ ticket.clienteNombre || 'Cliente General' }}</h5>
+                    <p class="ticket-details text-xxs text-secondary mb-3">
+                        @if (ticket.hospitalizacionId) {
+                            Hospitalización ID: {{ ticket.hospitalizacionId }} | Items: {{ ticket.detalles.length }}
+                        } @else {
+                            Cita ID: {{ ticket.citaId }} | Items: {{ ticket.detalles.length }}
+                        }
+                    </p>
+
+                    <div class="flex flex-col gap-xs pt-2 border-top" style="border-style: dashed;">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-muted font-semibold">Total Ticket:</span>
+                            <span class="font-medium text-secondary">S/ {{ ticket.total | number:'1.2-2' }}</span>
+                        </div>
+                        @if (ticket.hospitalizacionId && ticket.montoPagado > 0) {
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-muted font-semibold">Abonado:</span>
+                            <span class="font-medium text-success">S/ {{ ticket.montoPagado | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs font-bold text-danger">
+                            <span>Saldo Pendiente:</span>
+                            <span>S/ {{ ticket.saldoPendiente | number:'1.2-2' }}</span>
+                        </div>
+                        } @else {
+                        <div class="flex justify-between items-center text-xs font-bold text-primary">
+                            <span>Saldo Pendiente:</span>
+                            <span>S/ {{ ticket.saldoPendiente | number:'1.2-2' }}</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+    </div>
+    }
+
+    <!-- DIÁLOGO DE PAGO FRACCIONADO (MODAL CHECKOUT) -->
+    @if (showCheckoutModal) {
+    <div class="modal-backdrop">
+        <div class="card p-6 modal-box checkout-modal-container fade-in-up"
+            style="background: white; max-width: 750px; border-radius: var(--radius-lg);">
+
+            <div class="flex justify-between items-center border-bottom pb-3 mb-4">
+                <h3 class="font-bold flex items-center gap-xs text-secondary">
+                    <span class="material-icons-round text-confirmada" style="font-size: 24px;">payment</span>
+                    Registrar Pago & Comprobante
+                </h3>
+                <button class="btn-close" (click)="closeCheckoutModal()">&times;</button>
+            </div>
+
+            <!-- DOS COLUMNAS DEL MODAL DE PAGO -->
+            <div class="checkout-modal-body">
+
+                <!-- PARTE IZQUIERDA: CLIENTE Y COMPROBANTE -->
+                <div class="flex flex-col gap-md">
+
+                    <!-- TIPO DE COMPROBANTE -->
+                    <div class="form-group">
+                        <label class="form-label font-bold">Tipo de Comprobante</label>
+                        <div class="segment-selector">
+                            <button class="segment-btn" [ngClass]="{'active': tipoComprobante === 'BOLETA'}"
+                                (click)="tipoComprobante = 'BOLETA'; onTipoComprobanteChange()">
+                                Boleta
+                            </button>
+                            <button class="segment-btn" [ngClass]="{'active': tipoComprobante === 'FACTURA'}"
+                                (click)="tipoComprobante = 'FACTURA'; onTipoComprobanteChange()">
+                                Factura
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- RUC SUNAT (Solo para FACTURA) -->
+                    @if (tipoComprobante === 'FACTURA') {
+                    <div class="form-group" style="border: 1px solid var(--color-warning-400); border-radius: var(--radius-md); padding: 10px; background: rgba(251,191,36,0.07);">
+                        <label class="form-label font-bold" style="color: var(--color-warning-600);">
+                            <span class="material-icons-round" style="font-size: 14px; vertical-align: middle;">receipt_long</span>
+                            RUC del Receptor (Obligatorio para Factura)
+                        </label>
+                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px;">
+                            <input type="text" [(ngModel)]="rucNumero" class="form-control text-xs"
+                                placeholder="RUC (11 dígitos)" maxlength="11" pattern="[0-9]*"
+                                oninput="this.value=this.value.replace(/[^0-9]/g,'')" (input)="onRucChange()" />
+                            <button class="btn btn-warning btn-sm" [disabled]="rucNumero.length !== 11 || buscandoRuc()" (click)="buscarRuc()">
+                                @if (buscandoRuc()) {
+                                <span style="display:inline-block;width:12px;height:12px;border:2px solid #b45309;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;"></span>
+                                } @else { SUNAT }
+                            </button>
+                        </div>
+                        @if (rucValidado) {
+                        <div class="mt-1" style="background: rgba(34,197,94,0.1); border-radius: 6px; padding: 6px 8px;">
+                            <div class="text-xxs font-bold" style="color: var(--color-success-600);">✓ RUC Validado</div>
+                            <div class="text-xxs text-muted">{{ rucRazonSocial }}</div>
+                            @if (rucDireccion) { <div class="text-xxs text-muted">{{ rucDireccion }}</div> }
+                        </div>
+                        }
+                    </div>
+                    }
+
+                    <!-- BUSCADOR DE CLIENTE -->
+                    <div class="form-group" style="position: relative;">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="form-label font-bold m-0">Dueño / Cliente</label>
+                            @if (!modoClienteRapido()) {
+                            <button class="quick-client-trigger" (click)="enableQuickClientMode()">
+                                <span class="material-icons-round" style="font-size: 14px;">person_add</span>
+                                Registro Rápido
+                            </button>
+                            } @else {
+                            <button class="quick-client-trigger text-danger" (click)="cancelQuickClientMode()">
+                                <span class="material-icons-round" style="font-size: 14px;">cancel</span>
+                                Cancelar Registro
+                            </button>
+                            }
+                        </div>
+
+                        @if (!modoClienteRapido()) {
+                        <div style="position: relative;">
+                            <span class="material-icons-round"
+                                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px;">search</span>
+                            <input type="text" [(ngModel)]="clienteQuery"
+                                (ngModelChange)="onClienteSearchChange($event)" class="form-control"
+                                style="padding-left: 36px;" placeholder="Buscar por DNI o Nombre..."
+                                [disabled]="citasVentaId !== null" />
+                            @if (clienteQuery) {
+                            <button class="clear-search-btn" style="right: 10px;" (click)="clearClienteSearch()"
+                                [disabled]="citasVentaId !== null">&times;</button>
+                            }
+                        </div>
+
+                        <!-- SUGGESTION DROPDOWN -->
+                        @if (showClienteDropdown && filteredClientes.length > 0) {
+                        <div class="client-suggestions-dropdown card p-0 shadow-lg">
+                            @for (c of filteredClientes; track c.id) {
+                            <div class="client-suggestion-item" (click)="selectCliente(c)">
+                                <div class="font-semibold">{{ c.nombre }} {{ c.apellido }}</div>
+                                <div class="text-xxs text-muted">DNI: {{ c.dni }} | Deuda: S/ {{ c.deudaAcumulada || 0 |
+                                    number:'1.2-2' }}</div>
+                            </div>
+                            }
+                        </div>
+                        }
+
+                        <!-- CLIENTE SELECCIONADO CARD -->
+                        @if (selectedCliente) {
+                        <div class="selected-client-card mt-2 fade-in-up">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="text-xs font-bold" style="color: var(--color-primary-800);">{{
+                                        selectedCliente.nombre }} {{ selectedCliente.apellido }}</span>
+                                    <div class="text-xxs text-secondary">
+                                        DNI: {{ selectedCliente.dni }} | Deuda Acumulada:
+                                        <strong
+                                            [ngClass]="(selectedCliente.deudaAcumulada || 0) > 0 ? 'text-danger' : 'text-success'">
+                                            S/ {{ selectedCliente.deudaAcumulada || 0 | number:'1.2-2' }}
+                                        </strong>
+                                    </div>
+                                </div>
+                                @if (citasVentaId === null) {
+                                <button class="btn-clear-client" (click)="clearClienteSearch()">
+                                    <span class="material-icons-round">cancel</span>
+                                </button>
+                                }
+                            </div>
+                        </div>
+                        } @else {
+                        <div class="selected-client-card mt-2 info-card">
+                            <span class="material-icons-round text-info" style="font-size: 16px;">info</span>
+                            <span class="text-xxs text-secondary">Venta General (Boleta anónima). No disponible para
+                                pago diferido en deuda.</span>
+                        </div>
+                        }
+                        } @else {
+                        <!-- FORMULARIO CLIENTE RÁPIDO DENTRO DEL POS -->
+                        <div class="card p-3 bg-surface border flex flex-col gap-xs mt-2 fade-in-up">
+                            <div class="text-xxs font-bold text-muted uppercase mb-1">Nuevo Cliente Rápido:</div>
+
+                            <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px;">
+                                <input type="text" [(ngModel)]="rapidoDni" (ngModelChange)="onDniChange()" class="form-control text-xs"
+                                    placeholder="DNI (8 dígitos)" maxlength="8" />
+                                <button class="btn btn-secondary btn-sm"
+                                    [disabled]="rapidoDni.length !== 8 || buscandoReniec()" (click)="buscarEnReniec()">
+                                    @if (buscandoReniec()) {
+                                    <span
+                                        style="display: inline-block; width: 12px; height: 12px; border: 2px solid var(--color-primary-500); border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite;"></span>
+                                    } @else {
+                                    RENIEC
+                                    }
+                                </button>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <input type="text" [(ngModel)]="rapidoNombre" class="form-control text-xs"
+                                    placeholder="Nombre" />
+                                <input type="text" [(ngModel)]="rapidoApellido" class="form-control text-xs"
+                                    placeholder="Apellido" />
+                            </div>
+
+                            <input type="text" [(ngModel)]="rapidoTelefono" (ngModelChange)="onPhoneChange()" class="form-control text-xs"
+                                placeholder="Teléfono (Opcional)" maxlength="9" />
+                            <input type="email" [(ngModel)]="rapidoEmail" class="form-control text-xs mt-1"
+                                placeholder="Correo electrónico (Opcional)" />
+
+                            <div class="border-top pt-2 mt-2">
+                                <span class="text-xxs font-bold text-muted uppercase block mb-1">Mascota del Cliente
+                                    (Obligatorio)</span>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                    <input type="text" [(ngModel)]="rapidoPetNombre" class="form-control text-xxs"
+                                        placeholder="Nombre Mascota" />
+                                    <select [(ngModel)]="rapidoPetEspecieId" class="form-control text-xxs">
+                                        <option [ngValue]="0" disabled selected>Especie...</option>
+                                        @for (esp of especies; track esp.id) {
+                                        <option [ngValue]="esp.id">{{ esp.nombre }}</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 6px;">
+                                    <input type="text" [(ngModel)]="rapidoPetRaza" class="form-control text-xxs"
+                                        placeholder="Raza" />
+                                    <select [(ngModel)]="rapidoPetSexo" class="form-control text-xxs">
+                                        <option value="MACHO">Macho</option>
+                                        <option value="HEMBRA">Hembra</option>
+                                    </select>
+                                    <input type="date" [(ngModel)]="rapidoPetNac" class="form-control text-xs mt-1" [max]="hoy" />
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary btn-xs w-full justify-center mt-3"
+                                [disabled]="registrandoRapido() || !rapidoDni || !rapidoNombre || !rapidoApellido || !rapidoPetNombre || !rapidoPetEspecieId || !rapidoPetNac"
+                                (click)="registrarClienteRapido()">
+                                <span class="material-icons-round">save</span>
+                                Confirmar y Crear Cliente
+                            </button>
+                        </div>
+                        }
+
+                    </div>
+
+                </div>
+
+                <!-- PARTE DERECHA: REGISTRO DE PAGOS / COBRO -->
+                <div class="flex flex-col gap-sm p-3 bg-surface rounded-xl border">
+                    <span class="text-xxs font-bold text-muted uppercase block">Detalle de Cobro fraccionado:</span>
+
+                    @if (loadedTicket && loadedTicket.hospitalizacionId) {
+                    <div class="flex flex-col gap-xs mb-3 text-xs border-bottom pb-2">
+                        <div class="flex justify-between items-center text-muted">
+                            <span>Total Hospitalización:</span>
+                            <span>S/ {{ getCartTotal() | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-success font-semibold">
+                            <span>Abonado Previamente:</span>
+                            <span>S/ {{ (loadedTicket.montoPagado || 0) | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center font-bold text-danger" style="font-size: 0.9rem;">
+                            <span>Saldo Pendiente:</span>
+                            <span>S/ {{ loadedTicket.saldoPendiente | number:'1.2-2' }}</span>
+                        </div>
+                    </div>
+                    } @else {
+                    <div class="flex justify-between items-center py-2 border-bottom">
+                        <span class="text-sm font-semibold text-secondary">Total Venta:</span>
+                        <span class="text-md font-bold text-primary">S/ {{ getCartTotal() | number:'1.2-2' }}</span>
+                    </div>
+                    }
+
+                    <!-- LISTA DE PAGOS REGISTRADOS -->
+                    <div class="flex flex-col gap-xs mt-2" style="max-height: 150px; overflow-y: auto;">
+                        @for (pay of payments; track $index) {
+                        <div class="flex justify-between items-center p-2 rounded bg-white border text-xs">
+                            <div class="flex items-center gap-xs">
+                                <span class="badge" [ngClass]="{
+                      'badge-agendada': pay.metodoPago === 'EFECTIVO',
+                      'badge-confirmada': pay.metodoPago === 'YAPE' || pay.metodoPago === 'PLIN',
+                      'badge-cancelada': pay.metodoPago === 'DEUDA'
+                    }">
+                                    {{ pay.metodoPago }}
+                                </span>
+                                @if (pay.referencia) {
+                                <span class="text-xxs text-muted">Op: {{ pay.referencia }}</span>
+                                }
+                            </div>
+                            <div class="flex items-center gap-sm">
+                                <strong class="text-secondary">S/ {{ pay.monto | number:'1.2-2' }}</strong>
+                                <button class="btn-remove-pay" (click)="removePayment($index)">&times;</button>
+                            </div>
+                        </div>
+                        }
+                    </div>
+
+                    <!-- CALCULADORA DE SALDOS -->
+                    <div
+                        class="flex justify-between items-center py-2 mt-2 border-top text-xs font-semibold text-secondary">
+                        <span>Monto Cubierto Ahora:</span>
+                        <span class="text-success">S/ {{ getPaymentsTotal() | number:'1.2-2' }}</span>
+                    </div>
+
+                    @if (obtenerTotalAPagar() - getPaymentsTotal() > 0) {
+                    <div class="flex justify-between items-center py-1 text-xs font-semibold text-danger">
+                        <span>Saldo Restante:</span>
+                        <span>S/ {{ (obtenerTotalAPagar() - getPaymentsTotal()) | number:'1.2-2' }}</span>
+                    </div>
+                    } @else if (getPaymentsTotal() - obtenerTotalAPagar() > 0) {
+                    <div class="flex justify-between items-center py-1 text-xs font-semibold text-info">
+                        <span>Vuelto (Efectivo):</span>
+                        <span class="font-bold">S/ {{ (getPaymentsTotal() - obtenerTotalAPagar()) | number:'1.2-2' }}</span>
+                    </div>
+                    }
+
+                    <!-- FORMULARIO NUEVO MEDIO DE PAGO -->
+                    @if (obtenerTotalAPagar() - getPaymentsTotal() > 0 || esTicketHospitalizacion()) {
+                    <div class="flex flex-col gap-xs mt-3 pt-3 border-top" style="border-style: dashed;">
+                        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px;">
+
+                            <!-- Selector de Método -->
+                            <select [(ngModel)]="newPayMethod" class="form-control text-xs" style="height: 38px;">
+                                <option value="EFECTIVO">Efectivo</option>
+                                <option value="YAPE">Yape</option>
+                                <option value="PLIN">Plin</option>
+                                @if (!esTicketHospitalizacion()) {
+                                <option value="DEUDA">Dejar como Deuda</option>
+                                }
+                            </select>
+
+                            <!-- Input Monto -->
+                            <div style="position: relative;">
+                                <span
+                                    style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--text-muted); font-size: 0.8rem;">S/</span>
+                                <input type="number" [(ngModel)]="newPayAmount" class="form-control text-xs"
+                                    style="padding-left: 28px; height: 38px; font-weight: 700;" placeholder="0.00"
+                                    [max]="obtenerTotalAPagar() - getPaymentsTotal()" />
+                            </div>
+
+                        </div>
+
+                        <!-- Input Referencia (para Yape / Plin) -->
+                        @if (newPayMethod === 'YAPE' || newPayMethod === 'PLIN') {
+                        <input type="text" [(ngModel)]="newPayRef" class="form-control text-xxs mt-1"
+                            placeholder="Número de Operación / Referencia..." style="height: 30px;" />
+                        }
+
+                        <button class="btn btn-secondary btn-sm justify-center mt-2" (click)="addPayment()"
+                            [disabled]="newPayAmount === null || newPayAmount <= 0">
+                            <span class="material-icons-round" style="font-size: 16px;">add</span>
+                            Agregar Pago
+                        </button>
+                    </div>
+                    }
+
+                    <!-- REGRESO BLOQUEANTE CRÉDITO / DEUDA MÁXIMA -->
+                    @if (exceedsDebtLimit()) {
+                    <div
+                        class="mt-2 p-2 rounded bg-danger-light border border-danger flex gap-xs items-start fade-in-up">
+                        <span class="material-icons-round text-danger" style="font-size: 18px;">warning</span>
+                        <span class="text-xxs text-danger font-semibold" style="line-height: 1.3;">
+                            El cliente seleccionado excede el límite de deuda de S/ 200.00.
+                            Saldo actual: S/ {{ selectedCliente?.deudaAcumulada || 0 | number:'1.2-2' }}.
+                            Deuda adicional: S/ {{ getDebtAmount() | number:'1.2-2' }}.
+                            Por favor, reduzca el pago diferido.
+                        </span>
+                    </div>
+                    }
+
+                </div>
+
+            </div>
+
+            <!-- BOTONES DE CONFIRMACIÓN -->
+            <div class="flex justify-end gap-sm mt-6 pt-3 border-top">
+                <button class="btn btn-secondary" (click)="closeCheckoutModal()"
+                    [disabled]="checkingOut()">Cancelar</button>
+                <button class="btn btn-primary" [disabled]="checkingOut() || !isCheckoutValid()"
+                    (click)="confirmCheckout()" style="padding: 10px 24px; font-weight: 700;">
+                    @if (checkingOut()) {
+                    <span
+                        style="display: inline-block; width: 14px; height: 14px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px;"></span>
+                    Emitiendo...
+                    } @else {
+                    <span class="material-icons-round">check_circle</span>
+                    {{ esTicketHospitalizacion() ? 'Confirmar Abono' : 'Finalizar Venta (S/ ' + (obtenerTotalAPagar() | number:'1.2-2') + ')' }}
+                    }
+                </button>
+            </div>
+
+        </div>
+    </div>
+    }
+
+    <!-- COMPROBANTE FINAL (BOLETA / FACTURA PRINT READY) -->
+    @if (completedVentaRes) {
+    <div class="modal-backdrop print-comprobante-backdrop">
+        <div class="card p-6 modal-box print-receipt-card fade-in-up"
+            style="background: white; max-width: 480px; box-shadow: var(--shadow-lg);">
+
+            <div class="text-center pb-4 border-bottom">
+                <h2 class="font-bold flex justify-center items-center gap-xs" style="color: var(--color-primary-600);">
+                    <span class="material-icons-round">pets</span> VetCare S.A.C
+                </h2>
+                <p class="text-xxs text-secondary" style="margin-top: 4px;">R.U.C. 20456789123 | {{
+                    obtenerNombreSedeActual() }}</p>
+                <p class="text-xxs text-muted">{{ obtenerDireccionSedeActual() }}</p>
+            </div>
+
+            <div class="py-4 border-bottom text-xs flex flex-col gap-xs">
+                <div class="flex justify-between font-bold">
+                    <span>{{ completedVentaRes.tipoComprobante }} ELECTRÓNICA</span>
+                    <span>{{ completedVentaRes.tipoComprobante === 'BOLETA' ? 'B001' : 'F001' }}-{{
+                        completedVentaRes.id.toString().padStart(6, '0') }}</span>
+                </div>
+                <div class="flex justify-between text-muted text-xxs">
+                    <span>Fecha Emisión:</span>
+                    <span>{{ completedVentaRes.fechaHora | date:'medium' }}</span>
+                </div>
+                <div class="flex justify-between text-muted text-xxs">
+                    <span>Cliente:</span>
+                    <span>{{ completedVentaRes.clienteNombre || 'CLIENTE GENERAL (ANÓNIMO)' }}</span>
+                </div>
+            </div>
+
+            <!-- DETALLE DE LA TRANSACCIÓN -->
+            <div class="py-4 text-xs">
+                <div class="text-xxs font-bold text-muted uppercase mb-2">Detalle del Comprobante:</div>
+                <div class="flex flex-col gap-sm">
+                    @for (line of completedVentaRes.detalles; track $index) {
+                    <div class="flex justify-between items-start text-xxs">
+                        <span>{{ line.cantidad }} x {{ line.nombreItem }}</span>
+                        <span class="font-semibold text-secondary">S/ {{ line.subtotal | number:'1.2-2' }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- TOTALES -->
+            <div class="py-3 border-top border-bottom bg-surface p-3 rounded-lg flex flex-col gap-xs text-xs">
+                <div class="flex justify-between font-bold">
+                    <span>TOTAL A PAGAR:</span>
+                    <span style="color: var(--color-primary-700);">S/ {{ completedVentaRes.total | number:'1.2-2'
+                        }}</span>
+                </div>
+                <div class="flex justify-between text-xxs text-success font-semibold">
+                    <span>Monto Pagado:</span>
+                    <span>S/ {{ completedVentaRes.montoPagado | number:'1.2-2' }}</span>
+                </div>
+                @if (completedVentaRes.clienteId) {
+                <div class="flex justify-between text-muted text-xxs">
+                    <span>Cliente:</span>
+                    <span class="text-right" style="max-width: 60%; word-break: break-word;">{{
+                        completedVentaRes.clienteNombre || 'N/A' }}</span>
+                </div>
+                }
+                
+                @if (completedVentaRes.tipoComprobante === 'FACTURA' && completedVentaRes.ruc) {
+                <div class="flex justify-between text-muted text-xxs mt-1">
+                    <span>RUC:</span>
+                    <span>{{ completedVentaRes.ruc }}</span>
+                </div>
+                <div class="flex justify-between text-muted text-xxs">
+                    <span>Razón Social:</span>
+                    <span class="text-right" style="max-width: 60%; word-break: break-word;">{{ completedVentaRes.razonSocial }}</span>
+                </div>
+                @if (completedVentaRes.direccionFacturacion) {
+                <div class="flex justify-between text-muted text-xxs">
+                    <span>Dirección:</span>
+                    <span class="text-right" style="max-width: 60%; word-break: break-word;">{{ completedVentaRes.direccionFacturacion }}</span>
+                </div>
+                }
+                }
+                @if (completedVentaRes.saldoPendiente > 0) {
+                <div class="flex justify-between text-xxs text-danger font-semibold">
+                    <span>Saldo deudor diferido:</span>
+                    <span>S/ {{ completedVentaRes.saldoPendiente | number:'1.2-2' }}</span>
+                </div>
+                }
+            </div>
+
+            <!-- METODOS DE PAGO EN TICKET -->
+            @if (completedVentaRes.pagos && completedVentaRes.pagos.length > 0) {
+            <div class="py-3 text-xxs text-muted flex flex-col gap-xs">
+                <span>Métodos de Pago Aplicados:</span>
+                @for (p of completedVentaRes.pagos; track p.id) {
+                <div class="flex justify-between px-2 font-semibold">
+                    <span>• {{ p.metodoPago }}</span>
+                    <span>S/ {{ p.monto | number:'1.2-2' }}</span>
+                </div>
+                }
+            </div>
+            }
+
+            <div class="text-center pt-4 border-top">
+                <p class="text-xxs text-muted">¡Gracias por confiar en VetCare para cuidar a su mascota!</p>
+                <div class="flex gap-sm mt-4">
+                    <button class="btn btn-secondary btn-sm w-full justify-center" (click)="cerrarComprobanteFinal()">
+                        Cerrar POS
+                    </button>
+                    <button class="btn btn-primary btn-sm w-full justify-center" (click)="imprimirComprobante()">
+                        <span class="material-icons-round">print</span> Imprimir
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    }
+
+</div>
