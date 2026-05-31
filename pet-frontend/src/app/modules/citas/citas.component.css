@@ -1,0 +1,127 @@
+/* Layout Principal Agenda */
+/* Corrección del grid para evitar que se amontone */
+.agenda-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+@media (min-width: 1024px) {
+    .agenda-grid {
+        display: grid;
+        /* Usamos minmax(0, 1fr) para que el contenido no fuerce el ancho de la columna */
+        grid-template-columns: 320px minmax(0, 1fr);
+        align-items: start;
+        gap: 32px;
+    }
+}
+
+/* Filtros y Chips */
+.chip-filter {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.chip-filter:hover {
+    border-color: var(--color-primary-400);
+}
+
+.chip-filter.active {
+    background: var(--color-primary-500);
+    color: white;
+}
+
+/* Tarjetas de Cita */
+.cita-card {
+    border-left-width: 4px;
+    border-left-style: solid;
+    transition: all var(--transition-fast);
+}
+
+.cita-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--color-primary-300);
+    transform: translateX(4px);
+}
+
+/* Tablero Kanban */
+.kanban-col {
+    border-top-width: 4px;
+    border-top-style: solid;
+    min-width: 280px;
+}
+
+.kanban-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.kanban-card:hover {
+    border-color: var(--color-primary-400);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+}
+
+/* Scrollbars y Calendario */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+::ng-deep .custom-calendar .mat-calendar-body-selected {
+    background-color: var(--color-primary-500) !important;
+    font-weight: bold;
+}
+
+::ng-deep .custom-calendar .mat-calendar-body-today:not(.mat-calendar-body-selected) {
+    border-color: var(--color-primary-500) !important;
+}
+
+/* Colores de Estado */
+.estado-agendada {
+    color: #64748b;
+    background: rgba(100, 116, 139, 0.1);
+}
+
+.estado-confirmada {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.estado-sala-espera {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.estado-consultorio {
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+}
+
+.estado-completada {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.estado-cancelada,
+.estado-no-asistio {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}

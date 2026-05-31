@@ -1,0 +1,115 @@
+<div class="flex flex-col h-full bg-white">
+    <div class="flex justify-between items-center p-5 border-bottom">
+        <div class="flex items-center gap-sm">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                [ngClass]="getEstadoColor(cita.estado)">
+                <span class="material-icons-round text-lg">{{ getEstadoIcon(cita.estado) }}</span>
+            </div>
+            <div>
+                <h2 class="font-bold text-lg m-0" style="color: var(--text-primary);">Detalle de Cita #{{ cita.id }}
+                </h2>
+                <span class="badge" [ngClass]="getEstadoColor(cita.estado)">{{ getEstadoLabel(cita.estado) }}</span>
+            </div>
+        </div>
+        <button class="btn-icon" (click)="dialogRef.close()"><span class="material-icons-round">close</span></button>
+    </div>
+
+    <mat-dialog-content class="p-5" style="max-height: 65vh; overflow-y: auto;">
+
+        <!-- Flujo de estados visual -->
+        <div class="card p-4 mb-6 bg-surface flex items-center justify-between">
+            @for (e of estadosOrden; track e; let i = $index) {
+            <div class="flex flex-col items-center flex-1"
+                [class.opacity-30]="getEstadoIndex(cita.estado) < i && !isEstadoCancelado()">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold mb-1"
+                    [style.background]="getEstadoIndex(cita.estado) >= i ? 'var(--color-primary-500)' : 'var(--text-muted)'">
+                    @if (getEstadoIndex(cita.estado) > i) { <span class="material-icons-round"
+                        style="font-size:16px">check</span> }
+                    @else { {{ i + 1 }} }
+                </div>
+                <span class="text-xxs font-bold text-center uppercase">{{ getEstadoLabel(e) }}</span>
+            </div>
+            @if (i < estadosOrden.length - 1) { <div class="flex-1 h-0.5 mx-1"
+                [style.background]="getEstadoIndex(cita.estado) > i ? 'var(--color-primary-500)' : 'var(--border-color)'">
+        </div>
+        }
+        }
+</div>
+
+@if (isEstadoCancelado()) {
+<div class="card p-3 text-center mb-4 text-danger flex items-center justify-center gap-xs"
+    style="background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.3);">
+    <span class="material-icons-round" style="font-size:18px">cancel</span>
+    <span class="font-bold text-sm">Cita {{ cita.estado === 'CANCELADA' ? 'cancelada' : 'marcada como No Asistió'
+        }}</span>
+</div>
+}
+
+<!-- Info General -->
+<div class="grid grid-cols-2 gap-4 mb-6">
+    <div class="info-item"><span class="info-label">Fecha</span><span class="info-value">{{ cita.fecha }}</span></div>
+    <div class="info-item"><span class="info-label">Horario</span><span class="info-value">{{
+            cita.horaInicio.substring(0,5) }} — {{ cita.horaFin.substring(0,5) }}</span></div>
+    <div class="info-item"><span class="info-label">Servicio</span><span class="info-value">{{ cita.servicioNombre
+            }}</span></div>
+    <div class="info-item"><span class="info-label">Veterinario</span><span class="info-value">Dr(a). {{
+            cita.veterinarioNombre }}</span></div>
+    <div class="info-item col-span-2"><span class="info-label">Sede</span><span class="info-value">{{ cita.sedeNombre
+            }}</span></div>
+    <div class="info-item col-span-2"><span class="info-label">Motivo</span><span class="info-value">{{ cita.motivo
+            }}</span></div>
+</div>
+
+<!-- Pacientes -->
+<h3 class="text-xs font-bold uppercase tracking-widest text-secondary mb-3">Pacientes ({{ cita.pacientes.length || 0 }})
+</h3>
+<div class="flex flex-col gap-sm mb-6">
+    @for (p of cita.pacientes; track p.id) {
+    <div class="card p-3 flex items-center gap-sm bg-surface">
+        <span class="material-icons-round text-primary">pets</span>
+        <div>
+            <p class="font-bold text-sm m-0" style="color: var(--text-primary);">{{ p.nombre }}</p>
+            <p class="text-xs text-muted m-0">{{ p.especieNombre }} — Dueño: {{ p.clienteNombre }}</p>
+        </div>
+    </div>
+    }
+</div>
+
+<!-- Acciones de estado -->
+@if (transiciones.length > 0) {
+<h3 class="text-xs font-bold uppercase tracking-widest text-secondary mb-3">Acciones Disponibles</h3>
+<div class="flex flex-wrap gap-xs">
+    @for (t of transiciones; track t) {
+    <button class="btn btn-sm" [ngClass]="isDestructive(t) ? 'btn-danger' : 'btn-secondary'" (click)="cambiarEstado(t)">
+        <span class="material-icons-round" style="font-size:16px">{{ getEstadoIcon(t) }}</span>
+        {{ getEstadoLabel(t) }}
+    </button>
+    }
+</div>
+}
+
+@if (cita.estado === 'EN_CONSULTORIO') {
+<div class="card p-4 text-center mt-4 border-primary-300" style="background: var(--color-primary-50);">
+    <span class="material-icons-round text-primary text-3xl mb-2">medical_services</span>
+    <p class="font-bold text-sm" style="color: var(--text-primary);">Paciente en consultorio</p>
+    <p class="text-xs text-muted mb-0">Esta cita está siendo atendida en el módulo clínico.</p>
+</div>
+}
+</mat-dialog-content>
+
+<div class="p-4 border-top flex justify-between bg-surface mt-auto">
+    <div class="flex gap-sm">
+        @if (cita.estado === 'AGENDADA') {
+        <button class="btn btn-danger" (click)="retirarDeAgenda()">
+            <span class="material-icons-round">delete_outline</span> Retirar
+        </button>
+        }
+        @if (cita.estado === 'AGENDADA' || cita.estado === 'CONFIRMADA') {
+        <button class="btn btn-secondary" (click)="dialogRef.close('edit')">
+            <span class="material-icons-round">edit</span> Reprogramar
+        </button>
+        }
+    </div>
+    <button class="btn btn-primary" (click)="dialogRef.close('refresh')">Cerrar</button>
+</div>
+</div>

@@ -9,9 +9,12 @@ export class CitaService {
   private url = `${environment.apiUrl}/citas`;
   constructor(private http: HttpClient) {}
 
-  listar(sedeId: number, page = 0, size = 10, buscar = ''): Observable<Page<CitaResponse>> {
+  listar(sedeId: number, page = 0, size = 10, buscar = '', fecha?: string, estado?: EstadoCita, veterinarioId?: number): Observable<Page<CitaResponse>> {
     let params = new HttpParams().set('sedeId', sedeId).set('page', page).set('size', size);
     if (buscar) params = params.set('buscar', buscar);
+    if (fecha) params = params.set('fecha', fecha);
+    if (estado) params = params.set('estado', estado);
+    if (veterinarioId) params = params.set('veterinarioId', veterinarioId);
     return this.http.get<Page<CitaResponse>>(this.url, { params });
   }
 
@@ -37,13 +40,14 @@ export class CitaService {
     });
   }
 
-  getDisponibilidad(veterinarioId: number, fecha: string, servicioId: number, sedeId: number, cantidadPacientes = 1): Observable<SlotDisponibilidad[]> {
-    const params = new HttpParams()
+  getDisponibilidad(veterinarioId: number, fecha: string, servicioId: number, sedeId: number, cantidadPacientes = 1, citaIdExcluir?: number): Observable<SlotDisponibilidad[]> {
+    let params = new HttpParams()
       .set('veterinarioId', veterinarioId)
       .set('fecha', fecha)
       .set('servicioId', servicioId)
       .set('sedeId', sedeId)
       .set('cantidadPacientes', cantidadPacientes);
+    if (citaIdExcluir) params = params.set('citaIdExcluir', citaIdExcluir);
     return this.http.get<SlotDisponibilidad[]>(`${this.url}/disponibilidad`, { params });
   }
 }
