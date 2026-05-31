@@ -169,5 +169,3 @@ export class InsumosServicioDialogComponent implements OnInit {
     return item.id;
   }
 }
-
-

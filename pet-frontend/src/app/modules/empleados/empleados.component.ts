@@ -17,6 +17,7 @@ import { EmpleadoResponse, SedeResponse } from '../../core/models/models';
 import { EmpleadoDialogComponent } from './empleado-dialog.component';
 import { RolesDialogComponent } from './roles-dialog.component';
 import { ModalConfirmacionComponent } from '../../shared/components/modal-confirmacion/modal-confirmacion.component';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-empleados',
@@ -33,8 +34,8 @@ import { ModalConfirmacionComponent } from '../../shared/components/modal-confir
     MatDialogModule,
     MatTabsModule
   ],
-  templateUrl: './empleados.component.html',
-  styleUrls: ['./empleados.component.css']
+  templateUrl: './empleados-component.html',
+  styleUrls: ['./empleados-component.css']
 })
 export class EmpleadosComponent implements OnInit {
   displayedColumns: string[] = ['nombre', 'dni', 'roles', 'estado', 'acciones'];
@@ -53,6 +54,7 @@ export class EmpleadosComponent implements OnInit {
   constructor(
     private empleadoService: EmpleadoService,
     private sedeService: SedeService,
+    public authService: AuthService,
     private dialog: MatDialog,
     private snack: MatSnackBar
   ) {

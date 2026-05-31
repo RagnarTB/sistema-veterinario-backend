@@ -79,11 +79,11 @@ export class EmpleadoDialogComponent implements OnInit {
     this.isEdit.set(!!data.empleado);
 
     this.form = this.fb.group({
-      dni: [{value: data.empleado?.dni || '', disabled: this.isEdit()}, [Validators.required, CustomValidators.dni]],
-      nombre: [{value: data.empleado?.nombre || '', disabled: this.isEdit()}, [Validators.required, CustomValidators.noWhitespace]],
-      apellido: [{value: data.empleado?.apellido || '', disabled: this.isEdit()}, [Validators.required, CustomValidators.noWhitespace]],
+      dni: [{ value: data.empleado?.dni || '', disabled: this.isEdit() }, [Validators.required, CustomValidators.dni]],
+      nombre: [{ value: data.empleado?.nombre || '', disabled: this.isEdit() }, [Validators.required, CustomValidators.noWhitespace]],
+      apellido: [{ value: data.empleado?.apellido || '', disabled: this.isEdit() }, [Validators.required, CustomValidators.noWhitespace]],
       telefono: [data.empleado?.telefono || '', [Validators.required, CustomValidators.telefono]],
-      email: [{value: data.empleado?.email || '', disabled: this.isEdit()}, [Validators.required, Validators.email]],
+      email: [{ value: data.empleado?.email || '', disabled: this.isEdit() }, [Validators.required, Validators.email]],
       especialidad: [data.empleado?.especialidad || ''],
       numeroColegiatura: [data.empleado?.numeroColegiatura || ''],
       sueldoBase: [data.empleado?.sueldoBase || null],
@@ -93,45 +93,91 @@ export class EmpleadoDialogComponent implements OnInit {
 
     // Verificar si ya es veterinario al editar
     if (this.isEdit() && data.empleado?.nombresRoles?.includes('ROLE_VETERINARIO')) {
+      this.esVeterinario.set(true);
       this.esVeterinarioGuardado.set(true);
     }
   }
 
-  ngOnInit(): void {
-    this.cargarSedes();
-    this.cargarRoles();
+  ngOnInit() {
+    this.cargarDatosAdicionales();
+    
+    // Actualizar sedes asignadas dinámicamente
+    this.form.get('sedeIds')?.valueChanges.subscribe(ids => {
+      this.actualizarSedesAsignadas(ids);
+    });
 
-    if (this.isEdit() && this.data.empleado) {
-      // Si el empleado ya es veterinario y tiene sedes asignadas
-      if (this.data.empleado.nombresRoles?.includes('ROLE_VETERINARIO')) {
-        this.esVeterinario.set(true);
-      }
+    // Limpiar datos RENIEC si el DNI se borra o edita (< 8 dígitos)
+    if (!this.isEdit()) {
+      this.form.get('dni')?.valueChanges.subscribe((val: string) => {
+        if ((val || '').toString().trim().length < 8) {
+          this.form.get('nombre')?.enable();
+          this.form.get('apellido')?.enable();
+          this.form.get('email')?.enable();
+          this.form.patchValue({ nombre: '', apellido: '' });
+          this.dniEsCliente.set(false);
+        }
+      });
     }
   }
 
-  cargarSedes() {
-    this.sedeService.listar(0, 100).subscribe({
-      next: (res: any) => this.sedes.set(res.content || []),
-      error: () => console.error('Error al cargar sedes')
-    });
+  actualizarSedesAsignadas(ids: number[]) {
+    if (!ids) ids = [];
+    this.sedesAsignadas.set(this.sedes().filter(s => ids.includes(s.id)));
   }
 
-  cargarRoles() {
-    this.rolService.listarTodos().subscribe({
-      next: (res: any) => this.roles.set(res || []),
-      error: () => console.error('Error al cargar roles')
+  cargarDatosAdicionales() {
+    this.sedeService.listar(0, 1000).subscribe((res: any) => {
+      let s = res.content || [];
+
+      if (this.isEdit()) {
+        const sedesActuales = this.data.empleado?.sedeIds || [];
+        s = s.filter((sede: SedeResponse) => sede.activo || sedesActuales.includes(sede.id));
+      } else {
+        s = s.filter((sede: SedeResponse) => sede.activo);
+      }
+
+      this.sedes.set(s);
+
+      if (!this.isEdit()) {
+        const chiclayo = s.find((sede: SedeResponse) => sede.nombre.toLowerCase().includes('chiclayo'));
+        if (chiclayo) {
+          this.form.get('sedeIds')?.setValue([chiclayo.id]);
+        }
+      } else {
+        // Inicializar las sedes asignadas en edición
+        this.actualizarSedesAsignadas(this.form.get('sedeIds')?.value);
+      }
+    });
+
+    this.rolService.listarTodos().subscribe((r: RolResponse[]) => {
+      // Filtrar siempre ROLE_CLIENTE para que no se asigne en Empleados
+      const rolesValidos = r.filter(rol => rol.nombre !== 'ROLE_CLIENTE');
+      
+      if (this.isEdit()) {
+        const rolesActuales = this.data.empleado?.nombresRoles || [];
+        this.roles.set(rolesValidos.filter(rol => rol.activo || rolesActuales.includes(rol.nombre)));
+      } else {
+        this.roles.set(rolesValidos.filter(rol => rol.activo));
+      }
     });
   }
 
   buscarDni() {
     const dni = this.form.get('dni')?.value;
-    if (!dni || dni.toString().length !== 8) return;
+    if (!dni || dni.toString().trim().length !== 8) return;
 
     this.buscandoDni = true;
+    this.dniEsCliente.set(false);
+
     this.externoService.consultarDni(dni).subscribe({
       next: (res: any) => {
-        if (res && res.nombre) {
-          this.form.patchValue({ nombre: res.nombre, apellido: res.apellido, email: res.email || '' });
+        if (res && res.first_name) {
+          const apellidos = `${res.first_last_name || ''} ${res.second_last_name || ''}`.trim();
+          this.form.patchValue({ 
+            nombre: res.first_name, 
+            apellido: apellidos, 
+            email: res.email || '' 
+          });
           this.form.get('nombre')?.disable();
           this.form.get('apellido')?.disable();
 
@@ -144,14 +190,16 @@ export class EmpleadoDialogComponent implements OnInit {
             this.dniEsCliente.set(true);
             this.snack.open('DNI registrado en el sistema. Se reutilizarán sus datos.', 'Entendido', { duration: 4000 });
           } else {
-            this.snack.open('DNI encontrado exitosamente', 'Cerrar', { duration: 3000 });
+            this.snack.open('DNI encontrado exitosamente en RENIEC', 'Cerrar', { duration: 3000 });
           }
+        } else {
+          this.snack.open('No se pudo encontrar información para este documento', 'Cerrar', { duration: 4000 });
         }
         this.buscandoDni = false;
       },
       error: () => {
         this.buscandoDni = false;
-        this.snack.open('No se pudo encontrar información para este documento', 'Cerrar', { duration: 4000 });
+        this.snack.open('No se pudo encontrar información para este documento en RENIEC', 'Cerrar', { duration: 4000 });
       }
     });
   }
@@ -244,6 +292,13 @@ export class EmpleadoDialogComponent implements OnInit {
 
   soloNumeros(event: KeyboardEvent): void {
     const teclas_permitidas = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+    // Permitir atajos standard con Ctrl o Meta (Cmd en Mac)
+    if (event.ctrlKey || event.metaKey) {
+      const shortcuts = ['a', 'c', 'v', 'x', 'z', 'A', 'C', 'V', 'X', 'Z'];
+      if (shortcuts.includes(event.key)) {
+        return;
+      }
+    }
     const patron = /^[0-9]$/;
     if (!teclas_permitidas.includes(event.key) && !patron.test(event.key)) {
       event.preventDefault();

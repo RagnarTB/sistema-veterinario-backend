@@ -11,6 +11,8 @@ export interface ReniecResponse {
   document_number: string;
   existe_en_bd?: boolean;
   email?: string;
+  telefono?: string;
+  cliente_id?: number; // ID del cliente si ya está registrado en BD
 }
 
 @Injectable({
@@ -24,5 +26,9 @@ export class ExternoService {
 
   consultarDni(dni: string): Observable<ReniecResponse> {
     return this.http.get<ReniecResponse>(`${this.apiUrl}/reniec/dni/${dni}`);
+  }
+
+  consultarRuc(ruc: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/reniec/sunat/ruc/${ruc}`);
   }
 }

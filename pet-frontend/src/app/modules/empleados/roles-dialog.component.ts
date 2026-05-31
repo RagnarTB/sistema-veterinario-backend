@@ -11,18 +11,18 @@ import { RolService } from '../../core/services/rol.service';
 import { RolResponse } from '../../core/models/models';
 
 @Component({
-    selector: 'app-roles-dialog',
-    standalone: true,
-    imports: [
-      CommonModule,
-      ReactiveFormsModule,
-      MatDialogModule,
-      MatButtonModule,
-      MatIconModule,
-      MatProgressSpinnerModule,
-    ],
-    templateUrl: './roles-dialog.component.html',
-    styleUrls: ['./roles-dialog.component.css']
+  selector: 'app-roles-dialog',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+  ],
+  templateUrl: './roles-dialog.component.html',
+  styleUrls: ['./roles-dialog.component.css']
 })
 export class RolesDialogComponent implements OnInit {
   roles = signal<RolResponse[]>([]);

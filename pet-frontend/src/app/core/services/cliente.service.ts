@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ClienteRequest, ClienteResponse, Page } from '../models/models';
+import { ClienteRapidoRequest, ClienteRapidoResponse, ClienteRequest, ClienteResponse, Page } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class ClienteService {
   private url = `${environment.apiUrl}/clientes`;
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   listar(page = 0, size = 10, buscar = '', estado: boolean | null = true): Observable<Page<ClienteResponse>> {
     let params = new HttpParams().set('page', page).set('size', size);
@@ -22,6 +22,10 @@ export class ClienteService {
 
   crear(dto: ClienteRequest): Observable<ClienteResponse> {
     return this.http.post<ClienteResponse>(this.url, dto);
+  }
+
+  crearRapido(dto: ClienteRapidoRequest): Observable<ClienteRapidoResponse> {
+    return this.http.post<ClienteRapidoResponse>(`${this.url}/rapido`, dto);
   }
 
   actualizar(id: number, dto: ClienteRequest): Observable<ClienteResponse> {
