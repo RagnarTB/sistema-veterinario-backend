@@ -8,7 +8,8 @@
     --text-primary: #1e293b;
     --text-muted: #64748b;
     --border-color: #e2e8f0;
-    --primary-color: #3b82f6; /* Azul premium de referencia */
+    --primary-color: #3b82f6;
+    /* Azul premium de referencia */
 }
 
 /* ==========================================================================
@@ -18,37 +19,37 @@
     display: block;
 }
 
-.page-header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: flex-start; 
-    margin-bottom: 24px; 
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
 }
 
-.page-title { 
-    font-size: 1.8rem; 
-    font-weight: 800; 
-    color: var(--text-primary); 
-    margin: 0; 
+.page-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
 }
 
-.page-subtitle { 
-    color: var(--text-muted); 
-    margin-top: 4px; 
+.page-subtitle {
+    color: var(--text-muted);
+    margin-top: 4px;
 }
 
-.btn-create { 
-    height: 44px; 
-    display: flex; 
-    align-items: center; 
-    gap: 8px; 
-    font-weight: 600; 
-    border-radius: var(--radius-md); 
+.btn-create {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    border-radius: var(--radius-md);
 }
 
-.btn-outline { 
-    border-color: var(--border-color); 
-    color: var(--text-primary); 
+.btn-outline {
+    border-color: var(--border-color);
+    color: var(--text-primary);
 }
 
 /* ==========================================================================
@@ -58,15 +59,16 @@
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
-    padding: 16px 0 !important; /* Alineación perfecta con el título */
+    padding: 16px 0 !important;
+    /* Alineación perfecta con el título */
     margin-bottom: 20px;
     display: flex;
     align-items: center;
 }
 
-.search-field { 
-    width: 100%; 
-    max-width: 420px; 
+.search-field {
+    width: 100%;
+    max-width: 420px;
 }
 
 /* Reset de márgenes de Angular Material */
@@ -78,9 +80,10 @@
 /* Contenedor Píldora: Blanco impecable y siempre azul */
 ::ng-deep .search-field .mat-mdc-text-field-wrapper {
     background-color: #ffffff !important;
-    border: 1px solid #3b82f6 !important; /* Azul fijo desde el inicio */
-    border-radius: 30px !important;       
-    height: 46px !important;              
+    border: 1px solid #3b82f6 !important;
+    /* Azul fijo desde el inicio */
+    border-radius: 30px !important;
+    height: 46px !important;
     padding: 0 16px !important;
     display: flex !important;
     align-items: center !important;
@@ -90,8 +93,8 @@
 
 /* Estado de Enfoque (Focus): Resplandor sutil */
 ::ng-deep .search-field.mat-focused .mat-mdc-text-field-wrapper {
-    border-color: #2563eb !important; 
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important; 
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
 }
 
 /* Eliminación total de capas, notches y líneas sobrantes */
@@ -127,7 +130,8 @@
     color: #1e293b !important;
     height: 100% !important;
     border: none !important;
-    padding: 0 8px 0 34px !important; /* Espacio exacto para no pisar la lupa */
+    padding: 0 8px 0 34px !important;
+    /* Espacio exacto para no pisar la lupa */
     background: transparent !important;
 }
 
@@ -152,7 +156,7 @@
 }
 
 ::ng-deep .search-field .mat-mdc-form-field-icon-prefix mat-icon {
-    color: #3b82f6 !important; 
+    color: #3b82f6 !important;
     font-size: 20px !important;
     width: 20px !important;
     height: 20px !important;
@@ -198,55 +202,56 @@
 /* ==========================================================================
    4. TARJETA DE LA TABLA
    ========================================================================== */
-.table-card { 
-    position: relative; 
-    overflow: hidden; 
+.table-card {
+    position: relative;
+    overflow: hidden;
 }
 
-.loading-overlay { 
-    position: absolute; 
-    inset: 0; 
-    background: rgba(11, 17, 32, 0.7); /* Tu fondo oscuro */
-    z-index: 10; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    backdrop-filter: blur(2px); 
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 17, 32, 0.7);
+    /* Tu fondo oscuro */
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
 }
 
-.table-responsive { 
-    width: 100%; 
-    overflow-x: auto; 
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
 }
 
-.custom-table { 
-    width: 100%; 
+.custom-table {
+    width: 100%;
 }
 
 /* ==========================================================================
    5. CELDAS DE USUARIOS Y AVATARES (¡REPARADO EL ICONO Y DEGRADADO!)
    ========================================================================== */
-.user-cell { 
-    display: flex; 
-    align-items: center; 
-    gap: 16px; 
-    padding: 12px 0; 
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
 }
 
 /* El círculo del avatar con su hermoso degradado morado/rosa */
-.user-avatar { 
-    width: 40px; 
-    height: 40px; 
-    border-radius: 50%; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    flex-shrink: 0; 
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 /* Tu degradado original restaurado */
-.bg-accent { 
-    background: linear-gradient(135deg, #8b5cf6, #c084fc) !important; 
+.bg-accent {
+    background: linear-gradient(135deg, #8b5cf6, #c084fc) !important;
 }
 
 /* Fuerza a que el icono de la patita sea de color blanco impecable y centrado */
@@ -261,70 +266,70 @@
     margin: 0 !important;
 }
 
-.user-info { 
-    display: flex; 
-    flex-direction: column; 
+.user-info {
+    display: flex;
+    flex-direction: column;
 }
 
-.user-name { 
-    font-weight: 600; 
-    color: var(--text-primary); 
+.user-name {
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
-.user-doc { 
-    font-size: 0.8rem; 
-    color: var(--text-muted); 
+.user-doc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
-.contact-info { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 4px; 
-    font-size: 0.85rem; 
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
 }
 
 /* ==========================================================================
    6. BADGES, ESTADOS Y COMPONENTES VACÍOS
    ========================================================================== */
-.status-badge { 
-    padding: 4px 12px; 
-    border-radius: 20px; 
-    font-size: 0.75rem; 
-    font-weight: 600; 
-    text-transform: uppercase; 
-    letter-spacing: 0.5px; 
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.status-active { 
-    background: rgba(16, 185, 129, 0.15); 
-    color: #10b981; 
+.status-active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
 }
 
-.status-inactive { 
-    background: rgba(239, 68, 68, 0.15); 
-    color: #ef4444; 
+.status-inactive {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
 }
 
-.row-disabled { 
-    opacity: 0.6; 
+.row-disabled {
+    opacity: 0.6;
 }
 
-.empty-cell { 
-    padding: 48px !important; 
-    text-align: center; 
+.empty-cell {
+    padding: 48px !important;
+    text-align: center;
 }
 
-.empty-state { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    gap: 16px; 
-    color: var(--text-muted); 
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: var(--text-muted);
 }
 
-.empty-state mat-icon { 
-    font-size: 48px; 
-    width: 48px; 
-    height: 48px; 
-    opacity: 0.5; 
+.empty-state mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.5;
 }

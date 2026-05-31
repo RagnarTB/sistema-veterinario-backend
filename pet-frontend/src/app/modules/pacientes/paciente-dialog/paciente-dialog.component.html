@@ -1,121 +1,112 @@
 <h2 mat-dialog-title class="dialog-title">
-  <mat-icon>{{ isEdit ? 'pets' : 'add_circle' }}</mat-icon>
-  {{ isEdit ? 'Editar Paciente' : 'Registrar Nuevo Paciente' }}
+    <mat-icon>{{ isEdit ? 'pets' : 'add_circle' }}</mat-icon>
+    {{ isEdit ? 'Editar Paciente' : 'Registrar Nuevo Paciente' }}
 </h2>
 
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
 
-  <mat-dialog-content class="dialog-content-scroll">
-    <p class="dialog-subtitle">
-      Completa los datos de la mascota y asociala con su dueño (cliente).
-    </p>
+    <mat-dialog-content class="dialog-content-scroll">
+        <p class="dialog-subtitle">
+            Completa los datos de la mascota y asociala con su dueño (cliente).
+        </p>
 
-    <div class="form-grid">
+        <div class="form-grid">
 
-      <!-- ── Nombre de la mascota ── -->
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Nombre de la mascota*</mat-label>
-        <mat-icon matPrefix class="prefix-icon">pets</mat-icon>
-        <input matInput
-               formControlName="nombre"
-               placeholder="Ej. Firulais"
-               (keydown)="soloLetras($event)" />
-        <mat-error *ngIf="form.get('nombre')?.hasError('required')">
-          El nombre es requerido
-        </mat-error>
-      </mat-form-field>
+            <!-- ── Nombre de la mascota ── -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Nombre de la mascota*</mat-label>
+                <mat-icon matPrefix class="prefix-icon">pets</mat-icon>
+                <input matInput formControlName="nombre" placeholder="Ej. Firulais" (keydown)="soloLetras($event)" />
+                <mat-error *ngIf="form.get('nombre')?.hasError('required')">
+                    El nombre es requerido
+                </mat-error>
+            </mat-form-field>
 
-      <!-- ── Dueño (Cliente) — Autocomplete ── -->
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Dueño (Cliente)</mat-label>
-        <mat-icon matPrefix class="prefix-icon">person</mat-icon>
-        <input matInput
-               type="text"
-               placeholder="Buscar cliente activo..."
-               [formControl]="clienteSearchCtrl"
-               [matAutocomplete]="autoCliente" />
-        <mat-icon matSuffix *ngIf="!searchingClientes()">search</mat-icon>
-        <mat-spinner matSuffix [diameter]="20" *ngIf="searchingClientes()"></mat-spinner>
-        <mat-autocomplete #autoCliente="matAutocomplete" [displayWith]="displayCliente">
-          <mat-option *ngFor="let cliente of clientesOptions" [value]="cliente">
-            <span class="cliente-op-name">{{ cliente.nombre }} {{ cliente.apellido }}</span>
-            <span class="cliente-op-doc">(DNI: {{ cliente.dni }})</span>
-          </mat-option>
-        </mat-autocomplete>
-        <mat-error *ngIf="form.get('clienteId')?.hasError('required')">
-          Debe seleccionar un cliente registrado
-        </mat-error>
-      </mat-form-field>
+            <!-- ── Dueño (Cliente) — Autocomplete ── -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Dueño (Cliente)</mat-label>
+                <mat-icon matPrefix class="prefix-icon">person</mat-icon>
+                <input matInput type="text" placeholder="Buscar cliente activo..." [formControl]="clienteSearchCtrl"
+                    [matAutocomplete]="autoCliente" />
+                <mat-icon matSuffix *ngIf="!searchingClientes()">search</mat-icon>
+                <mat-spinner matSuffix [diameter]="20" *ngIf="searchingClientes()"></mat-spinner>
+                <mat-autocomplete #autoCliente="matAutocomplete" [displayWith]="displayCliente">
+                    <mat-option *ngFor="let cliente of clientesOptions" [value]="cliente">
+                        <span class="cliente-op-name">{{ cliente.nombre }} {{ cliente.apellido }}</span>
+                        <span class="cliente-op-doc">(DNI: {{ cliente.dni }})</span>
+                    </mat-option>
+                </mat-autocomplete>
+                <mat-error *ngIf="form.get('clienteId')?.hasError('required')">
+                    Debe seleccionar un cliente registrado
+                </mat-error>
+            </mat-form-field>
 
-      <!-- ── Especie (modo crear) ── -->
-      <mat-form-field appearance="outline" class="full-width" *ngIf="!isEdit">
-        <mat-label>Especie*</mat-label>
-        <mat-icon matPrefix class="prefix-icon">category</mat-icon>
-        <mat-select formControlName="especieId">
-          <mat-option *ngFor="let esp of especiesOptions" [value]="esp.id">
-            {{ esp.nombre }}
-          </mat-option>
-        </mat-select>
-        <mat-error *ngIf="form.get('especieId')?.hasError('required')">
-          La especie es requerida
-        </mat-error>
-      </mat-form-field>
+            <!-- ── Especie (modo crear) ── -->
+            <mat-form-field appearance="outline" class="full-width" *ngIf="!isEdit">
+                <mat-label>Especie*</mat-label>
+                <mat-icon matPrefix class="prefix-icon">category</mat-icon>
+                <mat-select formControlName="especieId">
+                    <mat-option *ngFor="let esp of especiesOptions" [value]="esp.id">
+                        {{ esp.nombre }}
+                    </mat-option>
+                </mat-select>
+                <mat-error *ngIf="form.get('especieId')?.hasError('required')">
+                    La especie es requerida
+                </mat-error>
+            </mat-form-field>
 
-      <!-- ── Especie (modo editar — solo lectura) ── -->
-      <mat-form-field appearance="outline" class="full-width" *ngIf="isEdit">
-        <mat-label>Especie</mat-label>
-        <mat-icon matPrefix class="prefix-icon">category</mat-icon>
-        <input matInput [value]="data?.especieNombre" disabled />
-      </mat-form-field>
+            <!-- ── Especie (modo editar — solo lectura) ── -->
+            <mat-form-field appearance="outline" class="full-width" *ngIf="isEdit">
+                <mat-label>Especie</mat-label>
+                <mat-icon matPrefix class="prefix-icon">category</mat-icon>
+                <input matInput [value]="data?.especieNombre" disabled />
+            </mat-form-field>
 
-      <!-- ── Raza (Opcional) ── -->
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Raza (Opcional)</mat-label>
-        <mat-icon matPrefix class="prefix-icon">style</mat-icon>
-        <input matInput
-               formControlName="raza"
-               placeholder="Ej. Bulldog, Persa..."
-               (keydown)="soloLetras($event)" />
-      </mat-form-field>
+            <!-- ── Raza (Opcional) ── -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Raza (Opcional)</mat-label>
+                <mat-icon matPrefix class="prefix-icon">style</mat-icon>
+                <input matInput formControlName="raza" placeholder="Ej. Bulldog, Persa..."
+                    (keydown)="soloLetras($event)" />
+            </mat-form-field>
 
-      <!-- ── Fecha de Nacimiento ── -->
-      <mat-form-field appearance="outline" class="full-width col-span-2">
-        <mat-label>Fecha de Nacimiento*</mat-label>
-        <mat-icon matPrefix
-                  class="prefix-icon"
-                  style="cursor: pointer;"
-                  (click)="picker.open()">event</mat-icon>
-        <input matInput
-               readonly
-               style="cursor: pointer;"
-               placeholder="YYYY-MM-DD"
-               formControlName="fechaNacimiento"
-               [matDatepicker]="picker"
-               [max]="today"
-               (click)="picker.open()" />
-        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker></mat-datepicker>
-        <mat-error *ngIf="form.get('fechaNacimiento')?.hasError('required')">
-          La fecha es requerida
-        </mat-error>
-      </mat-form-field>
+            <!-- ── Sexo ── -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Sexo*</mat-label>
+                <mat-icon matPrefix class="prefix-icon">transgender</mat-icon>
+                <mat-select formControlName="sexo">
+                    <mat-option value="MACHO">Macho</mat-option>
+                    <mat-option value="HEMBRA">Hembra</mat-option>
+                </mat-select>
+                <mat-error *ngIf="form.get('sexo')?.hasError('required')">
+                    El sexo es requerido
+                </mat-error>
+            </mat-form-field>
 
-    </div>
-  </mat-dialog-content>
+            <!-- ── Fecha de Nacimiento ── -->
+            <mat-form-field appearance="outline" class="full-width col-span-2">
+                <mat-label>Fecha de Nacimiento*</mat-label>
+                <mat-icon matPrefix class="prefix-icon" style="cursor: pointer;"
+                    (click)="picker.open()">event</mat-icon>
+                <input matInput readonly style="cursor: pointer;" placeholder="YYYY-MM-DD"
+                    formControlName="fechaNacimiento" [matDatepicker]="picker" [max]="today" (click)="picker.open()" />
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+                <mat-error *ngIf="form.get('fechaNacimiento')?.hasError('required')">
+                    La fecha es requerida
+                </mat-error>
+            </mat-form-field>
 
-  <mat-dialog-actions class="dialog-actions">
-    <button mat-stroked-button
-            type="button"
-            class="btn-cancel"
-            (click)="onCancel()">
-      Cancelar
-    </button>
-    <button mat-flat-button
-            color="primary"
-            type="submit"
-            [disabled]="form.invalid || isSubmitting">
-      {{ isEdit ? 'Guardar Cambios' : 'Registrar Paciente' }}
-    </button>
-  </mat-dialog-actions>
+        </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions class="dialog-actions">
+        <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">
+            Cancelar
+        </button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || isSubmitting">
+            {{ isEdit ? 'Guardar Cambios' : 'Registrar Paciente' }}
+        </button>
+    </mat-dialog-actions>
 
 </form>

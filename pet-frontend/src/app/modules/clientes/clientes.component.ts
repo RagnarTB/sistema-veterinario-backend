@@ -74,7 +74,7 @@ export class ClientesComponent implements OnInit {
   cargarClientes() {
     this.loading.set(true);
     const search = this.searchControl.value || '';
-    
+
     // Suponiendo que tu servicio ha sido actualizado para recibir el estado
     // this.clienteService.listar(this.pageIndex(), this.pageSize(), search, this.estadoActual())
     this.clienteService.listar(this.pageIndex(), this.pageSize(), search, this.estadoActual()).subscribe({

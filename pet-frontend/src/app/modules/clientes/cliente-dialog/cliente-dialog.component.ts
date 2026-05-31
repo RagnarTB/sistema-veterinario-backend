@@ -52,9 +52,20 @@ export class ClienteDialogComponent implements OnInit {
       apellido: [{ value: this.data?.apellido || '', disabled: this.isEdit }, [Validators.required, CustomValidators.noWhitespace]],
       dni: [{ value: this.data?.dni || '', disabled: this.isEdit }, [Validators.required, CustomValidators.dni]],
       telefono: [this.data?.telefono || '', [Validators.required, CustomValidators.telefono]],
-      email: [{ value: this.data?.email || '', disabled: this.isEdit }, [Validators.required, Validators.email]],
-      direccion: [(this.data as any)?.direccion || '']
+      email: [{ value: this.data?.email || '', disabled: this.isEdit && !!this.data?.email }, [Validators.email]],
+      direccion: [this.data?.direccion || '']
     });
+
+    // Limpiar datos RENIEC si el DNI se edita (< 8 dígitos)
+    if (!this.isEdit) {
+      this.form.get('dni')?.valueChanges.subscribe((val: string) => {
+        if ((val || '').toString().trim().length < 8) {
+          this.form.get('nombre')?.enable();
+          this.form.get('apellido')?.enable();
+          this.form.patchValue({ nombre: '', apellido: '' });
+        }
+      });
+    }
   }
 
   buscarDni() {
@@ -92,17 +103,24 @@ export class ClienteDialogComponent implements OnInit {
       event.preventDefault();
     }
   }
-  
+
   soloNumeros(event: KeyboardEvent): void {
     const teclas_permitidas = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+    // Permitir atajos standard con Ctrl o Meta (Cmd en Mac)
+    if (event.ctrlKey || event.metaKey) {
+      const shortcuts = ['a', 'c', 'v', 'x', 'z', 'A', 'C', 'V', 'X', 'Z'];
+      if (shortcuts.includes(event.key)) {
+        return;
+      }
+    }
     const patron = /^[0-9]$/;
     if (!teclas_permitidas.includes(event.key) && !patron.test(event.key)) {
       event.preventDefault();
     }
   }
 
-    // Si estamos editando y el email / dni se usa para login, a veces no se debería poder editar, 
-    // pero lo dejamos habilitado a menos que el backend lo restrinja.
+  // Si estamos editando y el email / dni se usa para login, a veces no se debería poder editar, 
+  // pero lo dejamos habilitado a menos que el backend lo restrinja.
 
   irAResumen(): void {
     if (this.form.valid) {
