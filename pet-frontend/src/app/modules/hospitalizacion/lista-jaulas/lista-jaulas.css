@@ -1,0 +1,11 @@
+:host {
+  display: block;
+}
+
+.card:hover .jaula-actions {
+  opacity: 1 !important;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

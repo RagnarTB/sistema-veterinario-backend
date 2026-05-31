@@ -1,0 +1,47 @@
+﻿<div class="page-container fade-in-up">
+  <div class="page-header mb-6 p-6 pb-0">
+    <h1 class="text-2xl font-bold text-[var(--text-primary)]">Gestión de Jaulas y Hospitalización</h1>
+    <p class="text-[var(--text-muted)]">Configure las jaulas, categorías, tamaños y rangos de peso sugeridos.</p>
+  </div>
+
+  <!-- Panel de Pestañas (Material Tabs) -->
+  <mat-tab-group animationDuration="200ms" class="hospitalizacion-tabs" dynamicHeight>
+    
+    <!-- Pestaña 1: Jaulas -->
+    <mat-tab label="Lista de Jaulas">
+      <ng-template matTabContent>
+        <div class="p-6">
+          <app-lista-jaulas></app-lista-jaulas>
+        </div>
+      </ng-template>
+    </mat-tab>
+
+    <!-- Pestaña 2: Categorías -->
+    <mat-tab label="Categorías de Jaula">
+      <ng-template matTabContent>
+        <div class="p-6">
+          <app-categoria-jaula></app-categoria-jaula>
+        </div>
+      </ng-template>
+    </mat-tab>
+
+    <!-- Pestaña 3: Tamaños -->
+    <mat-tab label="Tamaños de Jaula">
+      <ng-template matTabContent>
+        <div class="p-6">
+          <app-tamano-jaula></app-tamano-jaula>
+        </div>
+      </ng-template>
+    </mat-tab>
+
+    <!-- Pestaña 4: Rangos de Peso (Sugerencias) -->
+    <mat-tab label="Sugerencias por Peso">
+      <ng-template matTabContent>
+        <div class="p-6">
+          <app-rango-peso-jaula></app-rango-peso-jaula>
+        </div>
+      </ng-template>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

@@ -1,0 +1,18 @@
+﻿::ng-deep .hospitalizacion-tabs .mat-mdc-tab-header {
+  border-bottom: 1px solid var(--border-color);
+  background-color: white;
+  padding: 0 24px;
+}
+
+::ng-deep .hospitalizacion-tabs .mdc-tab__text-label {
+  font-weight: 600 !important;
+  color: var(--text-muted);
+}
+
+::ng-deep .hospitalizacion-tabs .mdc-tab--active .mdc-tab__text-label {
+  color: var(--primary-color) !important;
+}
+
+::ng-deep .hospitalizacion-tabs .mdc-tab-indicator__content--underline {
+  border-color: var(--primary-color) !important;
+}
