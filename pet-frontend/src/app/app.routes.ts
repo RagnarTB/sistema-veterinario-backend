@@ -3,7 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
-  // ─── Ruta raíz ────────────────────────────────────────────────────────
+  // â”€â”€â”€ Ruta raÃ­z â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {
     path: '',
     redirectTo: 'app/citas',
@@ -15,7 +15,7 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
 
-  // ─── Auth Layout (sin sidebar) ────────────────────────────────────────
+  // â”€â”€â”€ Auth Layout (sin sidebar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {
     path: '',
     loadComponent: () =>
@@ -44,10 +44,24 @@ export const routes: Routes = [
             (m) => m.CompletarRegistroComponent
           ),
       },
+      {
+        path: 'olvide-password',
+        loadComponent: () =>
+          import('./modules/auth/olvide-password/olvide-password.component').then(
+            (m) => m.OlvidePasswordComponent
+          ),
+      },
+      {
+        path: 'reset-password',
+        loadComponent: () =>
+          import('./modules/auth/reset-password/reset-password.component').then(
+            (m) => m.ResetPasswordComponent
+          ),
+      },
     ],
   },
 
-  // ─── Main Layout (con sidebar + header) ───────────────────────────────
+  // â”€â”€â”€ Main Layout (con sidebar + header) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {
     path: 'app',
     canActivate: [authGuard],
@@ -56,7 +70,7 @@ export const routes: Routes = [
         (m) => m.MainLayoutComponent
       ),
     children: [
-      // Dashboard — solo ADMIN
+      // Dashboard â€” solo ADMIN
       {
         path: 'dashboard',
         canActivate: [roleGuard(['ROLE_ADMIN'])],
@@ -76,14 +90,14 @@ export const routes: Routes = [
           ),
       },
 
-      // Citas — todos los empleados
+      // Citas â€” todos los empleados
       {
         path: 'citas',
         loadChildren: () =>
           import('./modules/citas/citas.routes').then((m) => m.CITAS_ROUTES),
       },
 
-      // Clientes — ADMIN y RECEPCIONISTA
+      // Clientes â€” ADMIN y RECEPCIONISTA
       {
         path: 'clientes',
         canActivate: [roleGuard(['ROLE_ADMIN', 'ROLE_RECEPCIONISTA'])],
@@ -93,7 +107,7 @@ export const routes: Routes = [
           ),
       },
 
-      // Pacientes — todos los autenticados
+      // Pacientes â€” todos los autenticados
       {
         path: 'pacientes',
         loadChildren: () =>
@@ -102,7 +116,7 @@ export const routes: Routes = [
           ),
       },
 
-      // Atenciones medicas — VETERINARIO y ADMIN
+      // Atenciones medicas â€” VETERINARIO y ADMIN
       {
         path: 'atenciones',
         canActivate: [roleGuard(['ROLE_ADMIN', 'ROLE_VETERINARIO'])],
@@ -112,7 +126,7 @@ export const routes: Routes = [
           ),
       },
 
-      // Hospitalización — VETERINARIO y ADMIN
+      // HospitalizaciÃ³n â€” VETERINARIO y ADMIN
       {
         path: 'hospitalizacion',
         canActivate: [roleGuard(['ROLE_ADMIN', 'ROLE_VETERINARIO'])],
@@ -126,13 +140,10 @@ export const routes: Routes = [
       {
         path: 'jaulas',
         canActivate: [roleGuard(['ROLE_ADMIN', 'ROLE_VETERINARIO'])],
-        loadComponent: () =>
-          import('./modules/hospitalizacion/jaulas.component').then(
-            (m) => m.JaulasComponent
-          ),
+        loadChildren: () => import('./modules/hospitalizacion/jaulas.routes').then(m => m.JAULAS_ROUTES),
       },
 
-      // Farmacia (productos + ventas) — todos
+      // Farmacia (productos + ventas) â€” todos
       {
         path: 'farmacia',
         loadChildren: () =>
@@ -151,7 +162,7 @@ export const routes: Routes = [
           ),
       },
 
-      // Caja — ADMIN y RECEPCIONISTA
+      // Caja â€” ADMIN y RECEPCIONISTA
       {
         path: 'caja',
         canActivate: [roleGuard(['ROLE_ADMIN', 'ROLE_RECEPCIONISTA'])],
@@ -159,7 +170,27 @@ export const routes: Routes = [
           import('./modules/caja/caja.routes').then((m) => m.CAJA_ROUTES),
       },
 
-      // Empleados — solo ADMIN
+      // Finanzas / Cuentas por Cobrar â€” ADMIN y RECEPCIONISTA
+      {
+        path: 'finanzas/deudas',
+        canActivate: [roleGuard(['ROLE_ADMIN', 'ROLE_RECEPCIONISTA'])],
+        loadComponent: () =>
+          import('./modules/finanzas/deudas.component').then(
+            (m) => m.DeudasComponent
+          ),
+      },
+
+      // Finanzas / Historial de Ventas â€” ADMIN y RECEPCIONISTA
+      {
+        path: 'finanzas/ventas',
+        canActivate: [roleGuard(['ROLE_ADMIN', 'ROLE_RECEPCIONISTA'])],
+        loadComponent: () =>
+          import('./modules/finanzas/ventas.component').then(
+            (m) => m.VentasComponent
+          ),
+      },
+
+      // Empleados â€” solo ADMIN
       {
         path: 'empleados',
         canActivate: [roleGuard(['ROLE_ADMIN'])],
@@ -169,7 +200,7 @@ export const routes: Routes = [
           ),
       },
 
-      // Sedes — solo ADMIN
+      // Sedes â€” solo ADMIN
       {
         path: 'sedes',
         canActivate: [roleGuard(['ROLE_ADMIN'])],
@@ -177,7 +208,7 @@ export const routes: Routes = [
           import('./modules/sedes/sedes.routes').then((m) => m.SEDES_ROUTES),
       },
 
-      // Servicios Médicos — solo ADMIN
+      // Servicios MÃ©dicos â€” solo ADMIN
       {
         path: 'servicios-medicos',
         canActivate: [roleGuard(['ROLE_ADMIN'])],
@@ -187,7 +218,7 @@ export const routes: Routes = [
           ),
       },
 
-      // Redirección por defecto dentro de /app
+      // RedirecciÃ³n por defecto dentro de /app
       { path: '', redirectTo: 'citas', pathMatch: 'full' },
 
       // 403 Forbidden
@@ -204,3 +235,4 @@ export const routes: Routes = [
   // Wildcard
   { path: '**', redirectTo: 'app/citas' },
 ];
+

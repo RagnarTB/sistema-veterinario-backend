@@ -1,0 +1,415 @@
+<div class="page-container fade-in-up" style="max-width: 1400px;">
+    <!-- HEADER -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Control de Caja Diaria</h1>
+            <p class="page-subtitle">Apertura, arqueo y conciliación de movimientos de caja para recepción</p>
+        </div>
+        <div style="min-width: 220px;">
+            <div style="position: relative;">
+                <span class="material-icons-round"
+                    style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #14b8b8; font-size: 18px;">storefront</span>
+                <select [(ngModel)]="sedeId" (change)="onSedeChange()" class="form-control"
+                    style="padding-left: 36px; border-color: #14b8b8; font-weight: 600; cursor: pointer; height: 40px; font-size: 0.85rem;"
+                    [disabled]="cajaAbierta">
+                    @for (s of sedes; track s.id) {
+                    <option [ngValue]="s.id">{{ s.nombre }}</option>
+                    }
+                    @if (sedes.length === 0) {
+                    <option [ngValue]="1">Sede Central</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- CASO 1: CAJA CERRADA (PANTALLA DE APERTURA) -->
+    @if (!cajaCargando() && !cajaAbierta) {
+    <div class="flex items-center justify-center" style="min-height: 500px; padding: var(--space-lg);">
+        <div class="card p-8 text-center fade-in-up"
+            style="max-width: 450px; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+            <div class="icon-circle mb-4">
+                <span class="material-icons-round" style="font-size: 48px; color: #14b8b8;">lock_open</span>
+            </div>
+
+            <h2 class="font-bold mb-2">Apertura de Caja Diaria</h2>
+            <p class="text-sm text-secondary mb-6">
+                Para iniciar las operaciones de farmacia y cobros de servicios de hoy, debe registrar el saldo inicial
+                en efectivo para el sencillo en caja.
+            </p>
+
+            <div class="form-group text-left mb-6">
+                <label class="form-label font-bold" style="color: var(--text-secondary);">Saldo Inicial de Caja
+                    (S/)</label>
+                <div style="position: relative;">
+                    <span
+                        style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--text-muted); font-size: 0.95rem;">S/</span>
+                    <input type="number" [(ngModel)]="saldoInicialInput" class="form-control"
+                        style="padding-left: 36px; font-size: 1.1rem; font-weight: 700;" placeholder="0.00" min="0" />
+                </div>
+                @if (saldoInicialInput !== null && saldoInicialInput < 0) { <small class="form-error">El saldo inicial
+                    no puede ser negativo</small>
+                    }
+            </div>
+
+            <button class="btn btn-primary w-full justify-center" (click)="abrirCaja()"
+                [disabled]="saldoInicialInput === null || saldoInicialInput < 0 || operandoCaja()"
+                style="padding: 12px;">
+                @if (operandoCaja()) {
+                <span
+                    style="display: inline-block; width: 14px; height: 14px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px;"></span>
+                Abriendo Caja...
+                } @else {
+                <span class="material-icons-round">vpn_key</span>
+                🔓 Iniciar Caja Diaria
+                }
+            </button>
+        </div>
+    </div>
+    }
+
+    <!-- CARGANDO ESTADO -->
+    @if (cajaCargando()) {
+    <div class="card p-8 text-center flex flex-col items-center justify-center" style="min-height: 400px;">
+        <div
+            style="width: 48px; height: 48px; border: 4px solid rgba(20,184,184,0.1); border-top-color: #14b8b8; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: var(--space-md);">
+        </div>
+        <span class="text-sm text-secondary">Verificando sesión de caja...</span>
+    </div>
+    }
+
+    <!-- CASO 2: CAJA ABIERTA (CONSOLA DE CONTROL) -->
+    @if (!cajaCargando() && cajaAbierta && estadoCaja) {
+    <div class="fade-in-up flex flex-col gap-lg">
+
+        <!-- BARRA INFORMATIVA DE LA CAJA -->
+        <div class="card p-4 flex flex-wrap justify-between items-center bg-card-glow"
+            style="border: 1px solid rgba(20, 184, 184, 0.25);">
+            <div class="flex items-center gap-md">
+                <span class="pulse-indicator"></span>
+                <div>
+                    <span class="badge badge-confirmada" style="font-size: 0.7rem; font-weight: 700;">SESIÓN
+                        ABIERTA</span>
+                    <span class="text-xs text-muted ml-3">
+                        <strong>Responsable:</strong> {{ estadoCaja.responsableNombre }} |
+                        <strong>Apertura:</strong> {{ estadoCaja.fechaApertura | date:'short' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex gap-sm">
+                <button class="btn btn-secondary btn-sm" (click)="abrirModalMovimiento('INGRESO')">
+                    <span class="material-icons-round text-success">add_circle</span>
+                    Registrar Ingreso
+                </button>
+                <button class="btn btn-secondary btn-sm" (click)="abrirModalMovimiento('EGRESO')">
+                    <span class="material-icons-round text-danger">remove_circle</span>
+                    Registrar Egreso
+                </button>
+                <button class="btn btn-danger btn-sm" (click)="abrirModalCierre()">
+                    <span class="material-icons-round">lock</span>
+                    Arqueo & Cerrar Caja
+                </button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD DE SALDOS -->
+        <div class="stats-grid">
+
+            <!-- Saldo Inicial -->
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(96, 165, 250, 0.12); color: #60a5fa;">
+                    <span class="material-icons-round">payment</span>
+                </div>
+                <span class="stat-label">Saldo Inicial</span>
+                <span class="stat-value">S/ {{ estadoCaja.saldoInicial | number:'1.2-2' }}</span>
+            </div>
+
+            <!-- Ventas Totales del Día -->
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(34, 197, 94, 0.12); color: #4ade80;">
+                    <span class="material-icons-round">shopping_cart</span>
+                </div>
+                <span class="stat-label">Ingresos por Ventas</span>
+                <span class="stat-value">S/ {{ totalVentasReal | number:'1.2-2' }}</span>
+            </div>
+
+            <!-- Ingresos / Egresos Manuales -->
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24;">
+                    <span class="material-icons-round">swap_vertical_circle</span>
+                </div>
+                <span class="stat-label">Movs. Extra (Neto)</span>
+                <span class="stat-value" [ngClass]="totalMovimientosNeto >= 0 ? 'text-success' : 'text-danger'">
+                    {{ totalMovimientosNeto >= 0 ? '+' : '' }}S/ {{ totalMovimientosNeto | number:'1.2-2' }}
+                </span>
+            </div>
+
+            <!-- Saldo Actual Estimado -->
+            <div class="stat-card" style="border-color: var(--color-primary-400); box-shadow: var(--shadow-glow);">
+                <div class="stat-icon" style="background: rgba(20, 184, 184, 0.12); color: #14b8b8;">
+                    <span class="material-icons-round">account_balance_wallet</span>
+                </div>
+                <span class="stat-label">Saldo Estimado Caja</span>
+                <span class="stat-value" style="color: var(--color-primary-600);">
+                    S/ {{ saldoActualEstimado | number:'1.2-2' }}
+                </span>
+            </div>
+
+        </div>
+
+        <!-- TABLA DE MOVIMIENTOS Y VENTAS DEL DÍA -->
+        <div class="card overflow-hidden p-0">
+            <div class="tabla-header pb-3">
+                <div>
+                    <h3 class="tabla-title">Kardex de Transacciones Realizadas</h3>
+                    <p class="text-xxs text-muted" style="margin-top: 2px;">Ventas registradas y movimientos manuales
+                        ingresados hoy</p>
+                </div>
+                <div class="flex gap-sm">
+                    <button class="btn btn-secondary btn-sm" (click)="cargarDiario()">
+                        <span class="material-icons-round" style="font-size: 16px;">sync</span>
+                        Sincronizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="tabla-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Concepto / Tipo</th>
+                            <th>Comprobante</th>
+                            <th>Propietario / Detalle</th>
+                            <th>Método</th>
+                            <th class="text-right">Monto</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (movimientosMezclados.length === 0) {
+                        <tr>
+                            <td colspan="7" class="text-center py-6 text-muted">
+                                No se registran movimientos ni ventas cobradas el día de hoy.
+                            </td>
+                        </tr>
+                        } @else {
+                        @for (mov of movimientosMezclados; track $index) {
+                        <tr>
+                            <td class="text-xs font-semibold text-muted">
+                                {{ mov.fecha | date:'HH:mm' }}
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-xs">
+                                    <span class="material-icons-round"
+                                        [ngStyle]="{'color': mov.tipo === 'INGRESO' ? 'var(--color-success)' : 'var(--color-danger)'}"
+                                        style="font-size: 18px;">
+                                        {{ mov.tipo === 'INGRESO' ? 'arrow_downward' : 'arrow_upward' }}
+                                    </span>
+                                    <span class="font-medium" style="color: var(--text-primary);">
+                                        {{ mov.concepto }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-xs">
+                                {{ mov.comprobante || '-' }}
+                            </td>
+                            <td class="text-xs text-secondary">
+                                {{ mov.detalle }}
+                            </td>
+                            <td>
+                                <span class="text-xxs px-2 py-1 rounded font-bold"
+                                    [ngStyle]="mov.metodo === 'DEUDA' ? {'color': 'var(--color-danger)', 'background-color': 'rgba(239, 68, 68, 0.12)'} : {'color': 'var(--text-secondary)', 'background-color': 'var(--bg-surface)'}">
+                                    {{ mov.metodo }}
+                                </span>
+                            </td>
+                            <td class="text-right font-bold"
+                                [ngStyle]="{'color': mov.tipo === 'INGRESO' ? 'var(--color-success)' : 'var(--color-danger)'}">
+                                {{ mov.tipo === 'INGRESO' ? '+' : '-' }} S/ {{ mov.monto | number:'1.2-2' }}
+                            </td>
+                            <td>
+                                <span class="badge badge-completada" style="font-size: 0.65rem;">Cerrado</span>
+                            </td>
+                        </tr>
+                        }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    }
+
+    <!-- MODAL FLOTANTE: INGRESO / EGRESO MANUAL -->
+    @if (mostrarModalMovimiento) {
+    <div class="modal-backdrop">
+        <div class="card p-6 modal-box fade-in-up" style="max-width: 420px; background: white;">
+            <div class="flex justify-between items-center border-bottom pb-3 mb-4">
+                <h3 class="font-bold flex items-center gap-xs"
+                    [ngStyle]="{'color': movimientoModalTipo === 'INGRESO' ? 'var(--color-success)' : 'var(--color-danger)'}">
+                    <span class="material-icons-round">
+                        {{ movimientoModalTipo === 'INGRESO' ? 'add_circle' : 'remove_circle' }}
+                    </span>
+                    Registrar {{ movimientoModalTipo === 'INGRESO' ? 'Ingreso' : 'Egreso' }} Manual
+                </h3>
+                <button class="btn-close" (click)="cerrarModalMovimiento()">&times;</button>
+            </div>
+
+            <div class="flex flex-col gap-sm">
+                <div class="form-group">
+                    <label class="form-label font-semibold">Concepto / Motivo <span
+                            style="color: var(--color-danger)">*</span></label>
+                    <input type="text" [(ngModel)]="manualConcepto" class="form-control"
+                        placeholder="Ej: Sencillo adicional / Compra de útiles..." />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label font-semibold">Monto del Movimiento (S/) <span
+                            style="color: var(--color-danger)">*</span></label>
+                    <div style="position: relative;">
+                        <span
+                            style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--text-muted);">S/</span>
+                        <input type="number" [(ngModel)]="manualMonto" class="form-control" style="padding-left: 36px;"
+                            placeholder="0.00" min="0.1" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label font-semibold">Método de Pago <span
+                            style="color: var(--color-danger)">*</span></label>
+                    <select [(ngModel)]="manualMetodo" class="form-control">
+                        <option value="EFECTIVO">Efectivo</option>
+                        <option value="YAPE">Yape</option>
+                        <option value="PLIN">Plin</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-sm mt-6 pt-3 border-top">
+                <button class="btn-secondary" (click)="cerrarModalMovimiento()">Cancelar</button>
+                <button class="btn btn-primary"
+                    [disabled]="!manualConcepto.trim() || manualMonto === null || manualMonto <= 0"
+                    (click)="registrarMovimientoManual()">
+                    Guardar Movimiento
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- MODAL ARQUEO & CIERRE DE CAJA -->
+    @if (mostrarModalCierre) {
+    <div class="modal-backdrop">
+        <div class="card p-6 modal-box fade-in-up" style="max-width: 500px; background: white;">
+            <div class="flex justify-between items-center border-bottom pb-3 mb-4">
+                <h3 class="font-bold text-danger flex items-center gap-xs">
+                    <span class="material-icons-round">lock</span>
+                    Arqueo & Cierre de Caja Diaria
+                </h3>
+                <button class="btn-close" (click)="cerrarModalCierre()">&times;</button>
+            </div>
+
+            <p class="text-sm text-secondary mb-4">
+                Por favor, confirme que desea realizar el arqueo y cerrar el cajón diario. Se generará un resumen de
+                cierre auditado.
+            </p>
+
+            <div class="card p-4 mb-4" style="background: var(--bg-surface); border: 1px solid var(--border-color);">
+                <span class="text-xxs font-bold text-muted uppercase block mb-3">CONCILIACIÓN ESTIMADA EN
+                    SISTEMA:</span>
+
+                <div class="flex justify-between py-1 border-bottom text-xs">
+                    <span>Saldo Inicial:</span>
+                    <span class="font-semibold">S/ {{ estadoCaja?.saldoInicial | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex justify-between py-1 border-bottom text-xs">
+                    <span>Ingresos por Ventas:</span>
+                    <span class="font-semibold text-success">+ S/ {{ totalVentasReal | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex justify-between py-1 border-bottom text-xs">
+                    <span>Ingresos Manuales:</span>
+                    <span class="font-semibold text-success">+ S/ {{ sumManualIngresos | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex justify-between py-1 border-bottom text-xs">
+                    <span>Egresos Manuales:</span>
+                    <span class="font-semibold text-danger">- S/ {{ sumManualEgresos | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex justify-between py-2 text-sm font-bold mt-2"
+                    style="border-top: 1px dashed var(--border-color);">
+                    <span>Cierre Estimado:</span>
+                    <span style="color: var(--color-primary-600);">S/ {{ saldoActualEstimado | number:'1.2-2' }}</span>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-sm mt-6 pt-3 border-top">
+                <button class="btn btn-secondary" (click)="cerrarModalCierre()"
+                    [disabled]="operandoCaja()">Cancelar</button>
+                <button class="btn btn-danger" (click)="cerrarCaja()" [disabled]="operandoCaja()">
+                    @if (operandoCaja()) {
+                    <span
+                        style="display: inline-block; width: 14px; height: 14px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px;"></span>
+                    Cerrando Caja...
+                    } @else {
+                    <span class="material-icons-round">check</span>
+                    Confirmar y Cerrar Caja
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- PANTALLA EXITO DETALLADA DE ARQUEO FINAL -->
+    @if (cierreResumenFinal) {
+    <div class="modal-backdrop">
+        <div class="card p-8 text-center modal-box fade-in-up"
+            style="max-width: 500px; background: white; border: 2px solid var(--color-success); box-shadow: var(--shadow-lg);">
+            <div class="icon-circle mb-4"
+                style="background: rgba(34, 197, 94, 0.12); color: #4ade80; margin: 0 auto 16px;">
+                <span class="material-icons-round" style="font-size: 48px; color: #22c55e;">lock</span>
+            </div>
+
+            <h2 class="font-bold mb-2" style="color: var(--text-primary)">¡Caja Cerrada Exitosamente!</h2>
+            <p class="text-sm text-secondary mb-6">
+                El cajón ha sido arqueado y sellado para conciliación contable.
+            </p>
+
+            <div class="card p-4 text-left mb-6" style="background: var(--bg-surface);">
+                <span class="text-xxs font-bold text-muted uppercase block mb-3">RESUMEN DEL ARQUEO EMITIDO:</span>
+
+                <div class="flex justify-between py-1 text-xs">
+                    <span>Saldo de Apertura:</span>
+                    <span class="font-semibold">S/ {{ cierreResumenFinal.saldoInicial | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex justify-between py-1 text-xs">
+                    <span>Ventas Registradas:</span>
+                    <span class="font-semibold">S/ {{ cierreResumenFinal.totalVentas | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex justify-between py-1 text-xs">
+                    <span>Ingresos Adicionales:</span>
+                    <span class="font-semibold text-success">+ S/ {{ cierreResumenFinal.ingresosExtras | number:'1.2-2'
+                        }}</span>
+                </div>
+                <div class="flex justify-between py-1 text-xs">
+                    <span>Egresos Adicionales:</span>
+                    <span class="font-semibold text-danger">- S/ {{ cierreResumenFinal.egresosExtras | number:'1.2-2'
+                        }}</span>
+                </div>
+
+                <div class="flex justify-between py-2 text-sm font-bold mt-3"
+                    style="border-top: 2px solid var(--border-color);">
+                    <span>Saldo Final Arqueado:</span>
+                    <span class="text-success">S/ {{ cierreResumenFinal.saldoFinal | number:'1.2-2' }}</span>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary w-full" (click)="finalizarCierreVista()">
+                Finalizar y Volver
+            </button>
+        </div>
+    </div>
+    }
+
+</div>

@@ -2,12 +2,16 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
+import { MatIconModule } from '@angular/material/icon';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ReporteService } from '../../core/services/reporte.service';
-import { DashboardResumen, TopProducto, CitasVeterinario } from '../../core/models/models';
+import { VacunaService } from '../../core/services/vacuna.service';
+import { DesparasitacionService } from '../../core/services/desparasitacion.service';
+import { DashboardResumen, TopProducto, CitasVeterinario, VacunaResponse, DesparasitacionResponse } from '../../core/models/models';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,6 +20,7 @@ import { DashboardResumen, TopProducto, CitasVeterinario } from '../../core/mode
     CommonModule,
     MatCardModule,
     MatTableModule,
+    MatIconModule,
     BaseChartDirective,
     MatProgressSpinnerModule
   ],
@@ -24,14 +29,24 @@ import { DashboardResumen, TopProducto, CitasVeterinario } from '../../core/mode
 })
 export class DashboardComponent implements OnInit {
   private reporteService = inject(ReporteService);
+  private vacunaService = inject(VacunaService);
+  private desparasitacionService = inject(DesparasitacionService);
 
   loading = signal(true);
   resumen = signal<DashboardResumen | null>(null);
   topProductos = signal<TopProducto[]>([]);
   veterinarios = signal<CitasVeterinario[]>([]);
+  
+  proximasVacunas = signal<VacunaResponse[]>([]);
+  proximasDesparasitaciones = signal<DesparasitacionResponse[]>([]);
+  alertasStock = signal<any[]>([]);
+
+  authService = inject(AuthService);
 
   // Configuración de la tabla
   displayedColumns: string[] = ['nombre', 'citas'];
+  vacunasColumns: string[] = ['paciente', 'vacuna', 'fecha'];
+  desparasitacionColumns: string[] = ['paciente', 'producto', 'fecha'];
 
   // Configuración del Chart
   chartType: ChartType = 'bar';
@@ -39,7 +54,7 @@ export class DashboardComponent implements OnInit {
     labels: [],
     datasets: []
   };
-  
+
   chartOptions: ChartConfiguration['options'] = {
     responsive: true,
     maintainAspectRatio: false,
@@ -106,6 +121,27 @@ export class DashboardComponent implements OnInit {
       },
       error: () => checkDone()
     });
+
+    this.vacunaService.listarProximasDosis().subscribe({
+      next: (data) => {
+        this.proximasVacunas.set(data);
+      }
+    });
+
+    this.desparasitacionService.listarProximasDosis().subscribe({
+      next: (data) => {
+        this.proximasDesparasitaciones.set(data);
+      }
+    });
+
+    const role = this.authService.activeRole();
+    if (role === 'ROLE_ADMIN' || role === 'ROLE_RECEPCIONISTA') {
+      this.reporteService.getAlertasStock().subscribe({
+        next: (data) => {
+          this.alertasStock.set(data);
+        }
+      });
+    }
   }
 
   actualizarGrafico(datos: TopProducto[]) {

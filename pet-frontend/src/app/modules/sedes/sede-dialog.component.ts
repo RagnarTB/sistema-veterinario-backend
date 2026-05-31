@@ -43,7 +43,7 @@ export class SedeDialogComponent implements OnInit {
     private snack: MatSnackBar
   ) {
     this.isEdit.set(!!data?.sede);
-    
+
     this.form = this.fb.group({
       nombre: [data?.sede?.nombre || '', Validators.required],
       direccion: [data?.sede?.direccion || '', Validators.required],
@@ -51,7 +51,7 @@ export class SedeDialogComponent implements OnInit {
     });
   }
 
-  ngOnInit() {}
+  ngOnInit() { }
 
   soloNumeros(event: KeyboardEvent): void {
     const teclas_permitidas = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];

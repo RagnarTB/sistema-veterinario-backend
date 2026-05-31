@@ -1,89 +1,81 @@
 .animation-fade-in {
-  animation: fadeInSedes 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: fadeInSedes 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes fadeInSedes {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
+
 
 .focus-input-vet:focus {
-  border-color: #0d9488 !important; 
-  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1) !important;
-  background-color: #ffffff !important;
+    border-color: #0d9488 !important;
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1) !important;
+    background-color: #ffffff !important;
 }
+
 
 .row-vet-hover:hover {
-  background-color: #f8fafc !important;
+    background-color: #f8fafc !important;
 }
 
-/* Base de los botones de acción estilizados de la imagen */
+
 .btn-vet-action {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 36px !important;
-  height: 36px !important;
-  padding: 0 !important;
-  min-width: 36px !important;
-  background-color: #ffffff !important;
-  border: 1px solid #e2e8f0 !important; /* El borde gris sutil */
-  border-radius: 10px !important;        /* Esquinas redondeadas de tarjeta */
-  cursor: pointer !important;
-  outline: none !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02) !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    min-width: 32px !important;
+    border: none !important;
+    background: transparent !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transition: background-color 0.2s, cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Centrado exacto del icono dentro del contenedor */
+
+.btn-vet-action:hover {
+    background-color: #f1f5f9 !important;
+}
+
+.btn-vet-action.text-blue:hover {
+    background-color: #eff6ff !important;
+}
+
+.btn-vet-action.text-red:hover {
+    background-color: #fef2f2 !important;
+}
+
+
 .btn-vet-action mat-icon {
-  margin: 0 !important;
-  padding: 0 !important;
-  font-size: 18px !important;
-  width: 18px !important;
-  height: 18px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-/* Hover & Colores: Editar (Azul) */
-.btn-vet-action.action-blue mat-icon { color: #2563eb !important; }
-.btn-vet-action.action-blue:hover {
-  background-color: #eff6ff !important;
-  border-color: #bfdbfe !important;
-}
 
-/* Hover & Colores: Desactivar (Naranja/Ámbar) */
-.btn-vet-action.action-orange mat-icon { color: #d97706 !important; }
-.btn-vet-action.action-orange:hover {
-  background-color: #fef3c7 !important;
-  border-color: #fde68a !important;
-}
-
-/* Hover & Colores: Activar (Verde) */
-.btn-vet-action.action-green mat-icon { color: #059669 !important; }
-.btn-vet-action.action-green:hover {
-  background-color: #ecfdf5 !important;
-  border-color: #a7f3d0 !important;
-}
-
-/* Hover & Colores: Eliminar Físico (Rojo) */
-.btn-vet-action.action-red mat-icon { color: #dc2626 !important; }
-.btn-vet-action.action-red:hover {
-  background-color: #fef2f2 !important;
-  border-color: #fecaca !important;
-}
-
-/* Reset estructural de Material Tables */
 .custom-vet-table {
-  background-color: white !important;
+    background-color: white !important;
 }
+
 .mat-mdc-table {
-  background: transparent !important;
-}
-.mat-mdc-header-row, .mat-mdc-row {
-  border: none !important;
+    background: transparent !important;
 }
 
-
+.mat-mdc-header-row,
+.mat-mdc-row {
+    border: none !important;
+}

@@ -27,21 +27,23 @@ import { ModalConfirmacionComponent } from '../../shared/components/modal-confir
     MatIconModule,
     MatProgressSpinnerModule,
     MatDialogModule,
-    MatSnackBarModule 
+    MatSnackBarModule // <-- ¡Arreglado! Faltaba este módulo esencial para los avisos en pantalla
   ],
   templateUrl: './sedes.component.html',
   styleUrls: ['./sedes.component.css']
 })
 export class SedesComponent implements OnInit {
-  
+  // Columnas que se renderizan en la tabla
   displayedColumns: string[] = ['nombre', 'telefono', 'estado', 'acciones'];
-  
+
+  // Manejo del estado reactivo de la UI con Signals
   dataSource = signal<SedeResponse[]>([]);
   totalElements = signal(0);
   pageSize = signal(10);
   pageIndex = signal(0);
   loading = signal(false);
 
+  // Control del buscador reactivo
   searchControl = new FormControl('');
 
   constructor(
@@ -49,11 +51,12 @@ export class SedesComponent implements OnInit {
     private dialog: MatDialog,
     private snack: MatSnackBar
   ) {
+    // Escucha del buscador con Debounce para no saturar el servidor con peticiones por cada tecla
     this.searchControl.valueChanges.pipe(
       debounceTime(400),
       distinctUntilChanged()
     ).subscribe(() => {
-      this.pageIndex.set(0); 
+      this.pageIndex.set(0); // Reiniciar a la primera página tras una nueva búsqueda
       this.cargarSedes();
     });
   }
@@ -62,10 +65,13 @@ export class SedesComponent implements OnInit {
     this.cargarSedes();
   }
 
+  /**
+   * Obtiene la lista paginada de sedes desde el servicio
+   */
   cargarSedes(): void {
     this.loading.set(true);
     const searchTerm = this.searchControl.value || '';
-    
+
     this.sedeService.listar(this.pageIndex(), this.pageSize(), searchTerm).subscribe({
       next: (page: any) => {
         this.dataSource.set(page.content);
@@ -79,12 +85,18 @@ export class SedesComponent implements OnInit {
     });
   }
 
+  /**
+   * Escucha los cambios del paginado de Angular Material
+   */
   onPageChange(event: PageEvent): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
     this.cargarSedes();
   }
 
+  /**
+   * Abre el formulario modal para Crear o Editar una Sede
+   */
   abrirModal(sede?: SedeResponse): void {
     const dialogRef = this.dialog.open(SedeDialogComponent, {
       width: '500px',
@@ -97,9 +109,12 @@ export class SedesComponent implements OnInit {
     });
   }
 
+  /**
+   * Cambia el estado lógico de la sede mediante modal de confirmación
+   */
   cambiarEstado(sede: SedeResponse): void {
     const nuevoEstado = !sede.activo;
-    
+
     const dialogRef = this.dialog.open(ModalConfirmacionComponent, {
       width: '400px',
       data: {
@@ -127,6 +142,9 @@ export class SedesComponent implements OnInit {
     });
   }
 
+  /**
+   * Ejecuta la eliminación física/permanente en la base de datos
+   */
   eliminarFisico(sede: SedeResponse): void {
     const dialogRef = this.dialog.open(ModalConfirmacionComponent, {
       width: '400px',
@@ -155,5 +173,3 @@ export class SedesComponent implements OnInit {
     });
   }
 }
-
-

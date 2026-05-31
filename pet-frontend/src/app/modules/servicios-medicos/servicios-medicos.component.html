@@ -1,171 +1,168 @@
 <div class="page-container fade-in-up">
-  
-  <div class="vet-header-container">
-    <div class="vet-header-text">
-      <h1 class="vet-title">Servicios Médicos</h1>
-      <p class="vet-subtitle">Catálogo general de consultas, cirugías especializadas y plantillas de insumos médicos.</p>
+
+    <div class="vet-header-container">
+        <div class="vet-header-text">
+            <h1 class="vet-title">Servicios Médicos</h1>
+            <p class="vet-subtitle">Catálogo general de consultas, cirugías especializadas y plantillas de insumos
+                médicos.</p>
+        </div>
+        <button mat-flat-button class="add-service-btn" (click)="abrirDialogo()">
+            <span class="material-icons-round">add</span> Nuevo Servicio
+        </button>
     </div>
-    <button mat-flat-button class="add-service-btn" (click)="abrirDialogo()">
-      <span class="material-icons-round">add</span> Nuevo Servicio
-    </button>
-  </div>
 
-  <div class="vet-filter-card">
-    <div class="vet-filter-grid">
-      
-      <div class="vet-input-wrapper">
-        <span class="material-icons-round wrapper-icon">search</span>
-        <input 
-          type="text" 
-          class="vet-custom-input" 
-          placeholder="Buscar por nombre o descripción..."
-          [ngModel]="filtroNombre()"
-          (ngModelChange)="filtroNombre.set($event)"
-        >
-      </div>
-      
-      <div class="vet-input-wrapper">
-        <span class="material-icons-round wrapper-icon">category</span>
-        <select 
-          class="vet-custom-select" 
-          [ngModel]="filtroTipo()" 
-          (ngModelChange)="filtroTipo.set($event)"
-        >
-          <option value="">Todos los Tipos</option>
-          <option *ngFor="let tipo of tipos" [value]="tipo">{{ tipo }}</option>
-        </select>
-        <span class="material-icons-round select-arrow">expand_more</span>
-      </div>
+    <div class="vet-filter-card">
+        <div class="vet-filter-grid">
 
+            <div class="vet-input-wrapper">
+                <span class="material-icons-round wrapper-icon">search</span>
+                <input type="text" class="vet-custom-input" placeholder="Buscar por nombre o descripción..."
+                    [ngModel]="filtroNombre()" (ngModelChange)="filtroNombre.set($event)">
+            </div>
+
+            <div class="vet-input-wrapper">
+                <span class="material-icons-round wrapper-icon">category</span>
+                <select class="vet-custom-select" [ngModel]="filtroTipo()" (ngModelChange)="filtroTipo.set($event)">
+                    <option value="">Todos los Tipos</option>
+                    <option *ngFor="let tipo of tipos" [value]="tipo">{{ tipo }}</option>
+                </select>
+                <span class="material-icons-round select-arrow">expand_more</span>
+            </div>
+
+        </div>
     </div>
-  </div>
 
-  <div class="vet-main-card">
-    <mat-tab-group class="custom-tabs-navigation" (selectedTabChange)="onTabChange($event)">
-      
-      <mat-tab label="Servicios Activos">
-        <ng-template matTabContent>
-          <div *ngIf="loading()" class="vet-loading-box">
-            <div class="animate-spin-circle"></div>
-            <span>Cargando catálogo...</span>
-          </div>
+    <div class="vet-main-card">
+        <mat-tab-group class="custom-tabs-navigation" (selectedTabChange)="onTabChange($event)">
 
-          <div *ngIf="!loading()" class="vet-table-responsive">
-            <table class="vet-table">
-              <thead>
-                <tr>
-                  <th style="width: 15%;">Tipo</th>
-                  <th style="width: 40%;">Detalles del Servicio</th>
-                  <th style="width: 15%; text-align: right;">Precio Base</th>
-                  <th style="width: 15%; text-align: center;">Tiempos</th>
-                  <th style="width: 7%; text-align: center;">Insumos</th>
-                  <th style="width: 8%; text-align: center;">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let s of serviciosFiltrados(); trackBy: trackByServiceId">
-                  <td>
-                    <span class="chip-premium" [ngClass]="getTipoClass(s.tipoServicio)">
-                      {{ s.tipoServicio || 'OTRO' }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="vet-service-info">
-                      <span class="service-name">{{ s.nombre }}</span>
-                      <span *ngIf="s.descripcion" class="service-desc">{{ s.descripcion }}</span>
+            <mat-tab label="Servicios Activos">
+                <ng-template matTabContent>
+                    <div *ngIf="loading()" class="vet-loading-box">
+                        <div class="animate-spin-circle"></div>
+                        <span>Cargando catálogo...</span>
                     </div>
-                  </td>
-                  <td class="text-right font-mono font-bold text-slate-900" style="font-size: 15px;">
-                    S/ {{ s.precio | number:'1.2-2' }}
-                  </td>
-                  <td>
-                    <div class="vet-time-info">
-                      <span class="badge-time">
-                        <span class="material-icons-round">schedule</span>{{ s.duracionMinutos }} min
-                      </span>
-                      <span class="cleaning-text">Limpieza: {{ s.bufferMinutos }} min</span>
-                    </div>
-                  </td>
-                  <td style="text-align: center;">
-                    <button class="action-btn-template" (click)="verInsumos(s)" title="Gestionar Insumos">
-                      <span class="material-icons-round">inventory_2</span>
-                    </button>
-                  </td>
-                  <td>
-                    <div class="vet-actions-wrapper">
-                      <button class="action-btn edit" (click)="abrirDialogo(s)" title="Editar">
-                        <span class="material-icons-round">edit</span>
-                      </button>
-                      <button class="action-btn delete" (click)="toggleEstado(s)" title="Desactivar">
-                        <span class="material-icons-round">block</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                
-                <tr *ngIf="serviciosFiltrados().length === 0">
-                  <td colspan="6">
-                    <div class="vet-empty-state">
-                      <span class="material-icons-round empty-icon">inventory</span>
-                      <h3>No hay servicios médicos</h3>
-                      <p>No encontramos registros activos que coincidan con la búsqueda.</p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </ng-template>
-      </mat-tab>
 
-      <mat-tab label="Servicios Inactivos">
-        <ng-template matTabContent>
-          <div class="vet-table-responsive">
-            <table class="vet-table">
-              <thead>
-                <tr>
-                  <th style="width: 20%;">Tipo</th>
-                  <th style="width: 50%;">Nombre del Servicio</th>
-                  <th style="width: 15%; text-align: right;">Precio</th>
-                  <th style="width: 15%; text-align: center;">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let s of serviciosFiltrados(); trackBy: trackByServiceId" class="row-inactive">
-                  <td>
-                    <span class="chip-premium chip-inactive">
-                      {{ s.tipoServicio || 'OTRO' }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="service-name-inactive">{{ s.nombre }}</span>
-                  </td>
-                  <td class="text-right font-mono text-slate-400">
-                    S/ {{ s.precio | number:'1.2-2' }}
-                  </td>
-                  <td>
-                    <div class="vet-actions-wrapper">
-                      <button class="action-btn restore" (click)="toggleEstado(s)" title="Reactivar">
-                        <span class="material-icons-round">settings_backup_restore</span>
-                      </button>
+                    <div *ngIf="!loading()" class="vet-table-responsive">
+                        <table class="vet-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%;">Tipo</th>
+                                    <th style="width: 40%;">Detalles del Servicio</th>
+                                    <th style="width: 15%; text-align: right;">Precio Base</th>
+                                    <th style="width: 15%; text-align: center;">Tiempos</th>
+                                    <th style="width: 7%; text-align: center;">Insumos</th>
+                                    <th style="width: 8%; text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let s of serviciosFiltrados(); trackBy: trackByServiceId">
+                                    <td>
+                                        <span class="chip-premium" [ngClass]="getTipoClass(s.tipoServicio)">
+                                            {{ s.tipoServicio || 'OTRO' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="vet-service-info">
+                                            <span class="service-name">{{ s.nombre }}</span>
+                                            <span *ngIf="s.descripcion" class="service-desc">{{ s.descripcion }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-right font-mono font-bold text-slate-900" style="font-size: 15px;">
+                                        S/ {{ s.precio | number:'1.2-2' }}
+                                    </td>
+                                    <td>
+                                        <div class="vet-time-info">
+                                            <span class="badge-time">
+                                                <span class="material-icons-round">schedule</span>{{ s.duracionMinutos
+                                                }} min
+                                            </span>
+                                            <span class="cleaning-text">Limpieza: {{ s.bufferMinutos }} min</span>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <button class="action-btn-template" (click)="verInsumos(s)"
+                                            title="Gestionar Insumos">
+                                            <span class="material-icons-round">inventory_2</span>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="vet-actions-wrapper">
+                                            <button class="action-btn edit" (click)="abrirDialogo(s)" title="Editar">
+                                                <span class="material-icons-round">edit</span>
+                                            </button>
+                                            <button class="action-btn delete" (click)="toggleEstado(s)"
+                                                title="Desactivar">
+                                                <span class="material-icons-round">block</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr *ngIf="serviciosFiltrados().length === 0">
+                                    <td colspan="6">
+                                        <div class="vet-empty-state">
+                                            <span class="material-icons-round empty-icon">inventory</span>
+                                            <h3>No hay servicios médicos</h3>
+                                            <p>No encontramos registros activos que coincidan con la búsqueda.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                  </td>
-                </tr>
-                
-                <tr *ngIf="serviciosFiltrados().length === 0">
-                  <td colspan="4">
-                    <div class="vet-empty-state">
-                      <span class="material-icons-round empty-icon">task_alt</span>
-                      <h3>Todo en orden</h3>
-                      <p>No se registran servicios dados de baja actualmente.</p>
+                </ng-template>
+            </mat-tab>
+
+            <mat-tab label="Servicios Inactivos">
+                <ng-template matTabContent>
+                    <div class="vet-table-responsive">
+                        <table class="vet-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%;">Tipo</th>
+                                    <th style="width: 50%;">Nombre del Servicio</th>
+                                    <th style="width: 15%; text-align: right;">Precio</th>
+                                    <th style="width: 15%; text-align: center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let s of serviciosFiltrados(); trackBy: trackByServiceId"
+                                    class="row-inactive">
+                                    <td>
+                                        <span class="chip-premium chip-inactive">
+                                            {{ s.tipoServicio || 'OTRO' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="service-name-inactive">{{ s.nombre }}</span>
+                                    </td>
+                                    <td class="text-right font-mono text-slate-400">
+                                        S/ {{ s.precio | number:'1.2-2' }}
+                                    </td>
+                                    <td>
+                                        <div class="vet-actions-wrapper">
+                                            <button class="action-btn restore" (click)="toggleEstado(s)"
+                                                title="Reactivar">
+                                                <span class="material-icons-round">settings_backup_restore</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr *ngIf="serviciosFiltrados().length === 0">
+                                    <td colspan="4">
+                                        <div class="vet-empty-state">
+                                            <span class="material-icons-round empty-icon">task_alt</span>
+                                            <h3>Todo en orden</h3>
+                                            <p>No se registran servicios dados de baja actualmente.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </ng-template>
-      </mat-tab>
-    </mat-tab-group>
-  </div>
+                </ng-template>
+            </mat-tab>
+        </mat-tab-group>
+    </div>
 </div>

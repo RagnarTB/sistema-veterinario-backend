@@ -20,4 +20,8 @@ export class ReporteService {
   getRendimientoVeterinarios(): Observable<CitasVeterinario[]> {
     return this.http.get<CitasVeterinario[]>(`${this.url}/rendimiento-veterinarios`);
   }
+
+  getAlertasStock(): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/productos/alertas-stock`);
+  }
 }
