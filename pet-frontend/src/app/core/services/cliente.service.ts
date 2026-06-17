@@ -37,4 +37,8 @@ export class ClienteService {
       params: new HttpParams().set('activo', activo),
     });
   }
+
+  obtenerMiPerfil(): Observable<any> {
+    return this.http.get<any>(`${this.url}/mi-perfil`);
+  }
 }

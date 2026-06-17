@@ -64,6 +64,13 @@ public class ClienteController {
         return ResponseEntity.ok(clientes);
     }
 
+    @GetMapping("/mi-perfil")
+    public ResponseEntity<com.veterinaria.dtos.ClienteDashboardDTO> obtenerMiPerfil() {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        com.veterinaria.dtos.ClienteDashboardDTO respuesta = clienteServicio.obtenerDashboardPorEmail(email);
+        return ResponseEntity.ok(respuesta);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ClienteResponseDTO> obtenerClientePorId(@PathVariable Long id) {
         ClienteResponseDTO cliente = clienteServicio.buscarPorId(id);

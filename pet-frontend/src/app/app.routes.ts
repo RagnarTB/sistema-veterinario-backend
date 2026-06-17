@@ -3,7 +3,6 @@ import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
-  // â”€â”€â”€ Ruta raÃ­z â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {
     path: '',
     redirectTo: 'app/citas',
@@ -15,7 +14,6 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
 
-  // â”€â”€â”€ Auth Layout (sin sidebar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {
     path: '',
     loadComponent: () =>
@@ -61,7 +59,7 @@ export const routes: Routes = [
     ],
   },
 
-  // â”€â”€â”€ Main Layout (con sidebar + header) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
   {
     path: 'app',
     canActivate: [authGuard],
@@ -70,7 +68,7 @@ export const routes: Routes = [
         (m) => m.MainLayoutComponent
       ),
     children: [
-      // Dashboard â€” solo ADMIN
+
       {
         path: 'dashboard',
         canActivate: [roleGuard(['ROLE_ADMIN'])],
@@ -80,7 +78,7 @@ export const routes: Routes = [
           ),
       },
 
-      // Reportes
+     
       {
         path: 'reportes',
         canActivate: [roleGuard(['ROLE_ADMIN'])],
@@ -90,11 +88,20 @@ export const routes: Routes = [
           ),
       },
 
-      // Citas â€” todos los empleados
+    
       {
         path: 'citas',
         loadChildren: () =>
           import('./modules/citas/citas.routes').then((m) => m.CITAS_ROUTES),
+      },
+
+      // PÃ¡gina de usuarios
+      {
+        path: 'pagina-usuarios',
+        loadComponent: () =>
+          import('./modules/pagina-usuarios/pagina-usuario.component').then(
+            (m) => m.PaginaUsuarioComponent
+          ),
       },
 
       // Clientes â€” ADMIN y RECEPCIONISTA
@@ -235,4 +242,3 @@ export const routes: Routes = [
   // Wildcard
   { path: '**', redirectTo: 'app/citas' },
 ];
-

@@ -1,0 +1,698 @@
+
+$teal-dark: #1a7a6e;
+$teal: #2c9d8f;
+$teal-light: #e0f5f2;
+$teal-btn: #1e6e64;
+$green-badge: #22b573;
+$green-light: #d4f5e0;
+$blue-light: #dbeafe;
+$blue-icon: #3b82f6;
+$red-badge: #ef4444;
+
+$text-primary: #1a202c;
+$text-sub: #6b7280;
+$text-muted: #9ca3af;
+$border: #e5e7eb;
+$bg-page: #f5f8fa;
+$bg-card: #ffffff;
+$shadow-card: 0 2px 12px rgba(0, 0, 0, .07);
+
+$radius-card: 16px;
+$radius-btn: 100px;
+$radius-avatar: 50%;
+
+$font: 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+// ============================================================
+// Base reset
+// ============================================================
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.vc-layout {
+    font-family: $font;
+    background: $bg-page;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: $text-primary;
+}
+
+// ============================================================
+// HEADER
+// ============================================================
+.vc-header {
+    background: $bg-card;
+    border-bottom: 1px solid $border;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 16px;
+
+    @media (min-width: 768px) {
+        padding: 0 32px;
+        height: 68px;
+    }
+
+    &__brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    &__name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: $text-primary;
+        letter-spacing: -.3px;
+    }
+
+    &__nav {
+        display: none;
+        gap: 4px;
+        margin-left: 32px;
+        flex: 1;
+
+        @media (min-width: 768px) {
+            display: flex;
+        }
+    }
+}
+
+.vc-logo {
+    width: 38px;
+    height: 38px;
+    background: $teal;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.vc-nav-link {
+    padding: 6px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: .9rem;
+    font-weight: 500;
+    color: $text-sub;
+    transition: color .15s, background .15s;
+
+    &:hover {
+        background: $teal-light;
+        color: $teal-dark;
+    }
+
+    &--active {
+        color: $teal-dark;
+        font-weight: 700;
+        position: relative;
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: -18px;
+            left: 14px;
+            right: 14px;
+            height: 2px;
+            background: $teal;
+            border-radius: 2px;
+
+            @media (min-width: 768px) {
+                bottom: -22px;
+            }
+        }
+    }
+}
+
+.vc-bell {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: $text-sub;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background .15s;
+    flex-shrink: 0;
+
+    &:hover {
+        background: $teal-light;
+        color: $teal-dark;
+    }
+
+    &--unread::after {
+        content: '';
+        position: absolute;
+        top: 7px;
+        right: 7px;
+        width: 9px;
+        height: 9px;
+        background: $teal;
+        border: 2px solid $bg-card;
+        border-radius: 50%;
+    }
+}
+
+// ============================================================
+// MAIN
+// ============================================================
+.vc-main {
+    flex: 1;
+    padding: 20px 16px 88px; // 88px = espacio para bottom nav móvil
+
+    @media (min-width: 768px) {
+        padding: 32px 32px 40px;
+        max-width: 1100px;
+        width: 100%;
+        margin: 0 auto;
+    }
+}
+
+// ============================================================
+// GREETING
+// ============================================================
+.vc-greeting {
+    margin-bottom: 24px;
+
+    &__title {
+        font-size: 1.65rem;
+        font-weight: 800;
+        letter-spacing: -.5px;
+        line-height: 1.2;
+        color: $text-primary;
+
+        @media (min-width: 768px) {
+            font-size: 2rem;
+        }
+    }
+
+    &__sub {
+        margin-top: 4px;
+        color: $text-sub;
+        font-size: .9rem;
+    }
+}
+
+// ============================================================
+// GRID PRINCIPAL
+// ============================================================
+.vc-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+
+    @media (min-width: 768px) {
+        grid-template-columns: 1fr 340px;
+        gap: 24px;
+        align-items: start;
+    }
+}
+
+.vc-col-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.vc-col-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+// ============================================================
+// CARD BASE
+// ============================================================
+.vc-card {
+    background: $bg-card;
+    border-radius: $radius-card;
+    box-shadow: $shadow-card;
+    padding: 20px;
+
+    &__header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    &__title {
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+}
+
+.vc-icon-teal {
+    color: $teal;
+    flex-shrink: 0;
+}
+
+// ============================================================
+// CARD CITA
+// ============================================================
+.vc-cita {
+
+    &__body {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    &__pet {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    &__info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__pet-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    &__detail {
+        font-size: .85rem;
+        color: $text-sub;
+    }
+
+    &__fecha {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+
+        @media (min-width: 768px) {
+            margin-left: auto;
+        }
+    }
+
+    &__fecha-dia {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: $teal-dark;
+    }
+
+    &__fecha-hora {
+        font-size: .85rem;
+        color: $text-sub;
+    }
+
+    &__footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 16px;
+    }
+}
+
+// En desktop: body de cita en fila
+@media (min-width: 768px) {
+    .vc-cita__body {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+// ============================================================
+// AVATARES
+// ============================================================
+.vc-pet-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: $radius-avatar;
+    object-fit: cover;
+    background: $teal-light;
+    flex-shrink: 0;
+
+    &--lg {
+        width: 64px;
+        height: 64px;
+    }
+}
+
+// ============================================================
+// MIS MASCOTAS
+// ============================================================
+.vc-mascotas {
+    background: $bg-card;
+    border-radius: $radius-card;
+    box-shadow: $shadow-card;
+    padding: 20px;
+
+    &__lista {
+        display: flex;
+        gap: 16px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+    }
+}
+
+.vc-mascota-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+
+    &__avatar-wrap {
+        position: relative;
+        border-radius: $radius-avatar;
+        border: 3px solid transparent;
+        transition: border-color .2s;
+
+        &--add {
+            width: 64px;
+            height: 64px;
+            border: 2.5px dashed $border;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: $radius-avatar;
+            background: none;
+            transition: border-color .2s, background .2s;
+        }
+    }
+
+    &--active .vc-mascota-item__avatar-wrap {
+        border-color: $teal;
+    }
+
+    &:hover .vc-mascota-item__avatar-wrap--add {
+        border-color: $teal;
+        background: $teal-light;
+    }
+
+    &__check {
+        position: absolute;
+        bottom: 1px;
+        right: 1px;
+        width: 20px;
+        height: 20px;
+        background: $teal;
+        border-radius: 50%;
+        border: 2px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__nombre {
+        font-size: .8rem;
+        font-weight: 600;
+        color: $text-primary;
+
+        &--muted {
+            color: $text-muted;
+            font-weight: 400;
+        }
+    }
+
+    &--active .vc-mascota-item__nombre {
+        color: $teal-dark;
+    }
+}
+
+.vc-add-icon {
+    font-size: 1.5rem;
+    color: $text-muted;
+    line-height: 1;
+}
+
+// ============================================================
+// SECCIÓN HEADER (título + link)
+// ============================================================
+.vc-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.vc-section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.vc-link {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: $teal-dark;
+    font-size: .85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0;
+    font-family: $font;
+    text-decoration: none;
+    transition: opacity .15s;
+
+    &:hover {
+        opacity: .75;
+    }
+}
+
+.vc-link-static {
+    color: $teal-dark;
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+// ============================================================
+// CARD SALUD
+// ============================================================
+.vc-card--salud {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.vc-salud-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid $border;
+
+    &:last-of-type {
+        border-bottom: none;
+    }
+}
+
+.vc-salud-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    &--green {
+        background: $green-badge;
+    }
+
+    &--blue {
+        background: $blue-icon;
+    }
+}
+
+.vc-salud-data {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.vc-salud-label {
+    font-size: .8rem;
+    color: $text-sub;
+}
+
+.vc-salud-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text-primary;
+
+    &--ok {
+        color: $green-badge;
+    }
+}
+
+.vc-salud-sub {
+    font-size: .78rem;
+    color: $text-sub;
+}
+
+.vc-salud-peso-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vc-peso-badge {
+    font-size: .75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 100px;
+
+    &--baja {
+        background: $green-light;
+        color: #059669;
+    }
+
+    &--sube {
+        background: #fee2e2;
+        color: $red-badge;
+    }
+}
+
+// ============================================================
+// HISTORIAL LINK
+// ============================================================
+.vc-historial-link {
+    margin-top: 4px;
+    padding: 10px 0;
+    border-top: 1px solid $border;
+    justify-content: flex-start;
+    gap: 8px;
+    font-size: .88rem;
+    color: $text-sub;
+    font-weight: 500;
+
+    &:hover {
+        color: $teal-dark;
+    }
+
+    svg:last-child {
+        margin-left: auto;
+    }
+}
+
+// ============================================================
+// BOTONES
+// ============================================================
+.vc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: $radius-btn;
+    font-family: $font;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, opacity .15s, box-shadow .15s;
+    border: none;
+    font-size: .95rem;
+    padding: 10px 22px;
+
+    &--outline {
+        background: transparent;
+        border: 1.5px solid $teal-dark;
+        color: $teal-dark;
+        padding: 9px 20px;
+
+        &:hover {
+            background: $teal-light;
+        }
+    }
+
+    &--primary {
+        background: $teal-btn;
+        color: #fff;
+        padding: 14px 24px;
+        font-size: 1rem;
+
+        &:hover {
+            background: $teal-dark;
+            box-shadow: 0 4px 14px rgba(28, 110, 100, .25);
+        }
+    }
+
+    &--full {
+        width: 100%;
+    }
+}
+
+// ============================================================
+// BOTTOM NAV (móvil)
+// ============================================================
+.vc-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: $bg-card;
+    border-top: 1px solid $border;
+    display: flex;
+    height: 68px;
+    z-index: 200;
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+
+    &__item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        text-decoration: none;
+        color: $text-muted;
+        font-size: .68rem;
+        font-weight: 500;
+        transition: color .15s;
+
+        &--active {
+            color: $teal-dark;
+        }
+
+        &:hover {
+            color: $teal;
+        }
+    }
+}
+
+// ============================================================
+// UTILIDADES RESPONSIVE
+// ============================================================
+.vc-mobile-only {
+    @media (min-width: 768px) {
+        display: none !important;
+    }
+}
+
+.vc-desktop-only {
+    @media (max-width: 767px) {
+        display: none !important;
+    }
+}
+
+.vc-salud-item--desktop-only {
+    @media (max-width: 767px) {
+        display: none;
+    }
+}
