@@ -118,4 +118,11 @@ public interface CitaRepositorio extends JpaRepository<Cita, Long> {
 
     @Query("SELECT c FROM Cita c JOIN c.pacientes p WHERE p.cliente.id = :clienteId AND c.fecha >= :hoy AND c.estado = com.veterinaria.modelos.Enums.EstadoCita.AGENDADA ORDER BY c.fecha ASC, c.horaInicio ASC")
     List<Cita> buscarProximaCitaCliente(@Param("clienteId") Long clienteId, @Param("hoy") LocalDate hoy);
+
+    @EntityGraph(attributePaths = { "pacientes", "pacientes.especie", "pacientes.cliente", "pacientes.cliente.usuario", "servicio", "veterinario", "veterinario.usuario", "sede" })
+    @Query("SELECT DISTINCT c FROM Cita c JOIN c.pacientes p WHERE p.id = :pacienteId AND p.cliente.id = :clienteId")
+    Page<Cita> buscarHistorialPorPacienteYCliente(
+            @Param("pacienteId") Long pacienteId,
+            @Param("clienteId") Long clienteId,
+            Pageable pageable);
 }

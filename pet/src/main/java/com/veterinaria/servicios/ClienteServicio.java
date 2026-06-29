@@ -12,8 +12,12 @@ import com.veterinaria.dtos.ClienteRapidoRequestDTO;
 import com.veterinaria.dtos.ClienteRapidoResponseDTO;
 import com.veterinaria.dtos.ClienteRequestDTO;
 import com.veterinaria.dtos.ClienteResponseDTO;
+import com.veterinaria.dtos.CitaResponseDTO;
+import com.veterinaria.dtos.DesparasitacionResponseDTO;
 import com.veterinaria.dtos.MascotaRapidaDTO;
+import com.veterinaria.dtos.PacienteResponseDTO;
 import com.veterinaria.dtos.PacienteResumenDTO;
+import com.veterinaria.dtos.VacunaResponseDTO;
 import com.veterinaria.modelos.Cliente;
 import com.veterinaria.modelos.Especie;
 import com.veterinaria.modelos.Paciente;
@@ -34,6 +38,9 @@ public class ClienteServicio {
     private EmailServicio emailServicio;
     private final EspecieRepositorio especieRepositorio;
     private final PacienteRepositorio pacienteRepositorio;
+    private final CitaServicio citaServicio;
+    private final VacunaServicio vacunaServicio;
+    private final DesparasitacionServicio desparasitacionServicio;
 
     public ClienteServicio(ClienteRepositorio clienteRepositorio, 
                            com.veterinaria.respositorios.UsuarioRepositorio usuarioRepositorio,
@@ -41,7 +48,10 @@ public class ClienteServicio {
                            com.veterinaria.respositorios.VerificationTokenRepositorio tokenRepositorio, 
                            EmailServicio emailServicio,
                            EspecieRepositorio especieRepositorio,
-                           PacienteRepositorio pacienteRepositorio) {
+                           PacienteRepositorio pacienteRepositorio,
+                           CitaServicio citaServicio,
+                           VacunaServicio vacunaServicio,
+                           DesparasitacionServicio desparasitacionServicio) {
         this.clienteRepositorio = clienteRepositorio;
         this.usuarioRepositorio = usuarioRepositorio;
         this.rolRespositorio = rolRespositorio;
@@ -49,6 +59,9 @@ public class ClienteServicio {
         this.emailServicio = emailServicio;
         this.especieRepositorio = especieRepositorio;
         this.pacienteRepositorio = pacienteRepositorio;
+        this.citaServicio = citaServicio;
+        this.vacunaServicio = vacunaServicio;
+        this.desparasitacionServicio = desparasitacionServicio;
     }
 
     // =========================================================
@@ -486,6 +499,61 @@ public class ClienteServicio {
         dashboard.setMascotas(mascotasDTO);
 
         return dashboard;
+    }
+
+    public List<PacienteResponseDTO> listarMisMascotas(String email) {
+        Cliente cliente = obtenerClienteAutenticado(email);
+        return pacienteRepositorio.findByClienteIdAndActivoTrueOrderByNombreAsc(cliente.getId()).stream()
+                .map(this::mapearPacienteAResponse)
+                .toList();
+    }
+
+    public Page<CitaResponseDTO> listarCitasDeMiMascota(String email, Long pacienteId, Pageable pageable) {
+        Cliente cliente = obtenerClienteAutenticado(email);
+        validarMascotaDelCliente(pacienteId, cliente.getId());
+        return citaServicio.listarHistorialPorPacienteYCliente(pacienteId, cliente.getId(), pageable);
+    }
+
+    public List<VacunaResponseDTO> listarVacunasDeMiMascota(String email, Long pacienteId) {
+        Cliente cliente = obtenerClienteAutenticado(email);
+        validarMascotaDelCliente(pacienteId, cliente.getId());
+        return vacunaServicio.listarPorPaciente(pacienteId);
+    }
+
+    public List<DesparasitacionResponseDTO> listarDesparasitacionesDeMiMascota(String email, Long pacienteId) {
+        Cliente cliente = obtenerClienteAutenticado(email);
+        validarMascotaDelCliente(pacienteId, cliente.getId());
+        return desparasitacionServicio.listarPorPaciente(pacienteId);
+    }
+
+    private Cliente obtenerClienteAutenticado(String email) {
+        com.veterinaria.modelos.Usuario usuario = usuarioRepositorio.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+        return clienteRepositorio.findByUsuarioId(usuario.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado"));
+    }
+
+    private void validarMascotaDelCliente(Long pacienteId, Long clienteId) {
+        pacienteRepositorio.findByIdAndClienteIdAndActivoTrue(pacienteId, clienteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mascota no encontrada"));
+    }
+
+    private PacienteResponseDTO mapearPacienteAResponse(Paciente paciente) {
+        String clienteNombre = "";
+        if (paciente.getCliente() != null && paciente.getCliente().getUsuario() != null) {
+            clienteNombre = paciente.getCliente().getUsuario().getNombre() + " "
+                    + paciente.getCliente().getUsuario().getApellido();
+        }
+        return new PacienteResponseDTO(
+                paciente.getId(),
+                paciente.getNombre(),
+                paciente.getEspecie() != null ? paciente.getEspecie().getNombre() : "",
+                paciente.getRaza(),
+                paciente.getSexo(),
+                paciente.getFechaNacimiento(),
+                paciente.getCliente() != null ? paciente.getCliente().getId() : null,
+                clienteNombre,
+                paciente.getActivo());
     }
 
 }

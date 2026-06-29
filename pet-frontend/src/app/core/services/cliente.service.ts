@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ClienteRapidoRequest, ClienteRapidoResponse, ClienteRequest, ClienteResponse, Page } from '../models/models';
+import { CitaResponse, ClienteRapidoRequest, ClienteRapidoResponse, ClienteRequest, ClienteResponse, DesparasitacionResponse, PacienteResponse, Page, VacunaResponse } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class ClienteService {
@@ -40,5 +40,22 @@ export class ClienteService {
 
   obtenerMiPerfil(): Observable<any> {
     return this.http.get<any>(`${this.url}/mi-perfil`);
+  }
+
+  listarMisMascotas(): Observable<PacienteResponse[]> {
+    return this.http.get<PacienteResponse[]>(`${this.url}/mis-mascotas`);
+  }
+
+  listarCitasDeMiMascota(pacienteId: number, page = 0, size = 5): Observable<Page<CitaResponse>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<CitaResponse>>(`${this.url}/mis-mascotas/${pacienteId}/citas`, { params });
+  }
+
+  listarVacunasDeMiMascota(pacienteId: number): Observable<VacunaResponse[]> {
+    return this.http.get<VacunaResponse[]>(`${this.url}/mis-mascotas/${pacienteId}/vacunas`);
+  }
+
+  listarDesparasitacionesDeMiMascota(pacienteId: number): Observable<DesparasitacionResponse[]> {
+    return this.http.get<DesparasitacionResponse[]>(`${this.url}/mis-mascotas/${pacienteId}/desparasitaciones`);
   }
 }

@@ -104,6 +104,15 @@ export const routes: Routes = [
           ),
       },
 
+      {
+        path: 'mis-mascotas',
+        canActivate: [roleGuard(['ROLE_CLIENTE'])],
+        loadComponent: () =>
+          import('./modules/mis-mascotas-cliente/mis-mascotas-cliente.component').then(
+            (m) => m.MisMascotasClienteComponent
+          ),
+      },
+
       // Clientes â€” ADMIN y RECEPCIONISTA
       {
         path: 'clientes',
@@ -117,6 +126,7 @@ export const routes: Routes = [
       // Pacientes â€” todos los autenticados
       {
         path: 'pacientes',
+        canActivate: [roleGuard(['ROLE_ADMIN', 'ROLE_RECEPCIONISTA', 'ROLE_VETERINARIO'])],
         loadChildren: () =>
           import('./modules/pacientes/pacientes.routes').then(
             (m) => m.PACIENTES_ROUTES
