@@ -1,0 +1,12 @@
+node_modules
+dist
+.angular
+coverage
+tmp
+out-tsc
+.env
+*.env
+.vscode
+.idea
+*.log
+__screenshots__
