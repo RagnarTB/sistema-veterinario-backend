@@ -2,9 +2,13 @@ package com.veterinaria.respositorios;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.veterinaria.modelos.Paciente;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface PacienteRepositorio extends JpaRepository<Paciente, Long> {
 
@@ -15,4 +19,10 @@ public interface PacienteRepositorio extends JpaRepository<Paciente, Long> {
     Page<Paciente> findAllConFiltro(@org.springframework.data.repository.query.Param("estado") Boolean estado, Pageable pageable);
 
     boolean existsByEspecie_Id(Long especieId);
+
+    @EntityGraph(attributePaths = { "especie", "cliente", "cliente.usuario" })
+    List<Paciente> findByClienteIdAndActivoTrueOrderByNombreAsc(Long clienteId);
+
+    @EntityGraph(attributePaths = { "especie", "cliente", "cliente.usuario" })
+    Optional<Paciente> findByIdAndClienteIdAndActivoTrue(Long id, Long clienteId);
 }

@@ -74,7 +74,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         { label: 'Citas', route: '/app/citas', icon: 'calendar_today' },
         { label: 'Atenciones', route: '/app/atenciones', icon: 'healing', roles: ['ROLE_ADMIN', 'ROLE_VETERINARIO'] },
         { label: 'Clientes', route: '/app/clientes', icon: 'people', roles: ['ROLE_ADMIN', 'ROLE_RECEPCIONISTA'] },
-        { label: 'Pacientes', route: '/app/pacientes', icon: 'pets' },
+        { label: 'Pacientes', route: '/app/pacientes', icon: 'pets', roles: ['ROLE_ADMIN', 'ROLE_RECEPCIONISTA', 'ROLE_VETERINARIO'] },
+        { label: 'Mis mascotas', route: '/app/mis-mascotas', icon: 'pets', roles: ['ROLE_CLIENTE'] },
       ]
     },
     {

@@ -12,8 +12,12 @@ import com.veterinaria.dtos.ClienteRapidoRequestDTO;
 import com.veterinaria.dtos.ClienteRapidoResponseDTO;
 import com.veterinaria.dtos.ClienteRequestDTO;
 import com.veterinaria.dtos.ClienteResponseDTO;
+import com.veterinaria.dtos.CitaResponseDTO;
+import com.veterinaria.dtos.DesparasitacionResponseDTO;
 import com.veterinaria.dtos.MascotaRapidaDTO;
+import com.veterinaria.dtos.PacienteResponseDTO;
 import com.veterinaria.dtos.PacienteResumenDTO;
+import com.veterinaria.dtos.VacunaResponseDTO;
 import com.veterinaria.modelos.Cliente;
 import com.veterinaria.modelos.Especie;
 import com.veterinaria.modelos.Paciente;
@@ -34,6 +38,9 @@ public class ClienteServicio {
     private EmailServicio emailServicio;
     private final EspecieRepositorio especieRepositorio;
     private final PacienteRepositorio pacienteRepositorio;
+    private final CitaServicio citaServicio;
+    private final VacunaServicio vacunaServicio;
+    private final DesparasitacionServicio desparasitacionServicio;
 
     public ClienteServicio(ClienteRepositorio clienteRepositorio, 
                            com.veterinaria.respositorios.UsuarioRepositorio usuarioRepositorio,
@@ -41,7 +48,10 @@ public class ClienteServicio {
                            com.veterinaria.respositorios.VerificationTokenRepositorio tokenRepositorio, 
                            EmailServicio emailServicio,
                            EspecieRepositorio especieRepositorio,
-                           PacienteRepositorio pacienteRepositorio) {
+                           PacienteRepositorio pacienteRepositorio,
+                           CitaServicio citaServicio,
+                           VacunaServicio vacunaServicio,
+                           DesparasitacionServicio desparasitacionServicio) {
         this.clienteRepositorio = clienteRepositorio;
         this.usuarioRepositorio = usuarioRepositorio;
         this.rolRespositorio = rolRespositorio;
@@ -49,6 +59,9 @@ public class ClienteServicio {
         this.emailServicio = emailServicio;
         this.especieRepositorio = especieRepositorio;
         this.pacienteRepositorio = pacienteRepositorio;
+        this.citaServicio = citaServicio;
+        this.vacunaServicio = vacunaServicio;
+        this.desparasitacionServicio = desparasitacionServicio;
     }
 
     // =========================================================
@@ -377,6 +390,170 @@ public class ClienteServicio {
             clientedb.getPacientes().forEach(paciente -> paciente.setActivo(estado != null ? estado : false));
         }
         clienteRepositorio.save(clientedb);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.veterinaria.respositorios.CitaRepositorio citaRepositorio;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.veterinaria.respositorios.VacunaRepositorio vacunaRepositorio;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.veterinaria.respositorios.AtencionMedicaRepositorio atencionMedicaRepositorio;
+
+    public com.veterinaria.dtos.ClienteDashboardDTO obtenerDashboardPorEmail(String email) {
+        com.veterinaria.modelos.Usuario usuario = usuarioRepositorio.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        Cliente cliente = clienteRepositorio.findByUsuarioId(usuario.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado"));
+
+        com.veterinaria.dtos.ClienteDashboardDTO dashboard = new com.veterinaria.dtos.ClienteDashboardDTO();
+        dashboard.setNombreCliente(usuario.getNombre());
+
+        // 1. Calcular la próxima cita
+        List<com.veterinaria.modelos.Cita> proximasCitas = citaRepositorio.buscarProximaCitaCliente(cliente.getId(), java.time.LocalDate.now());
+        if (!proximasCitas.isEmpty()) {
+            com.veterinaria.modelos.Cita cita = proximasCitas.get(0);
+            com.veterinaria.dtos.ProximaCitaDTO proximaCitaDTO = new com.veterinaria.dtos.ProximaCitaDTO();
+            
+            if (cita.getPacientes() != null && !cita.getPacientes().isEmpty()) {
+                proximaCitaDTO.setMascotaNombre(cita.getPacientes().get(0).getNombre());
+                proximaCitaDTO.setFotoMascota(null);
+            }
+            
+            proximaCitaDTO.setTipoServicio(cita.getServicio() != null ? cita.getServicio().getNombre() : "");
+            
+            if (cita.getVeterinario() != null && cita.getVeterinario().getUsuario() != null) {
+                proximaCitaDTO.setDoctorNombre("Dr. " + cita.getVeterinario().getUsuario().getApellido());
+            } else {
+                proximaCitaDTO.setDoctorNombre("Veterinario");
+            }
+
+            java.time.format.DateTimeFormatter formatFecha = 
+                java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMM", new java.util.Locale("es", "ES"));
+            java.time.format.DateTimeFormatter formatHora = 
+                java.time.format.DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.ENGLISH);
+
+            proximaCitaDTO.setFechaFormateada(cita.getFecha() != null ? cita.getFecha().format(formatFecha) : "");
+            proximaCitaDTO.setHoraFormateada(cita.getHoraInicio() != null ? cita.getHoraInicio().format(formatHora) : "");
+            
+            if (proximaCitaDTO.getFechaFormateada() != null && !proximaCitaDTO.getFechaFormateada().isEmpty()) {
+                String f = proximaCitaDTO.getFechaFormateada();
+                proximaCitaDTO.setFechaFormateada(f.substring(0, 1).toUpperCase() + f.substring(1));
+            }
+            
+            dashboard.setProximaCita(proximaCitaDTO);
+        }
+
+        // 2. Mapear mascotas con sus resúmenes de vacunas
+        List<com.veterinaria.dtos.MascotaDashboardDTO> mascotasDTO = new java.util.ArrayList<>();
+        if (cliente.getPacientes() != null) {
+            for (com.veterinaria.modelos.Paciente paciente : cliente.getPacientes()) {
+                if (Boolean.TRUE.equals(paciente.getActivo())) {
+                    com.veterinaria.dtos.MascotaDashboardDTO mDto = new com.veterinaria.dtos.MascotaDashboardDTO();
+                    mDto.setId(paciente.getId());
+                    mDto.setNombre(paciente.getNombre());
+                    mDto.setFoto(null);
+                    
+                    com.veterinaria.dtos.ResumenSaludDTO rSalud = new com.veterinaria.dtos.ResumenSaludDTO();
+                    
+                    List<com.veterinaria.modelos.Vacuna> vacunas = vacunaRepositorio.findByPacienteIdOrderByFechaAplicacionDesc(paciente.getId());
+                    
+                    com.veterinaria.modelos.Vacuna proximaDosisVacuna = null;
+                    boolean tienePendiente = false;
+                    
+                    for (com.veterinaria.modelos.Vacuna v : vacunas) {
+                        if (v.getFechaProximaDosis() != null) {
+                            if (v.getFechaProximaDosis().isBefore(java.time.LocalDate.now())) {
+                                tienePendiente = true;
+                            } else {
+                                if (proximaDosisVacuna == null || v.getFechaProximaDosis().isBefore(proximaDosisVacuna.getFechaProximaDosis())) {
+                                    proximaDosisVacuna = v;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (tienePendiente) {
+                        rSalud.setEstadoVacunas("Pendiente");
+                    } else {
+                        rSalud.setEstadoVacunas("Al día");
+                    }
+                    
+                    if (proximaDosisVacuna != null) {
+                        java.time.format.DateTimeFormatter formatVacuna = 
+                            java.time.format.DateTimeFormatter.ofPattern("MMM yyyy", new java.util.Locale("es", "ES"));
+                        String fechaVacunaStr = proximaDosisVacuna.getFechaProximaDosis().format(formatVacuna);
+                        fechaVacunaStr = fechaVacunaStr.substring(0, 1).toUpperCase() + fechaVacunaStr.substring(1);
+                        rSalud.setProximaVacuna(proximaDosisVacuna.getNombreVacuna() + " (" + fechaVacunaStr + ")");
+                    } else {
+                        rSalud.setProximaVacuna("Ninguna programada");
+                    }
+                    
+                    mDto.setResumenSalud(rSalud);
+                    mascotasDTO.add(mDto);
+                }
+            }
+        }
+        dashboard.setMascotas(mascotasDTO);
+
+        return dashboard;
+    }
+
+    public List<PacienteResponseDTO> listarMisMascotas(String email) {
+        Cliente cliente = obtenerClienteAutenticado(email);
+        return pacienteRepositorio.findByClienteIdAndActivoTrueOrderByNombreAsc(cliente.getId()).stream()
+                .map(this::mapearPacienteAResponse)
+                .toList();
+    }
+
+    public Page<CitaResponseDTO> listarCitasDeMiMascota(String email, Long pacienteId, Pageable pageable) {
+        Cliente cliente = obtenerClienteAutenticado(email);
+        validarMascotaDelCliente(pacienteId, cliente.getId());
+        return citaServicio.listarHistorialPorPacienteYCliente(pacienteId, cliente.getId(), pageable);
+    }
+
+    public List<VacunaResponseDTO> listarVacunasDeMiMascota(String email, Long pacienteId) {
+        Cliente cliente = obtenerClienteAutenticado(email);
+        validarMascotaDelCliente(pacienteId, cliente.getId());
+        return vacunaServicio.listarPorPaciente(pacienteId);
+    }
+
+    public List<DesparasitacionResponseDTO> listarDesparasitacionesDeMiMascota(String email, Long pacienteId) {
+        Cliente cliente = obtenerClienteAutenticado(email);
+        validarMascotaDelCliente(pacienteId, cliente.getId());
+        return desparasitacionServicio.listarPorPaciente(pacienteId);
+    }
+
+    private Cliente obtenerClienteAutenticado(String email) {
+        com.veterinaria.modelos.Usuario usuario = usuarioRepositorio.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+        return clienteRepositorio.findByUsuarioId(usuario.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado"));
+    }
+
+    private void validarMascotaDelCliente(Long pacienteId, Long clienteId) {
+        pacienteRepositorio.findByIdAndClienteIdAndActivoTrue(pacienteId, clienteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mascota no encontrada"));
+    }
+
+    private PacienteResponseDTO mapearPacienteAResponse(Paciente paciente) {
+        String clienteNombre = "";
+        if (paciente.getCliente() != null && paciente.getCliente().getUsuario() != null) {
+            clienteNombre = paciente.getCliente().getUsuario().getNombre() + " "
+                    + paciente.getCliente().getUsuario().getApellido();
+        }
+        return new PacienteResponseDTO(
+                paciente.getId(),
+                paciente.getNombre(),
+                paciente.getEspecie() != null ? paciente.getEspecie().getNombre() : "",
+                paciente.getRaza(),
+                paciente.getSexo(),
+                paciente.getFechaNacimiento(),
+                paciente.getCliente() != null ? paciente.getCliente().getId() : null,
+                clienteNombre,
+                paciente.getActivo());
     }
 
 }
