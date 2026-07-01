@@ -13,9 +13,15 @@ import com.veterinaria.dtos.ClienteRapidoRequestDTO;
 import com.veterinaria.dtos.ClienteRapidoResponseDTO;
 import com.veterinaria.dtos.ClienteRequestDTO;
 import com.veterinaria.dtos.ClienteResponseDTO;
+import com.veterinaria.dtos.CitaResponseDTO;
+import com.veterinaria.dtos.DesparasitacionResponseDTO;
+import com.veterinaria.dtos.PacienteResponseDTO;
+import com.veterinaria.dtos.VacunaResponseDTO;
 import com.veterinaria.servicios.ClienteServicio;
 
 import jakarta.validation.Valid;
+
+import java.util.List;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -62,6 +68,44 @@ public class ClienteController {
         Page<ClienteResponseDTO> clientes = clienteServicio.listarTodos(buscar, estado, pageable);
 
         return ResponseEntity.ok(clientes);
+    }
+
+    @GetMapping("/mi-perfil")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<com.veterinaria.dtos.ClienteDashboardDTO> obtenerMiPerfil() {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        com.veterinaria.dtos.ClienteDashboardDTO respuesta = clienteServicio.obtenerDashboardPorEmail(email);
+        return ResponseEntity.ok(respuesta);
+    }
+
+    @GetMapping("/mis-mascotas")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<List<PacienteResponseDTO>> listarMisMascotas() {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(clienteServicio.listarMisMascotas(email));
+    }
+
+    @GetMapping("/mis-mascotas/{pacienteId}/citas")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<Page<CitaResponseDTO>> listarCitasDeMiMascota(
+            @PathVariable Long pacienteId,
+            Pageable pageable) {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(clienteServicio.listarCitasDeMiMascota(email, pacienteId, pageable));
+    }
+
+    @GetMapping("/mis-mascotas/{pacienteId}/vacunas")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<List<VacunaResponseDTO>> listarVacunasDeMiMascota(@PathVariable Long pacienteId) {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(clienteServicio.listarVacunasDeMiMascota(email, pacienteId));
+    }
+
+    @GetMapping("/mis-mascotas/{pacienteId}/desparasitaciones")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<List<DesparasitacionResponseDTO>> listarDesparasitacionesDeMiMascota(@PathVariable Long pacienteId) {
+        String email = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(clienteServicio.listarDesparasitacionesDeMiMascota(email, pacienteId));
     }
 
     @GetMapping("/{id}")

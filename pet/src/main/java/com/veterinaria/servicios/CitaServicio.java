@@ -251,7 +251,7 @@ public class CitaServicio {
                 citaRepositorio.save(citaDb);
         }
 
-        private CitaResponseDTO mapearAResponse(Cita cita) {
+        public CitaResponseDTO mapearAResponse(Cita cita) {
                 List<Long> pacientesIds = cita.getPacientes().stream()
                                 .map(Paciente::getId)
                                 .collect(Collectors.toList());
@@ -298,6 +298,15 @@ public class CitaServicio {
                                 cita.getSede().getId(),
                                 cita.getSede().getNombre(),
                                 pacientesResumen);
+        }
+
+        public Page<CitaResponseDTO> listarHistorialPorPacienteYCliente(Long pacienteId, Long clienteId, Pageable pageable) {
+                if (pageable.getSort().isUnsorted()) {
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                                        Sort.by("fecha").descending().and(Sort.by("horaInicio").descending()));
+                }
+                return citaRepositorio.buscarHistorialPorPacienteYCliente(pacienteId, clienteId, pageable)
+                                .map(this::mapearAResponse);
         }
 
         public List<SlotDisponibilidadDTO> obtenerDisponibilidad(Long veterinarioId, LocalDate fecha, Long servicioId,

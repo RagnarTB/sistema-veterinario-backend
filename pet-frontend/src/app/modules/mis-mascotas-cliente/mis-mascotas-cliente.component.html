@@ -1,0 +1,46 @@
+<div class="page-container fade-in-up">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Mis mascotas</h2>
+      <p class="page-subtitle">Consulta la información clínica registrada para tus mascotas.</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-panel">
+      <mat-spinner diameter="42"></mat-spinner>
+    </div>
+  } @else if (mascotas().length === 0) {
+    <section class="empty-state">
+      <mat-icon>pets</mat-icon>
+      <h3>No tienes mascotas registradas</h3>
+      <p>Cuando la clínica registre tus mascotas, aparecerán en esta sección.</p>
+    </section>
+  } @else {
+    <section class="pets-grid" aria-label="Listado de mascotas">
+      @for (mascota of mascotas(); track mascota.id) {
+        <button type="button" class="pet-card" (click)="abrirDetalle(mascota)">
+          <div class="pet-avatar" aria-hidden="true">{{ inicial(mascota.nombre) }}</div>
+          <div class="pet-info">
+            <h3>{{ mascota.nombre }}</h3>
+            <p>{{ mascota.especieNombre }}{{ mascota.raza ? ' - ' + mascota.raza : '' }}</p>
+          </div>
+          <dl class="pet-meta">
+            <div>
+              <dt>Sexo</dt>
+              <dd>{{ mascota.sexo || 'No registrado' }}</dd>
+            </div>
+            <div>
+              <dt>Nacimiento</dt>
+              <dd>{{ mascota.fechaNacimiento ? (mascota.fechaNacimiento | date:'mediumDate') : 'No registrado' }}</dd>
+            </div>
+          </dl>
+          <span class="pet-action">
+            Ver historial
+            <mat-icon>chevron_right</mat-icon>
+          </span>
+        </button>
+      }
+    </section>
+  }
+</div>

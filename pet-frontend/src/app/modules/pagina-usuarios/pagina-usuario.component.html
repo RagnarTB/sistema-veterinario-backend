@@ -1,0 +1,241 @@
+<div class="vc-layout">
+
+    <!-- ===== HEADER ===== -->
+    <header class="vc-header">
+        <div class="vc-header__brand">
+            <div class="vc-logo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4.5 9.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm15 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4zM9 6.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm6 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4zM12 22c-4.418 0-8-2.239-8-5 0-1.657 1.343-3.122 3.375-4.062C8.25 12.328 10.05 12 12 12s3.75.328 4.625.938C18.657 13.878 20 15.343 20 17c0 2.761-3.582 5-8 5z" />
+                </svg>
+            </div>
+            <span class="vc-header__name">VetCare</span>
+        </div>
+
+        <!-- Nav solo en desktop -->
+        <nav class="vc-header__nav">
+            <a class="vc-nav-link vc-nav-link--active" href="#">Home</a>
+            <a class="vc-nav-link" href="#">Mis Mascotas</a>
+            <a class="vc-nav-link" href="#">Historial</a>
+            <a class="vc-nav-link" href="#">Perfil</a>
+        </nav>
+
+        <button class="vc-bell" [class.vc-bell--unread]="tieneNotificaciones" aria-label="Notificaciones">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+        </button>
+    </header>
+
+    <!-- ===== MAIN ===== -->
+    <main class="vc-main">
+
+        <!-- Saludo -->
+        <section class="vc-greeting">
+            <h1 class="vc-greeting__title">Hola, {{ nombreUsuario }} 👋</h1>
+            <p class="vc-greeting__sub">Aquí está el resumen de la salud de tus mascotas hoy.</p>
+        </section>
+
+        <!-- Grid principal (en desktop: 2 columnas) -->
+        <div class="vc-grid">
+
+            <!-- COLUMNA IZQUIERDA -->
+            <div class="vc-col-main">
+
+                <!-- Próxima Cita -->
+                <div class="vc-card vc-card--cita">
+                    <div class="vc-card__header">
+                        <svg class="vc-icon-teal" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        <h2 class="vc-card__title">Próxima Cita</h2>
+                    </div>
+
+                    <div class="vc-cita__body">
+                        <div class="vc-cita__pet">
+                            <img class="vc-pet-avatar vc-pet-avatar--lg" [src]="proximaCita.fotomascota"
+                                [alt]="proximaCita.mascota"
+                                onerror="this.src='https://placehold.co/80x80/e0f2f1/2c7873?text=🐕'" />
+                            <div class="vc-cita__info">
+                                <strong class="vc-cita__pet-name">{{ proximaCita.mascota }}</strong>
+                                <span class="vc-cita__detail">{{ proximaCita.tipo }} • {{ proximaCita.doctor }}</span>
+                            </div>
+                        </div>
+
+                        <div class="vc-cita__fecha">
+                            <span class="vc-cita__fecha-dia">{{ proximaCita.fecha }}</span>
+                            <span class="vc-cita__fecha-hora">{{ proximaCita.hora }}</span>
+                        </div>
+                    </div>
+
+                    <div class="vc-cita__footer">
+                        <button class="vc-btn vc-btn--outline" (click)="verDetallesCita()">
+                            Ver detalles
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mis Mascotas -->
+                <div class="vc-mascotas">
+                    <div class="vc-section-header">
+                        <h2 class="vc-section-title">Mis Mascotas</h2>
+                        <button class="vc-link" (click)="verTodasMascotas()">
+                            Ver todas
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="vc-mascotas__lista">
+                        <div *ngFor="let mascota of mascotas" class="vc-mascota-item"
+                            [class.vc-mascota-item--active]="mascota.seleccionada" (click)="seleccionarMascota(mascota)"
+                            role="button" [attr.aria-pressed]="mascota.seleccionada">
+                            <div class="vc-mascota-item__avatar-wrap">
+                                <img class="vc-pet-avatar" [src]="mascota.foto" [alt]="mascota.nombre"
+                                    onerror="this.src='https://placehold.co/64x64/e0f2f1/2c7873?text=🐾'" />
+                                <span *ngIf="mascota.seleccionada" class="vc-mascota-item__check" aria-hidden="true">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white"
+                                        stroke-width="3">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                </span>
+                            </div>
+                            <span class="vc-mascota-item__nombre">{{ mascota.nombre }}</span>
+                        </div>
+
+                        <!-- Botón añadir -->
+                        <div class="vc-mascota-item" (click)="agregarMascota()" role="button"
+                            aria-label="Añadir mascota">
+                            <div class="vc-mascota-item__avatar-wrap vc-mascota-item__avatar-wrap--add">
+                                <span class="vc-add-icon">+</span>
+                            </div>
+                            <span class="vc-mascota-item__nombre vc-mascota-item__nombre--muted">Añadir</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /vc-col-main -->
+
+            <!-- COLUMNA DERECHA (resumen + CTA) -->
+            <div class="vc-col-side">
+
+                <!-- Resumen de Salud -->
+                <div class="vc-card vc-card--salud">
+                    <div class="vc-section-header">
+                        <h2 class="vc-section-title">Resumen de Salud</h2>
+                        <span class="vc-link-static">{{ mascotaSeleccionada.nombre }}</span>
+                    </div>
+
+                    <!-- Vacunas -->
+                    <div class="vc-salud-item">
+                        <div class="vc-salud-icon vc-salud-icon--green">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" />
+                                <line x1="12" y1="8" x2="12" y2="16" />
+                                <line x1="8" y1="12" x2="16" y2="12" />
+                            </svg>
+                        </div>
+                        <div class="vc-salud-data">
+                            <span class="vc-salud-label">Vacunas</span>
+                            <strong class="vc-salud-value vc-salud-value--ok">{{ resumenSalud.vacunas.estado }}</strong>
+                            <span class="vc-salud-sub">Próxima: {{ resumenSalud.vacunas.proxima }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Peso (solo en desktop se muestra extra) -->
+                    <div class="vc-salud-item vc-salud-item--desktop-only">
+                        <div class="vc-salud-icon vc-salud-icon--blue">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" />
+                                <path d="M16 7V5a2 2 0 0 0-4 0v2" />
+                            </svg>
+                        </div>
+                        <div class="vc-salud-data">
+                            <span class="vc-salud-label">Peso Actual</span>
+                            <div class="vc-salud-peso-row">
+                                <strong class="vc-salud-value">{{ resumenSalud.peso.valor }} {{ resumenSalud.peso.unidad
+                                    }}</strong>
+                                <span class="vc-peso-badge" [class.vc-peso-badge--baja]="pesoNegativo"
+                                    [class.vc-peso-badge--sube]="pesoPositivo">
+                                    {{ cambioAbsoluto }}
+                                </span>
+                            </div>
+                            <span class="vc-salud-sub">Última medición: {{ resumenSalud.peso.ultimaMedicion }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Ver historial (solo en móvil) -->
+                    <button class="vc-link vc-historial-link vc-mobile-only" (click)="verHistorialCompleto()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        Ver historial completo
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Botón Agendar Cita (desktop: en columna derecha, móvil: oculto aquí) -->
+                <button class="vc-btn vc-btn--primary vc-btn--full vc-desktop-only" (click)="agendarCita()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="16" />
+                        <line x1="8" y1="12" x2="16" y2="12" />
+                    </svg>
+                    Agendar Cita
+                </button>
+
+            </div><!-- /vc-col-side -->
+        </div><!-- /vc-grid -->
+
+    </main>
+
+    <!-- ===== BOTTOM NAV (solo móvil) ===== -->
+    <nav class="vc-bottom-nav" aria-label="Navegación principal">
+        <a class="vc-bottom-nav__item vc-bottom-nav__item--active" href="#" aria-current="page">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+            </svg>
+            <span>Inicio</span>
+        </a>
+        <a class="vc-bottom-nav__item" href="#">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" />
+                <circle cx="9" cy="9" r="2" />
+                <circle cx="15" cy="15" r="2" />
+                <line x1="9" y1="15" x2="15" y2="9" />
+            </svg>
+            <span>Mis Mascotas</span>
+        </a>
+        <a class="vc-bottom-nav__item" href="#">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span>Historial</span>
+        </a>
+        <a class="vc-bottom-nav__item" href="#">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+</div>
