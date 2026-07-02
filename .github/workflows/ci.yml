@@ -48,15 +48,14 @@ jobs:
       with:
         node-version: '22'
         cache: 'npm'
-        cache-dependency-path: ./pet-frontend/package-lock.json
 
     - name: Install Dependencies
       working-directory: ./pet-frontend
-      run: npm ci
+      run: npm install
 
     - name: Build Frontend
       working-directory: ./pet-frontend
-      run: npm run build --prod
+      run: npm run build
 
     - name: Upload Frontend Artifact
       uses: actions/upload-artifact@v4
