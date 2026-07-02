@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main", "master" ]
     tags:
-      - 'v*' # Esto permite que se dispare cuando creas un tag como v1.0.0-rc1
+      - 'v*'
   pull_request:
     branches: [ "main", "master" ]
 
@@ -48,6 +48,7 @@ jobs:
       with:
         node-version: '22'
         cache: 'npm'
+        cache-dependency-path: ./pet-frontend/package-lock.json
 
     - name: Install Dependencies
       working-directory: ./pet-frontend
