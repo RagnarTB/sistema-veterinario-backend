@@ -1,0 +1,74 @@
+<h2 mat-dialog-title class="dialog-title">
+    <mat-icon class="header-icon">fingerprint</mat-icon>
+    <span>Gestión de Roles</span>
+</h2>
+
+<mat-dialog-content class="mat-typography !pb-2">
+    <form [formGroup]="form" (ngSubmit)="agregarRol()" class="form-container">
+        <div class="input-wrapper">
+            <input type="text" formControlName="nombre" class="custom-input" placeholder="EJ: CAJERO" />
+        </div>
+        <button type="submit" class="custom-btn-add" [disabled]="form.invalid || loading()">
+            <mat-icon>add_circle</mat-icon>
+            <span>Agregar</span>
+        </button>
+    </form>
+
+    <div *ngIf="loading(); else rolesList" class="spinner-container">
+        <mat-spinner diameter="32" strokeWidth="3"></mat-spinner>
+    </div>
+
+    <ng-template #rolesList>
+        <div class="roles-container custom-scrollbar">
+            <div *ngFor="let rol of roles()" class="role-item">
+                <div class="role-info">
+                    <div class="role-icon-wrapper">
+                        <mat-icon class="role-type-icon">
+                            {{
+                            rol.nombre.includes('ADMIN') ? 'manage_accounts' :
+                            rol.nombre.includes('VETERINARIO') ? 'medication' :
+                            rol.nombre.includes('RECEPCIONISTA') ? 'support_agent' :
+                            rol.nombre.includes('CLIENTE') ? 'person' : 'badge'
+                            }}
+                        </mat-icon>
+                    </div>
+
+                    <span class="role-name">{{ rol.nombre.replace('ROLE_', '') }}</span>
+                    <span *ngIf="!rol.activo" class="badge-inactive">Inactivo</span>
+                </div>
+
+                <div class="role-actions">
+                    <button type="button" class="action-btn" (click)="openPermisosDialog(rol)" title="Modificar Permisos" style="color: #4f46e5; margin-right: 8px; background: none; border: none; cursor: pointer; display: flex; align-items: center;">
+                        <mat-icon>vpn_key</mat-icon>
+                    </button>
+
+                    <span *ngIf="isProtegido(rol.nombre)" class="badge-protected">
+                        <mat-icon>lock</mat-icon>
+                        <span>Protegido</span>
+                    </span>
+
+                    <ng-container *ngIf="!isProtegido(rol.nombre)">
+                        <button type="button" class="action-btn toggle-btn" [class.is-active]="rol.activo"
+                            (click)="cambiarEstado(rol)" [title]="rol.activo ? 'Desactivar Rol' : 'Activar Rol'">
+                            <mat-icon>{{ rol.activo ? 'block' : 'check_circle' }}</mat-icon>
+                        </button>
+
+                        <button type="button" class="action-btn delete-btn" (click)="eliminarRol(rol)"
+                            title="Eliminar Rol permanentemente">
+                            <mat-icon>delete_forever</mat-icon>
+                        </button>
+                    </ng-container>
+                </div>
+            </div>
+
+            <div *ngIf="roles().length === 0" class="empty-state">
+                <mat-icon>shield_mood</mat-icon>
+                <p>No hay roles registrados</p>
+            </div>
+        </div>
+    </ng-template>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-button mat-dialog-close class="close-btn-danger">Cancelar</button>
+</mat-dialog-actions>

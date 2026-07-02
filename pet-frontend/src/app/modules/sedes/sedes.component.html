@@ -1,0 +1,145 @@
+<div class="page-container p-6 max-w-7xl mx-auto animation-fade-in"
+    style="padding: 24px; max-width: 1280px; margin: 0 auto; font-family: system-ui, -apple-system, sans-serif;">
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px;">
+        <div>
+            <h1 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; tracking-tight: -0.025em;">Sedes
+            </h1>
+            <p style="font-size: 14px; color: #64748b; margin: 4px 0 0 0;">Gestión de sucursales y ubicaciones</p>
+        </div>
+        <div>
+            <button mat-flat-button color="primary" class="!rounded-xl shadow-sm"
+                style="border-radius: 12px; height: 40px; font-weight: 500;" (click)="abrirModal()">
+                <mat-icon style="vertical-align: middle; margin-right: 4px;">add</mat-icon> Nueva Sede
+            </button>
+        </div>
+    </div>
+
+    <div
+        style="background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); overflow: hidden;">
+
+        <div style="padding: 20px; border-bottom: 1px solid #edf2f7; background-color: #f8fafc;">
+            <div style="position: relative; max-width: 400px; width: 100%;">
+                <mat-icon
+                    style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 20px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; z-index: 2; pointer-events: none;">
+                    search
+                </mat-icon>
+                <input [formControl]="searchControl"
+                    style="width: 100%; padding: 10px 12px 10px 40px; background: white; font-size: 14px; color: #334155; border: 1px solid #cbd5e1; border-radius: 12px; outline: none; box-sizing: border-box; transition: all 0.2s;"
+                    class="focus-input-vet" placeholder="Buscar por nombre o dirección..." />
+            </div>
+        </div>
+
+        <div class="table-container relative overflow-x-auto"
+            style="position: relative; overflow-x: auto; width: 100%;">
+
+            <div *ngIf="loading()"
+                class="absolute inset-0 bg-white/70 z-10 flex justify-center items-center backdrop-blur-sm"
+                style="position: absolute; inset: 0; background: rgba(255,255,255,0.7); z-index: 10; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+                <mat-spinner diameter="35"></mat-spinner>
+            </div>
+
+            <table mat-table [dataSource]="dataSource()" class="w-full custom-vet-table"
+                style="width: 100%; border-collapse: collapse;">
+
+                <ng-container matColumnDef="nombre">
+                    <th mat-header-cell *matHeaderCellDef
+                        style="padding: 14px 24px; background: #f8fafc; color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; text-align: left;">
+                        Nombre de la Sede
+                    </th>
+                    <td mat-cell *matCellDef="let element"
+                        style="padding: 16px 24px; border-bottom: 1px solid #f1f5f9; text-align: left;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 600; color: #334155; font-size: 14px;">{{element.nombre}}</span>
+                            <span style="font-size: 12px; color: #94a3b8; margin-top: 2px;">{{element.direccion}}</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="telefono">
+                    <th mat-header-cell *matHeaderCellDef
+                        style="padding: 14px 24px; background: #f8fafc; color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; text-align: left;">
+                        Teléfono
+                    </th>
+                    <td mat-cell *matCellDef="let element"
+                        style="padding: 16px 24px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #475569; text-align: left;">
+                        {{element.telefono || '—'}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="estado">
+                    <th mat-header-cell *matHeaderCellDef
+                        style="padding: 14px 24px; background: #f8fafc; color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; text-align: left;">
+                        Estado
+                    </th>
+                    <td mat-cell *matCellDef="let element"
+                        style="padding: 16px 24px; border-bottom: 1px solid #f1f5f9; text-align: left;">
+                        <span [style.background-color]="element.activo ? '#ecfdf5' : '#f1f5f9'"
+                            [style.color]="element.activo ? '#047857' : '#475569'"
+                            [style.border-color]="element.activo ? '#d1fae5' : '#e2e8f0'"
+                            style="display: inline-flex; align-items: center; padding: 4px 10px; font-size: 12px; font-weight: 500; border: 1px solid; border-radius: 100px;">
+                            <span [style.background-color]="element.activo ? '#10b981' : '#94a3b8'"
+                                style="width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; display: inline-block;"></span>
+                            {{ element.activo ? 'Activo' : 'Inactivo' }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef
+                        style="padding: 14px 24px; background: #f8fafc; color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; text-align: right;">
+                        Acciones
+                    </th>
+                    <td mat-cell *matCellDef="let element"
+                        style="padding: 16px 24px; border-bottom: 1px solid #f1f5f9; text-align: right; white-space: nowrap;">
+                        <div style="display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end;">
+
+                            <button mat-icon-button type="button" class="btn-vet-action text-blue"
+                                style="color: #2563eb;" (click)="abrirModal(element)" title="Editar">
+                                <mat-icon
+                                    style="font-size: 18px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;">edit</mat-icon>
+                            </button>
+
+                            <button mat-icon-button type="button" class="btn-vet-action"
+                                [style.color]="element.activo ? '#d97706' : '#059669'" (click)="cambiarEstado(element)"
+                                [title]="element.activo ? 'Desactivar' : 'Activar'">
+                                <mat-icon
+                                    style="font-size: 18px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;">
+                                    {{ element.activo ? 'block' : 'check_circle' }}
+                                </mat-icon>
+                            </button>
+
+                            <button mat-icon-button type="button" class="btn-vet-action text-red"
+                                style="color: #dc2626;" (click)="eliminarFisico(element)"
+                                title="Eliminar Permanentemente">
+                                <mat-icon
+                                    style="font-size: 18px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;">delete_forever</mat-icon>
+                            </button>
+
+                        </div>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="row-vet-hover"
+                    style="transition: background-color 0.15s;"></tr>
+
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell" colspan="4"
+                        style="padding: 40px; text-align: center; color: #94a3b8; font-size: 14px;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <mat-icon
+                                style="font-size: 28px; width: 28px; height: 28px; color: #cbd5e1;">search_off</mat-icon>
+                            <span>No se encontraron sedes que coincidan con la búsqueda</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <mat-paginator style="border-top: 1px solid #e2e8f0; background: white; font-size: 13px; color: #64748b;"
+                [length]="totalElements()" [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 25]"
+                (page)="onPageChange($event)" showFirstLastButtons>
+            </mat-paginator>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,234 @@
+<div class="page-container fade-in-up">
+    @if (loading()) {
+    <div class="loading-overlay">
+        <mat-spinner diameter="40"></mat-spinner>
+    </div>
+    } @else {
+    <div class="page-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button mat-icon-button (click)="volver()" matTooltip="Volver a la lista">
+                <mat-icon>arrow_back</mat-icon>
+            </button>
+            <div>
+                <h2 class="page-title">Historial Clínico: {{ paciente()?.nombre }}</h2>
+                <p class="page-subtitle">{{ paciente()?.especieNombre }} {{ paciente()?.raza ? ' - ' + paciente()?.raza : '' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-card premium-card" style="padding: 1rem;">
+        <mat-tab-group class="custom-tabs">
+            
+            <!-- RESUMEN -->
+            <mat-tab label="Resumen General">
+                <div style="padding: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <h3>Datos del Paciente</h3>
+                            <p><strong>Nacimiento:</strong> {{ paciente()?.fechaNacimiento | date:'longDate' }}</p>
+                            <p><strong>Sexo:</strong> {{ paciente()?.sexo }}</p>
+                            <p><strong>Familiar / Cliente:</strong> {{ paciente()?.clienteNombre }}</p>
+                        </div>
+                        <div *ngIf="isAdmin">
+                            <button mat-flat-button color="accent" (click)="abrirKardex()">
+                                <mat-icon>history</mat-icon> Ver Kardex de Auditoría
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </mat-tab>
+
+            <!-- VACUNAS -->
+            <mat-tab label="Vacunación">
+                <div style="padding: 1rem;">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                        <button mat-flat-button color="primary" (click)="abrirRegistrarVacuna()">
+                            <mat-icon>vaccines</mat-icon> Registrar Vacuna
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table mat-table [dataSource]="vacunas()" class="custom-table">
+                            <ng-container matColumnDef="fechaAplicacion">
+                                <th mat-header-cell *matHeaderCellDef> Fecha Aplicación </th>
+                                <td mat-cell *matCellDef="let element"> {{element.fechaAplicacion}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="nombreVacuna">
+                                <th mat-header-cell *matHeaderCellDef> Vacuna Aplicada </th>
+                                <td mat-cell *matCellDef="let element"> 
+                                    <span class="font-semibold">{{element.nombreVacuna}}</span>
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="fechaProximaDosis">
+                                <th mat-header-cell *matHeaderCellDef> Próxima Dosis </th>
+                                <td mat-cell *matCellDef="let element">
+                                    <span class="status-badge status-active">
+                                        {{element.fechaProximaDosis || 'N/A'}}
+                                    </span>
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="responsable">
+                                <th mat-header-cell *matHeaderCellDef> Aplicado por </th>
+                                <td mat-cell *matCellDef="let element"> Dr/a. {{element.empleadoNombre}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="observaciones">
+                                <th mat-header-cell *matHeaderCellDef> Observaciones </th>
+                                <td mat-cell *matCellDef="let element"> {{element.observaciones}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="acciones">
+                                <th mat-header-cell *matHeaderCellDef class="text-right"> Acciones </th>
+                                <td mat-cell *matCellDef="let element" class="text-right">
+                                    <button mat-icon-button color="primary" matTooltip="Editar Próxima Dosis" (click)="editarFechaVacuna(element)" *ngIf="!esCliente">
+                                        <mat-icon>edit_calendar</mat-icon>
+                                    </button>
+                                    <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="eliminarVacuna(element.id)" *ngIf="isAdmin">
+                                        <mat-icon>delete</mat-icon>
+                                    </button>
+                                </td>
+                            </ng-container>
+
+                            <tr mat-header-row *matHeaderRowDef="vacunasColumns"></tr>
+                            <tr mat-row *matRowDef="let row; columns: vacunasColumns;" class="premium-row"></tr>
+
+                            <tr class="mat-row" *matNoDataRow>
+                                <td class="mat-cell empty-cell" colspan="5">
+                                    <div class="empty-state">
+                                        <mat-icon>history</mat-icon>
+                                        <p>No hay registro de vacunas para este paciente.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </mat-tab>
+
+            <!-- DESPARASITACIÓN -->
+            <mat-tab label="Desparasitación">
+                <div style="padding: 1rem;">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                        <button mat-flat-button color="accent" (click)="abrirRegistrarDesparasitacion()">
+                            <mat-icon>medication</mat-icon> Registrar Desparasitación
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table mat-table [dataSource]="desparasitaciones()" class="custom-table">
+                            <ng-container matColumnDef="fechaAplicacion">
+                                <th mat-header-cell *matHeaderCellDef> Fecha Aplicación </th>
+                                <td mat-cell *matCellDef="let element"> {{element.fechaAplicacion}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="tipo">
+                                <th mat-header-cell *matHeaderCellDef> Tipo </th>
+                                <td mat-cell *matCellDef="let element"> 
+                                    <span class="status-badge" [ngClass]="element.tipo === 'INTERNA' ? 'status-active' : 'status-inactive'">
+                                        {{element.tipo}}
+                                    </span>
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="productoUtilizado">
+                                <th mat-header-cell *matHeaderCellDef> Producto Utilizado </th>
+                                <td mat-cell *matCellDef="let element"> <span class="font-semibold">{{element.productoUtilizado}}</span> </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="pesoAlMomento">
+                                <th mat-header-cell *matHeaderCellDef> Peso (kg) </th>
+                                <td mat-cell *matCellDef="let element"> {{element.pesoAlMomento}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="fechaProximaDosis">
+                                <th mat-header-cell *matHeaderCellDef> Próxima Dosis </th>
+                                <td mat-cell *matCellDef="let element"> 
+                                    <span class="status-badge status-active">
+                                        {{element.fechaProximaDosis || 'N/A'}}
+                                    </span> 
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="responsable">
+                                <th mat-header-cell *matHeaderCellDef> Aplicado por </th>
+                                <td mat-cell *matCellDef="let element"> Dr/a. {{element.empleadoNombre}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="acciones">
+                                <th mat-header-cell *matHeaderCellDef class="text-right"> Acciones </th>
+                                <td mat-cell *matCellDef="let element" class="text-right">
+                                    <button mat-icon-button color="primary" matTooltip="Editar Próxima Dosis" (click)="editarFechaDesparasitacion(element)" *ngIf="!esCliente">
+                                        <mat-icon>edit_calendar</mat-icon>
+                                    </button>
+                                    <button mat-icon-button color="warn" matTooltip="Eliminar" (click)="eliminarDesparasitacion(element.id)" *ngIf="isAdmin">
+                                        <mat-icon>delete</mat-icon>
+                                    </button>
+                                </td>
+                            </ng-container>
+
+                            <tr mat-header-row *matHeaderRowDef="desparasitacionColumns"></tr>
+                            <tr mat-row *matRowDef="let row; columns: desparasitacionColumns;" class="premium-row"></tr>
+
+                            <tr class="mat-row" *matNoDataRow>
+                                <td class="mat-cell empty-cell" colspan="6">
+                                    <div class="empty-state">
+                                        <mat-icon>history</mat-icon>
+                                        <p>No hay registro de desparasitaciones para este paciente.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </mat-tab>
+
+            <!-- ATENCIONES MÉDICAS -->
+            <mat-tab label="Atenciones Médicas">
+                <div style="padding: 1rem;">
+                    <div class="table-responsive">
+                        <table mat-table [dataSource]="atenciones()" class="custom-table">
+                            <ng-container matColumnDef="fecha">
+                                <th mat-header-cell *matHeaderCellDef> Fecha / Hora </th>
+                                <td mat-cell *matCellDef="let element"> {{element.fechaCreacion | date:'medium'}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="veterinario">
+                                <th mat-header-cell *matHeaderCellDef> Veterinario </th>
+                                <td mat-cell *matCellDef="let element"> 
+                                    <span class="font-semibold">Dr/a. {{element.veterinarioNombre}}</span>
+                                </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="diagnostico">
+                                <th mat-header-cell *matHeaderCellDef> Diagnóstico </th>
+                                <td mat-cell *matCellDef="let element"> {{element.diagnostico}} </td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="tratamiento">
+                                <th mat-header-cell *matHeaderCellDef> Tratamiento </th>
+                                <td mat-cell *matCellDef="let element"> {{element.tratamiento}} </td>
+                            </ng-container>
+
+                            <tr mat-header-row *matHeaderRowDef="atencionesColumns"></tr>
+                            <tr mat-row *matRowDef="let row; columns: atencionesColumns;" class="premium-row"></tr>
+
+                            <tr class="mat-row" *matNoDataRow>
+                                <td class="mat-cell empty-cell" colspan="4">
+                                    <div class="empty-state">
+                                        <mat-icon>history</mat-icon>
+                                        <p>No hay registro de atenciones médicas para este paciente.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </mat-tab>
+
+        </mat-tab-group>
+    </div>
+    }
+</div>

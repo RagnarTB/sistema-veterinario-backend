@@ -1,0 +1,131 @@
+<div class="dialog-container">
+    <div class="dialog-header">
+        <h2 class="dialog-title">
+            <span class="material-icons-round">add_shopping_cart</span>
+            {{ confirmando() ? 'Confirmar Ingreso' : 'Registrar Ingreso (Compra)' }}
+        </h2>
+        <button class="btn-icon" (click)="cerrar()" type="button" aria-label="Cerrar">
+            <span class="material-icons-round">close</span>
+        </button>
+    </div>
+
+    <div class="dialog-content">
+
+        @if (!confirmando()) {
+        <div class="product-summary-box">
+            <p class="product-label">Producto Seleccionado:</p>
+            <p class="product-name">{{ data.producto.nombre }}</p>
+
+            @if (data.producto.unidadCompraNombre) {
+            <p class="product-unit-info">
+                La cantidad debe ser en: <strong>{{ data.producto.unidadCompraNombre }}</strong>
+                @if (!permiteDecimales) {
+                <span class="no-decimals-alert">(No permite decimales)</span>
+                }
+            </p>
+            }
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="irAConfirmar()">
+            <div class="form-grid">
+
+                <div class="form-group col-span-2">
+                    <label class="form-label">Proveedor</label>
+                    <select formControlName="proveedorId" class="form-control">
+                        <option [ngValue]="null">Seleccione un proveedor...</option>
+                        @for (prov of data.proveedores; track prov.id) {
+                        <option [ngValue]="prov.id">{{ prov.razonSocial }}</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nro. de Lote *</label>
+                    <input type="text" formControlName="numeroLote" class="form-control" placeholder="Ej. L-998877">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Cantidad Comprada *</label>
+                    <input type="number" formControlName="cantidadComprada" class="form-control"
+                        [step]="permiteDecimales ? '0.01' : '1'" min="0.01"
+                        (keypress)="permiteDecimales ? null : soloEnteros($event)">
+                </div>
+
+                <div class="form-group col-span-2">
+                    <label class="checkbox-container">
+                        <input type="checkbox" formControlName="tieneVencimiento" class="form-checkbox">
+                        <span>¿Este producto tiene fecha de vencimiento?</span>
+                    </label>
+
+                    @if (form.get('tieneVencimiento')?.value) {
+                    <input type="date" formControlName="fechaVencimiento" class="form-control date-picker"
+                        [min]="fechaMinima" onkeydown="return false">
+                    }
+                </div>
+
+                <div class="form-group col-span-2">
+                    <label class="form-label">Motivo / Observación</label>
+                    <input type="text" formControlName="motivo" class="form-control" placeholder="Compra de stock">
+                </div>
+            </div>
+
+            <div class="dialog-actions">
+                <button type="button" class="btn btn-secondary" (click)="cerrar()">Cancelar</button>
+                <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+                    Revisar Ingreso
+                </button>
+            </div>
+        </form>
+
+        } @else {
+        <div class="confirmation-box">
+            <p class="confirmation-title">Resumen de Operación</p>
+
+            <div class="summary-item full-width">
+                <span class="summary-label">Producto:</span>
+                <p class="summary-value core-product">{{ data.producto.nombre }}</p>
+            </div>
+
+            <div class="confirmation-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Cantidad a Ingresar:</span>
+                    <p class="summary-value highlight-qty">{{ form.get('cantidadComprada')?.value }} {{
+                        data.producto.unidadCompraNombre }}</p>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Nro. Lote:</span>
+                    <p class="summary-value">{{ form.get('numeroLote')?.value }}</p>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Vencimiento:</span>
+                    <p class="summary-value">{{ form.get('tieneVencimiento')?.value ?
+                        (form.get('fechaVencimiento')?.value | date:'dd/MM/yyyy') : 'No aplica' }}</p>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Proveedor:</span>
+                    <p class="summary-value">{{ nombreProveedorSeleccionado || 'No asignado' }}</p>
+                </div>
+            </div>
+
+            @if (data.producto.factorConversion && data.producto.factorConversion > 1) {
+            <div class="conversion-alert">
+                <p>
+                    Equivale a <strong>{{ cantidadConvertida | number:'1.0-2' }} {{ data.producto.unidadVentaNombre
+                        }}</strong> en stock.
+                </p>
+            </div>
+            }
+        </div>
+
+        <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary btn-with-icon" (click)="confirmando.set(false)"
+                [disabled]="cargando()">
+                <span class="material-icons-round">edit</span> Volver a Editar
+            </button>
+            <button type="button" class="btn btn-primary" (click)="guardar()" [disabled]="cargando()">
+                {{ cargando() ? 'Procesando...' : 'Confirmar y Guardar' }}
+            </button>
+        </div>
+        }
+    </div>
+</div>

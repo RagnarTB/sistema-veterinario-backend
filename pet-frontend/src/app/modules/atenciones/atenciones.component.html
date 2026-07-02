@@ -1,0 +1,459 @@
+<div class="page-container fade-in-up" style="max-width: 1600px;">
+    <!-- HEADER -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Consultorio Clínico</h1>
+            <p class="page-subtitle">Panel del médico veterinario para el registro de atenciones y prescripciones</p>
+        </div>
+        <div class="flex items-center gap-md">
+            <div style="min-width: 220px;">
+                <div style="position: relative;">
+                    <span class="material-icons-round"
+                        style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #14b8b8; font-size: 18px;">storefront</span>
+                    <select [(ngModel)]="sedeId" (change)="onSedeChange()" class="form-control"
+                        style="padding-left: 36px; border-color: #14b8b8; font-weight: 600; cursor: pointer; height: 40px; font-size: 0.85rem;">
+                        @for (s of sedes; track s.id) {
+                        <option [ngValue]="s.id">{{ s.nombre }}</option>
+                        }
+                        @if (sedes.length === 0) {
+                        <option [ngValue]="1">Sede Central</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-secondary btn-sm" (click)="cargarCitas()">
+                <span class="material-icons-round">refresh</span>
+                Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT: SPLIT LAYOUT -->
+    <div class="main-grid" style="min-height: 700px; align-items: start;">
+
+        <!-- PANEL IZQUIERDO: CITAS DEL DÍA -->
+        <div class="flex flex-col gap-md" style="height: 100%;">
+            <!-- Filtros de Estado -->
+            <div class="card p-3 flex gap-sm justify-between items-center"
+                style="background: var(--bg-card); border-radius: var(--radius-md);">
+                <span class="text-xs font-bold text-muted">FILTRAR:</span>
+                <div class="flex gap-xs">
+                    <button class="btn btn-sm" [ngClass]="filtroEstado === 'TODOS' ? 'btn-primary' : 'btn-secondary'"
+                        (click)="cambiarFiltro('TODOS')" style="padding: 4px 8px; font-size: 0.75rem;">
+                        Todas
+                    </button>
+                    <button class="btn btn-sm"
+                        [ngClass]="filtroEstado === 'EN_CONSULTORIO' ? 'btn-primary' : 'btn-secondary'"
+                        (click)="cambiarFiltro('EN_CONSULTORIO')" style="padding: 4px 8px; font-size: 0.75rem;">
+                        En Box
+                    </button>
+                    <button class="btn btn-sm"
+                        [ngClass]="filtroEstado === 'EN_SALA_ESPERA' ? 'btn-primary' : 'btn-secondary'"
+                        (click)="cambiarFiltro('EN_SALA_ESPERA')" style="padding: 4px 8px; font-size: 0.75rem;">
+                        Espera
+                    </button>
+                </div>
+            </div>
+
+            <!-- Listado de Tarjetas de Citas -->
+            <div class="flex flex-col gap-sm" style="max-height: 650px; overflow-y: auto; padding-right: 4px;">
+                @if (citasCargando()) {
+                <div class="card p-6 text-center">
+                    <div
+                        style="margin: 0 auto 12px; width: 32px; height: 32px; border: 3px solid rgba(20,184,184,0.1); border-top-color: #14b8b8; border-radius: 50%; animation: spin 0.8s linear infinite;">
+                    </div>
+                    <span class="text-sm text-muted">Cargando agenda de hoy...</span>
+                </div>
+                } @else if (citasFiltradas.length === 0) {
+                <div class="card p-6 text-center text-muted">
+                    <span class="material-icons-round"
+                        style="font-size: 40px; margin-bottom: 8px; color: var(--text-muted);">calendar_today</span>
+                    <p class="text-sm">No hay citas registradas para hoy con los filtros seleccionados.</p>
+                </div>
+                } @else {
+                @for (cita of citasFiltradas; track cita.id) {
+                <div class="card p-4 transition-all clickable" [ngClass]="{
+                'active-card': citaSeleccionada?.id === cita.id,
+                'border-left-consultorio': cita.estado === 'EN_CONSULTORIO',
+                'border-left-espera': cita.estado === 'EN_SALA_ESPERA',
+                'border-left-completada': cita.estado === 'COMPLETADA'
+              }" (click)="seleccionarCita(cita)"
+                    style="cursor: pointer; border-left: 5px solid var(--border-color); position: relative;">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold text-muted">{{ cita.horaInicio }} - {{ cita.horaFin }}</span>
+                        <span class="badge" [ngClass]="{
+                  'badge-sala-espera': cita.estado === 'EN_SALA_ESPERA',
+                  'badge-consultorio': cita.estado === 'EN_CONSULTORIO',
+                  'badge-completada': cita.badgeCompletada || cita.estado === 'COMPLETADA',
+                  'badge-agendada': cita.estado === 'AGENDADA' || cita.estado === 'CONFIRMADA'
+                }">
+                            {{ cita.estado.replace('_', ' ') }}
+                        </span>
+                    </div>
+
+                    <h4 class="font-semibold text-sm mb-1" style="color: var(--text-primary);">
+                        {{ cita.pacientes[0]?.clienteNombre || 'Cliente' }}
+                    </h4>
+
+                    <div class="flex flex-wrap gap-xs items-center mt-2">
+                        <span class="material-icons-round text-muted" style="font-size: 14px;">pets</span>
+                        @for (pet of cita.pacientes; track pet.id) {
+                        <span class="text-xs font-medium bg-surface p-1 px-2 rounded"
+                            style="color: var(--text-secondary); background: #e2e8f0;">
+                            {{ pet.nombre }}
+                        </span>
+                        }
+                    </div>
+
+                    <p class="text-xs text-muted mt-2"
+                        style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <strong>Motivo:</strong> {{ cita.motivo }}
+                    </p>
+                </div>
+                }
+                }
+            </div>
+        </div>
+
+        <!-- PANEL DERECHO: ESPACIO DE TRABAJO CLÍNICO -->
+        <div class="flex flex-col gap-lg" style="height: 100%;">
+            @if (!citaSeleccionada) {
+            <div class="card p-8 text-center flex flex-col items-center justify-center" style="min-height: 500px;">
+                <span class="material-icons-round"
+                    style="font-size: 80px; color: var(--color-primary-300); margin-bottom: var(--space-md); animation: pulse-glow 3s infinite;">local_hospital</span>
+                <h2 style="color: var(--text-primary); margin-bottom: 8px;">Área de Consulta Clínica</h2>
+                <p class="text-secondary" style="max-width: 450px; font-size: 0.95rem;">
+                    Por favor, selecciona una cita de la agenda diaria en el panel izquierdo para comenzar a registrar
+                    la atención médica de los pacientes.
+                </p>
+            </div>
+            } @else {
+            <div class="card p-6" style="background: var(--bg-card); position: relative;">
+                <!-- Resumen Cita Seleccionada -->
+                <div class="flex justify-between items-center border-bottom pb-4 mb-4">
+                    <div>
+                        <div class="flex items-center gap-sm">
+                            <h2 class="font-bold text-lg" style="color: var(--text-primary);">Atención Médica Cita #{{
+                                citaSeleccionada.id }}</h2>
+                            <span class="badge badge-agendada">{{ citaSeleccionada.servicioNombre }}</span>
+                        </div>
+                        <p class="text-xs text-muted mt-1">
+                            <strong>Propietario:</strong> {{ citaSeleccionada.pacientes[0]?.clienteNombre }} |
+                            <strong>Motivo:</strong> {{ citaSeleccionada.motivo }}
+                        </p>
+                    </div>
+
+                    @if (canRegisterAtencion && citaSeleccionada.estado !== 'COMPLETADA' && citaSeleccionada.estado !== 'EN_CONSULTORIO') {
+                    <button class="btn btn-primary btn-sm" (click)="pasarAConsultorio()">
+                        <span class="material-icons-round">play_arrow</span>
+                        Iniciar Consulta
+                    </button>
+                    }
+                </div>
+
+                <!-- PESTAÑAS DE PACIENTES (MULTI-PETS) -->
+                <div class="flex border-bottom mb-6" style="gap: var(--space-xs);">
+                    @for (pet of citaSeleccionada.pacientes; track pet.id; let idx = $index) {
+                    <button class="tab-button" [ngClass]="{
+                  'active-tab': activePacienteIndex === idx,
+                  'tab-saved': clinicoData[pet.id]?.guardado
+                }" (click)="switchPaciente(idx)">
+                        <span class="material-icons-round" style="font-size: 16px;">
+                            {{ clinicoData[pet.id]?.guardado ? 'check_circle' : 'pets' }}
+                        </span>
+                        {{ pet.nombre }}
+                        @if (clinicoData[pet.id]?.guardado) {
+                        <span class="badge badge-completada" style="font-size: 0.6rem; padding: 2px 6px;">Listo</span>
+                        }
+                    </button>
+                    }
+                </div>
+
+                <!-- FORMULARIO DEL PACIENTE ACTIVO -->
+                @if (activePaciente) {
+                <div class="fade-in-up">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-md" style="color: var(--color-primary-700)">
+                            Historial Clínico: {{ activePaciente.nombre }}
+                            <span class="text-xs text-muted">({{ activePaciente.especieNombre || 'Mascota' }})</span>
+                        </h3>
+                        @if (clinicoData[activePaciente.id]?.guardado) {
+                        <div class="badge badge-completada flex items-center gap-xs">
+                            <span class="material-icons-round" style="font-size: 14px;">check</span>
+                            ATENCIÓN GUARDADA
+                        </div>
+                        }
+                    </div>
+
+                    <!-- Campos Clínicos y Fórmulas -->
+                    <div class="form-container">
+                        @if (!esVetAsignado) {
+                        <div class="alert-error mb-4" style="padding: 12px; border-radius: 8px; font-size: 0.9rem;">
+                            <span class="material-icons-round" style="vertical-align: middle;">lock</span>
+                            Solo el veterinario asignado a esta cita puede registrar la atención médica.
+                        </div>
+                        }
+
+                        <fieldset [disabled]="clinicoData[activePaciente.id]?.guardado || !esVetAsignado"
+                            style="border: none; padding: 0; margin: 0;">
+
+                            <!-- SECCIÓN: SIGNOS VITALES -->
+                            <div class="mb-6">
+                                <h4 class="text-xs font-bold text-muted mb-3 uppercase tracking-wider">🌡️ Signos
+                                    Vitales</h4>
+                                <div
+                                    style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md);">
+                                    <div class="form-group">
+                                        <label class="form-label">Peso (kg) <span
+                                                style="color: var(--color-danger)">*</span></label>
+                                        <div style="position: relative;">
+                                            <input type="number" [(ngModel)]="clinicoData[activePaciente.id].peso"
+                                                class="form-control" placeholder="Ej: 5.4" step="0.1" min="0" />
+                                            <span class="input-unit">kg</span>
+                                        </div>
+                                        @if (clinicoData[activePaciente.id].peso !== null &&
+                                        clinicoData[activePaciente.id].peso! <= 0) { <small class="form-error">El peso
+                                            debe ser mayor a 0</small>
+                                            }
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Temperatura (°C) <span
+                                                style="color: var(--color-danger)">*</span></label>
+                                        <div style="position: relative;">
+                                            <input type="number"
+                                                [(ngModel)]="clinicoData[activePaciente.id].temperatura"
+                                                class="form-control" placeholder="Ej: 38.5" step="0.1" min="10"
+                                                max="50" />
+                                            <span class="input-unit">°C</span>
+                                        </div>
+                                        @if (clinicoData[activePaciente.id].temperatura !== null &&
+                                        (clinicoData[activePaciente.id].temperatura! < 30 ||
+                                            clinicoData[activePaciente.id].temperatura!> 45)) {
+                                            <small class="form-error">Temperatura inusual (30 - 45)</small>
+                                            }
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Frecuencia Cardíaca (lpm) <span
+                                                style="color: var(--color-danger)">*</span></label>
+                                        <div style="position: relative;">
+                                            <input type="number"
+                                                [(ngModel)]="clinicoData[activePaciente.id].frecuenciaCardiaca"
+                                                class="form-control" placeholder="Ej: 120" min="10" max="300" />
+                                            <span class="input-unit">lpm</span>
+                                        </div>
+                                        @if (clinicoData[activePaciente.id].frecuenciaCardiaca !== null &&
+                                        (clinicoData[activePaciente.id].frecuenciaCardiaca! < 40 ||
+                                            clinicoData[activePaciente.id].frecuenciaCardiaca!> 250)) {
+                                            <small class="form-error">Frecuencia cardíaca inusual</small>
+                                            }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN: DETALLES DE LA CONSULTA -->
+                            <div class="mb-6">
+                                <h4 class="text-xs font-bold text-muted mb-3 uppercase tracking-wider">📋 Síntomas,
+                                    Diagnóstico y Tratamiento</h4>
+
+                                <div class="form-group">
+                                    <label class="form-label">Síntomas / Anamnesis <span
+                                            style="color: var(--color-danger)">*</span></label>
+                                    <textarea [(ngModel)]="clinicoData[activePaciente.id].sintomas" class="form-control"
+                                        rows="2"
+                                        placeholder="Describa los síntomas reportados por el propietario y observados..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Diagnóstico Clínico <span
+                                            style="color: var(--color-danger)">*</span></label>
+                                    <textarea [(ngModel)]="clinicoData[activePaciente.id].diagnostico"
+                                        class="form-control" rows="2"
+                                        placeholder="Ingrese el diagnóstico presuntivo o definitivo..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Tratamiento Médico <span
+                                            style="color: var(--color-danger)">*</span></label>
+                                    <textarea [(ngModel)]="clinicoData[activePaciente.id].tratamiento"
+                                        class="form-control" rows="2"
+                                        placeholder="Ingrese las directivas del tratamiento administrado en consulta..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- SECCIÓN: RECETA MÉDICA (OPCIONAL) -->
+                            <div class="card mb-6"
+                                style="border: 1px dashed var(--color-primary-400); background: var(--color-primary-50);">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h4 class="text-xs font-bold uppercase tracking-wider"
+                                        style="color: var(--color-primary-800); margin: 0;">
+                                        💊 Hoja de Prescripción / Receta Médica
+                                    </h4>
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                        (click)="agregarMedicamento(activePaciente.id)"
+                                        style="font-size: 0.75rem; padding: 4px 10px;">
+                                        <span class="material-icons-round" style="font-size: 14px;">add</span>
+                                        Agregar Línea
+                                    </button>
+                                </div>
+
+                                @if (clinicoData[activePaciente.id].recetaDetalles.length === 0) {
+                                <p class="text-xs text-muted text-center py-4">No se han recetado medicamentos para esta
+                                    mascota.</p>
+                                } @else {
+                                <div class="flex flex-col gap-sm">
+                                    @for (item of clinicoData[activePaciente.id].recetaDetalles; track $index; let
+                                    medIdx = $index) {
+                                    <div
+                                        style="display: grid; grid-template-columns: 2fr 1fr 1fr 80px 40px; gap: var(--space-sm); align-items: start;">
+
+                                        <!-- Medicamento (Input text / Autocomplete simple) -->
+                                        <div class="form-group" style="margin: 0;">
+                                            <input type="text" [(ngModel)]="item.medicamento" class="form-control"
+                                                placeholder="Nombre del medicamento"
+                                                style="font-size: 0.8rem; padding: 6px 10px;"
+                                                (focus)="showAutocomplete(activePaciente.id, medIdx)"
+                                                (blur)="hideAutocomplete(medIdx)" />
+                                            <!-- Autocomplete popup simple -->
+                                            @if (activeAutocompleteRow === medIdx && filteredProductos.length > 0) {
+                                            <div class="autocomplete-popup">
+                                                @for (prod of filteredProductos; track prod.id) {
+                                                <div class="autocomplete-item"
+                                                    (mousedown)="seleccionarProducto(activePaciente.id, medIdx, prod)">
+                                                    <div class="font-semibold text-xs">{{ prod.nombre }}</div>
+                                                    <div class="text-xxs text-muted">S/ {{ prod.precio }} | Stock: {{
+                                                        prod.stockActual }}</div>
+                                                </div>
+                                                }
+                                            </div>
+                                            }
+                                        </div>
+
+                                        <!-- Dosis -->
+                                        <div class="form-group" style="margin: 0;">
+                                            <input type="text" [(ngModel)]="item.dosis" class="form-control"
+                                                placeholder="Ej: 1 tableta / 5ml"
+                                                style="font-size: 0.8rem; padding: 6px 10px;" />
+                                        </div>
+
+                                        <!-- Frecuencia -->
+                                        <div class="form-group" style="margin: 0;">
+                                            <input type="text" [(ngModel)]="item.frecuencia" class="form-control"
+                                                placeholder="Ej: C/8 horas"
+                                                style="font-size: 0.8rem; padding: 6px 10px;" />
+                                        </div>
+
+                                        <!-- Duración (Días) -->
+                                        <div class="form-group" style="margin: 0;">
+                                            <input type="number" [(ngModel)]="item.duracionDias" class="form-control"
+                                                min="1" style="font-size: 0.8rem; padding: 6px 10px;" />
+                                        </div>
+
+                                        <!-- Eliminar Medicamento -->
+                                        <button type="button" class="btn btn-danger btn-sm"
+                                            (click)="removerMedicamento(activePaciente.id, medIdx)"
+                                            style="padding: 6px; height: 32px; width: 32px; justify-content: center; border-radius: 50%;">
+                                            <span class="material-icons-round" style="font-size: 16px;">delete</span>
+                                        </button>
+
+                                    </div>
+                                    }
+                                </div>
+
+                                <div class="form-group mt-3" style="margin-bottom: 0;">
+                                    <label class="form-label text-xxs">Indicaciones Generales adicionales</label>
+                                    <input type="text"
+                                        [(ngModel)]="clinicoData[activePaciente.id].indicacionesGenerales"
+                                        class="form-control"
+                                        placeholder="Ej: Mantener reposo absoluto, abundante agua..."
+                                        style="font-size: 0.8rem; padding: 6px 10px;" />
+                                </div>
+                                }
+                            </div>
+
+                        </fieldset>
+                    </div>
+
+                    <!-- Botones de Acción de Ficha -->
+                    <div class="flex justify-end gap-md mt-6 pt-4 border-top">
+                        @if (canRegisterAtencion && esVetAsignado && !clinicoData[activePaciente.id].guardado) {
+                        <button class="btn btn-primary" (click)="guardarAtencionPaciente(activePaciente.id)"
+                            [disabled]="!validarFichaPaciente(activePaciente.id) || guardandoFicha()">
+                            @if (guardandoFicha()) {
+                            <span
+                                style="display: inline-block; width: 14px; height: 14px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px;"></span>
+                            Guardando...
+                            } @else {
+                            <span class="material-icons-round">save</span>
+                            Guardar Atención de {{ activePaciente.nombre }}
+                            }
+                        </button>
+                        } @else {
+                        <div class="flex gap-sm">
+                            @if (clinicoData[activePaciente.id].recetaId) {
+                            <button class="btn btn-secondary"
+                                (click)="imprimirReceta({recetaId: clinicoData[activePaciente.id].recetaId, pacienteNombre: activePaciente.nombre, detalles: clinicoData[activePaciente.id].recetaDetalles})">
+                                <span class="material-icons-round">print</span>
+                                🖨️ Imprimir Receta
+                            </button>
+                            }
+                            <button class="btn btn-secondary" disabled>
+                                <span class="material-icons-round">check_circle</span>
+                                Atención Registrada
+                            </button>
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+
+                <!-- VIEW: TODOS LOS PACIENTES PROCESADOS (CITA COMPLETADA EXITO) -->
+                @if (citaCompletadaExito) {
+                <div class="completion-overlay">
+                    <div class="card p-8 text-center flex flex-col items-center justify-center fade-in-up"
+                        style="max-width: 500px; background: white; border: 2px solid var(--color-success); box-shadow: var(--shadow-lg);">
+                        <span class="material-icons-round text-success"
+                            style="font-size: 80px; color: var(--color-success); margin-bottom: var(--space-md);">check_circle</span>
+                        <h2 class="font-bold mb-2">¡Consulta Completada!</h2>
+                        <p class="text-sm text-secondary mb-6">
+                            Se han registrado las historias clínicas de todos los pacientes para esta cita. Se ha
+                            automáticamente el estado de la cita a <strong
+                                style="color: var(--color-success)">COMPLETADA</strong> y ha enviado el ticket de cobro
+                            a recepción para la facturación.
+                        </p>
+
+                        <!-- Acciones con Recetas -->
+                        @if (recetasGeneradas.length > 0) {
+                        <div class="w-full mb-6 text-left"
+                            style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-md); width: 100%;">
+                            <span
+                                class="text-xxs font-bold text-muted uppercase tracking-wider block mb-2">Prescripciones
+                                Emitidas:</span>
+                            <div class="flex flex-col gap-xs">
+                                @for (rec of recetasGeneradas; track rec.recetaId) {
+                                <div class="flex justify-between items-center p-2 bg-card rounded shadow-sm">
+                                    <span class="text-xs font-semibold">🐾 Receta: {{ rec.pacienteNombre }}</span>
+                                    <button class="btn btn-primary btn-sm" (click)="imprimirReceta(rec)"
+                                        style="padding: 4px 8px; font-size: 0.75rem;">
+                                        🖨️ Imprimir
+                                    </button>
+                                </div>
+                                }
+                            </div>
+                        </div>
+                        }
+
+                        <button class="btn btn-secondary w-full" (click)="cerrarPanelExito()">
+                            Volver a la Agenda Diaria
+                        </button>
+                    </div>
+                </div>
+                }
+
+            </div>
+            }
+        </div>
+
+    </div>
+</div>

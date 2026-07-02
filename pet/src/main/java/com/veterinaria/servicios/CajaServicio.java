@@ -1,0 +1,189 @@
+package com.veterinaria.servicios;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.veterinaria.dtos.CajaRequestDTO;
+import com.veterinaria.dtos.CierreCajaResponseDTO;
+import com.veterinaria.modelos.CajaDiaria;
+import com.veterinaria.modelos.Empleado;
+import com.veterinaria.modelos.Enums.TipoMovimiento;
+import com.veterinaria.modelos.Sede;
+import com.veterinaria.respositorios.CajaRepositorio;
+import com.veterinaria.respositorios.VentaRepositorio;
+import com.veterinaria.respositorios.SedeRepositorio;
+
+@Service
+public class CajaServicio {
+
+        private final CajaRepositorio cajaRepositorio;
+        private final VentaRepositorio ventaRepositorio;
+        private final SedeRepositorio sedeRepositorio;
+        private final com.veterinaria.respositorios.PagoVentaRepositorio pagoVentaRepositorio;
+
+        public CajaServicio(CajaRepositorio cajaRepositorio, VentaRepositorio ventaRepositorio,
+                        SedeRepositorio sedeRepositorio,
+                        com.veterinaria.respositorios.PagoVentaRepositorio pagoVentaRepositorio) {
+                this.cajaRepositorio = cajaRepositorio;
+                this.ventaRepositorio = ventaRepositorio;
+                this.sedeRepositorio = sedeRepositorio;
+                this.pagoVentaRepositorio = pagoVentaRepositorio;
+        }
+
+        @Transactional
+        public void abrirCaja(CajaRequestDTO dto, Empleado empleadoActual) {
+
+                Sede sede = sedeRepositorio.findById(dto.getSedeId())
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                                "Sede no encontrada"));
+
+                // --- VALIDACIÓN CLAVE: el empleado debe pertenecer a esa sede ---
+                if (!empleadoActual.getSedes().contains(sede)) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.FORBIDDEN,
+                                        "El empleado no pertenece a la sede solicitada. No puede abrir la caja de otra sede.");
+                }
+
+                // VALIDACIÓN: un empleado solo puede tener UNA caja abierta en todo el sistema
+                if (cajaRepositorio.findByEmpleadoIdAndEstado(empleadoActual.getId(), "ABIERTA").isPresent()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Ya tienes una caja abierta en el sistema. Debes cerrarla antes de abrir una nueva.");
+                }
+
+                CajaDiaria nuevaCaja = new CajaDiaria();
+                nuevaCaja.setSaldoInicial(dto.getSaldoInicial());
+                nuevaCaja.setEstado("ABIERTA");
+                nuevaCaja.setFechaApertura(LocalDateTime.now());
+                nuevaCaja.setSede(sede);
+                nuevaCaja.setEmpleado(empleadoActual); // Asignación personal
+
+                cajaRepositorio.save(nuevaCaja);
+        }
+
+        @Transactional
+        public void registrarMovimiento(com.veterinaria.dtos.MovimientoCajaRequestDTO dto, Empleado empleadoActual) {
+                Sede sede = sedeRepositorio.findById(dto.getSedeId())
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sede no encontrada"));
+
+                if (!empleadoActual.getSedes().contains(sede)) {
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El empleado no pertenece a la sede solicitada.");
+                }
+
+                CajaDiaria cajaAbierta = cajaRepositorio.findByEmpleadoIdAndSedeIdAndEstado(empleadoActual.getId(), dto.getSedeId(), "ABIERTA")
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No tienes ninguna caja abierta en esta sede."));
+
+                com.veterinaria.modelos.MovimientoCaja mov = new com.veterinaria.modelos.MovimientoCaja();
+                mov.setConcepto(dto.getConcepto());
+                mov.setMonto(dto.getMonto());
+                mov.setTipoMovimiento(TipoMovimiento.valueOf(dto.getTipo()));
+                mov.setFechaHora(LocalDateTime.now());
+                mov.setCajaDiaria(cajaAbierta);
+                
+                try {
+                        if (dto.getMetodoPago() != null) {
+                                mov.setMetodoPago(com.veterinaria.modelos.Enums.MetodoPago.valueOf(dto.getMetodoPago()));
+                        }
+                } catch (Exception e) {
+                        mov.setMetodoPago(com.veterinaria.modelos.Enums.MetodoPago.EFECTIVO);
+                }
+
+                cajaAbierta.getMovimientos().add(mov);
+                cajaRepositorio.save(cajaAbierta);
+        }
+
+        @Transactional
+        public CierreCajaResponseDTO cerrarCaja(Long sedeId, Empleado empleadoActual) {
+                Sede sede = sedeRepositorio.findById(sedeId)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                                "Sede no encontrada"));
+
+                // El empleado debe pertenecer a la sede
+                if (!empleadoActual.getSedes().contains(sede)) {
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                                        "El empleado no pertenece a la sede solicitada. No puede cerrar la caja de otra sede.");
+                }
+
+                // Buscamos la caja abierta ESPECÍFICA de este empleado en esta sede
+                CajaDiaria cajaAbierta = cajaRepositorio.findByEmpleadoIdAndSedeIdAndEstado(empleadoActual.getId(), sedeId, "ABIERTA")
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                                "No tienes ninguna caja abierta en esta sede para cerrar"));
+
+                LocalDateTime ahora = LocalDateTime.now();
+                cajaAbierta.setEstado("CERRADA");
+                cajaAbierta.setFechaCierre(ahora);
+
+                BigDecimal totalVentas = pagoVentaRepositorio.sumarPagosPorCaja(cajaAbierta.getId());
+                totalVentas = (totalVentas == null) ? BigDecimal.ZERO : totalVentas;
+
+                BigDecimal ingresosExtras = cajaAbierta.getMovimientos().stream()
+                                .filter(m -> m.getTipoMovimiento() == TipoMovimiento.INGRESO)
+                                .filter(m -> m.getConcepto() == null || !m.getConcepto().startsWith("Pago Venta"))
+                                .map(m -> m.getMonto())
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal egresosExtras = cajaAbierta.getMovimientos().stream()
+                                .filter(m -> m.getTipoMovimiento() == TipoMovimiento.EGRESO)
+                                .map(m -> m.getMonto())
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal saldoCalculado = cajaAbierta.getSaldoInicial()
+                                .add(totalVentas)
+                                .add(ingresosExtras)
+                                .subtract(egresosExtras);
+
+                cajaAbierta.setSaldoFinal(saldoCalculado);
+
+                cajaRepositorio.save(cajaAbierta);
+
+                return new CierreCajaResponseDTO(
+                                cajaAbierta.getId(),
+                                cajaAbierta.getFechaCierre(),
+                                cajaAbierta.getSaldoInicial(),
+                                totalVentas,
+                                ingresosExtras,
+                                egresosExtras,
+                                saldoCalculado);
+        }
+
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
+        public com.veterinaria.dtos.CajaEstadoResponseDTO obtenerEstadoCaja(Long sedeId, Empleado empleadoActual) {
+                java.util.Optional<CajaDiaria> cajaOpt = cajaRepositorio.findByEmpleadoIdAndSedeIdAndEstado(empleadoActual.getId(), sedeId, "ABIERTA");
+                if (cajaOpt.isPresent()) {
+                        CajaDiaria c = cajaOpt.get();
+                        String nombreCompleto = c.getEmpleado().getUsuario().getNombre() + " " + c.getEmpleado().getUsuario().getApellido();
+                        return new com.veterinaria.dtos.CajaEstadoResponseDTO(true, c.getId(), c.getSaldoInicial(), c.getFechaApertura(), nombreCompleto);
+                } else {
+                        return new com.veterinaria.dtos.CajaEstadoResponseDTO(false, null, null, null, null);
+                }
+        }
+
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
+        public org.springframework.data.domain.Page<com.veterinaria.dtos.CajaHistorialResponseDTO> listarCajasCerradas(Long sedeId, org.springframework.data.domain.Pageable pageable) {
+                return cajaRepositorio.findBySedeIdAndEstado(sedeId, "CERRADA", pageable)
+                        .map(c -> {
+                                String nombre = c.getEmpleado() != null && c.getEmpleado().getUsuario() != null 
+                                        ? c.getEmpleado().getUsuario().getNombre() + " " + c.getEmpleado().getUsuario().getApellido() 
+                                        : "N/A";
+                                return new com.veterinaria.dtos.CajaHistorialResponseDTO(
+                                        c.getId(), c.getFechaApertura(), c.getFechaCierre(), 
+                                        c.getSaldoInicial(), c.getSaldoFinal(), nombre);
+                        });
+        }
+
+        @org.springframework.transaction.annotation.Transactional(readOnly = true)
+        public java.util.List<com.veterinaria.dtos.MovimientoCajaResponseDTO> listarMovimientos(Long cajaId) {
+                CajaDiaria caja = cajaRepositorio.findById(cajaId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Caja no encontrada"));
+                
+                return caja.getMovimientos().stream().map(m -> 
+                        new com.veterinaria.dtos.MovimientoCajaResponseDTO(
+                                m.getId(), m.getConcepto(), m.getMonto(), 
+                                m.getTipoMovimiento(), m.getFechaHora(), m.getMetodoPago())
+                ).collect(java.util.stream.Collectors.toList());
+        }
+}

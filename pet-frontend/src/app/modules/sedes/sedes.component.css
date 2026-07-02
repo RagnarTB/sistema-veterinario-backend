@@ -1,0 +1,81 @@
+.animation-fade-in {
+    animation: fadeInSedes 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeInSedes {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+.focus-input-vet:focus {
+    border-color: #0d9488 !important;
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1) !important;
+    background-color: #ffffff !important;
+}
+
+
+.row-vet-hover:hover {
+    background-color: #f8fafc !important;
+}
+
+
+.btn-vet-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    min-width: 32px !important;
+    border: none !important;
+    background: transparent !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transition: background-color 0.2s, cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+
+.btn-vet-action:hover {
+    background-color: #f1f5f9 !important;
+}
+
+.btn-vet-action.text-blue:hover {
+    background-color: #eff6ff !important;
+}
+
+.btn-vet-action.text-red:hover {
+    background-color: #fef2f2 !important;
+}
+
+
+.btn-vet-action mat-icon {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+
+.custom-vet-table {
+    background-color: white !important;
+}
+
+.mat-mdc-table {
+    background: transparent !important;
+}
+
+.mat-mdc-header-row,
+.mat-mdc-row {
+    border: none !important;
+}

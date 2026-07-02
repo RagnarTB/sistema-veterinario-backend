@@ -1,0 +1,64 @@
+<h2 mat-dialog-title class="dialog-title" style="display: flex; align-items: center; gap: 8px;">
+    <span class="material-icons-round text-success">payments</span>
+    Abonar a Deuda #{{ data.venta.id }}
+</h2>
+
+<mat-dialog-content>
+    <div style="background: rgba(var(--color-danger-rgb), 0.05); padding: 12px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--color-danger);">
+        <div class="text-xs text-muted font-bold uppercase">Cliente</div>
+        <div class="font-bold mb-2">{{ data.venta.clienteNombre || 'N/A' }}</div>
+        
+        <div class="text-xs text-muted font-bold uppercase">Saldo Actual Pendiente</div>
+        <div class="text-2xl font-bold text-danger">
+            S/ {{ data.venta.saldoPendiente | number:'1.2-2' }}
+        </div>
+    </div>
+
+    <div class="form-group mb-4">
+        <label class="form-label font-bold">Monto a Abonar (S/)</label>
+        <div style="position: relative;">
+            <span class="material-icons-round text-muted" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 18px;">attach_money</span>
+            <input type="number" [(ngModel)]="montoAbonar" class="form-control" style="padding-left: 40px; font-size: 1.1rem; font-weight: bold; height: 48px;" min="0.1" [max]="data.venta.saldoPendiente" step="0.1" placeholder="0.00" />
+            <button class="btn btn-ghost btn-xs text-info" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%);" (click)="setMontoTotal()">
+                PAGAR TODO
+            </button>
+        </div>
+        @if (montoAbonar && montoAbonar > data.venta.saldoPendiente) {
+            <span class="text-xs text-danger mt-1 font-semibold">El monto no puede exceder el saldo pendiente.</span>
+        }
+    </div>
+
+    <div class="form-group mb-4">
+        <label class="form-label font-bold">Método de Pago</label>
+        <div class="flex gap-sm">
+            <button class="btn flex-1" [ngClass]="metodoPagoAbonar === 'EFECTIVO' ? 'btn-primary' : 'btn-secondary'" (click)="metodoPagoAbonar = 'EFECTIVO'">
+                <span class="material-icons-round" style="font-size: 18px;">payments</span> Efectivo
+            </button>
+            <button class="btn flex-1" [ngClass]="metodoPagoAbonar === 'YAPE' ? 'btn-primary' : 'btn-secondary'" (click)="metodoPagoAbonar = 'YAPE'">
+                <span class="material-icons-round" style="font-size: 18px;">qr_code_2</span> Yape
+            </button>
+            <button class="btn flex-1" [ngClass]="metodoPagoAbonar === 'PLIN' ? 'btn-primary' : 'btn-secondary'" (click)="metodoPagoAbonar = 'PLIN'">
+                <span class="material-icons-round" style="font-size: 18px;">qr_code_2</span> Plin
+            </button>
+        </div>
+    </div>
+
+    @if (metodoPagoAbonar !== 'EFECTIVO') {
+        <div class="form-group mb-4 fade-in">
+            <label class="form-label font-bold">N° de Operación (Opcional)</label>
+            <input type="text" [(ngModel)]="referenciaAbonar" class="form-control" placeholder="Ej: 12345678" />
+        </div>
+    }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" style="padding: 16px 24px; border-top: 1px solid var(--color-border); margin-bottom: 0;">
+    <button mat-stroked-button type="button" (click)="onClose()" [disabled]="cargandoPago">Cancelar</button>
+    <button mat-flat-button color="primary" type="button" (click)="guardarPago()" [disabled]="!montoAbonar || montoAbonar <= 0 || montoAbonar > data.venta.saldoPendiente || cargandoPago">
+        @if (cargandoPago) {
+            <span class="spinner" style="width: 18px; height: 18px; margin-right: 8px;"></span>
+        } @else {
+            <mat-icon style="margin-right: 4px;">save</mat-icon>
+        }
+        Registrar Abono
+    </button>
+</mat-dialog-actions>

@@ -1,0 +1,197 @@
+:host {
+    display: block;
+    width: 100%;
+    max-width: 500px;
+    box-sizing: border-box;
+}
+
+/* Contenedor principal con esquinas redondeadas */
+.custom-dialog-container {
+    padding: 20px 28px;
+    background-color: #ffffff;
+}
+
+/* Encabezado */
+.dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 24px 0;
+    padding-bottom: 12px;
+    border: none;
+}
+
+.brand-icon {
+    color: #00a8cc !important;
+    font-size: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.title-text {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #1a2536;
+}
+
+/* Contenido / Formulario */
+.dialog-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+}
+
+.form-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    /* Incrementamos ligeramente para dar más aire entre campos */
+}
+
+.form-field-custom {
+    width: 100%;
+}
+
+/* --- SOLUCIÓN INVISIBLE A LOS DETALLES DEL NOTCH Y TEXTOS --- */
+
+/* 1. Color de la etiqueta flotante (Label) en todos sus estados */
+::ng-deep .form-field-custom .mdc-floating-label,
+::ng-deep .form-field-custom .mdc-floating-label mat-label {
+    color: #00b4d8 !important;
+    font-weight: 600 !important;
+}
+
+/* 2. Color cuando el campo tiene el foco activo */
+::ng-deep .form-field-custom.mat-mdc-form-field-focused .mdc-floating-label {
+    color: #00a8cc !important;
+}
+
+/* 3. Evitar que la línea del contorno pase por en medio del texto flotante (Fix Notch) */
+::ng-deep .form-field-custom .mdc-notched-outline__notch {
+    border-right: none !important;
+    border-left: none !important;
+}
+
+/* Forzar altura limpia de los inputs de Material 15+ */
+::ng-deep .form-field-custom .mat-mdc-text-field-wrapper {
+    background-color: #ffffff !important;
+}
+
+/* 4. Estilo y redondeado del Outline (Contorno del input) */
+::ng-deep .form-field-custom .mdc-notched-outline__leading {
+    border-color: #e2e8f0 !important;
+    border-width: 1.5px !important;
+    border-radius: 8px 0 0 8px !important;
+}
+
+::ng-deep .form-field-custom .mdc-notched-outline__notch {
+    border-color: #e2e8f0 !important;
+    border-width: 1.5px !important;
+}
+
+::ng-deep .form-field-custom .mdc-notched-outline__trailing {
+    border-color: #e2e8f0 !important;
+    border-width: 1.5px !important;
+    border-radius: 0 8px 8px 0 !important;
+}
+
+/* 5. Comportamiento de bordes en Estado enfocado (Focus) */
+::ng-deep .form-field-custom.mat-focused .mdc-notched-outline__leading,
+::ng-deep .form-field-custom.mat-focused .mdc-notched-outline__notch,
+::ng-deep .form-field-custom.mat-focused .mdc-notched-outline__trailing {
+    border-color: #00b4d8 !important;
+    border-width: 2px !important;
+}
+
+/* Iconos de los inputs de color gris elegante */
+.input-icon {
+    color: #64748b !important;
+    margin-right: 6px;
+}
+
+/* Margen para los mensajes de error */
+::ng-deep .form-field-custom .mat-mdc-form-field-error-wrapper {
+    padding: 0 4px !important;
+    margin-top: 4px !important;
+}
+
+/* --- BOTONES DE ACCIÓN PERFECCIONADOS --- */
+.dialog-actions-layout {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 28px 0 4px 0 !important;
+    margin: 0 !important;
+    border: none;
+}
+
+/* Botón Cancelar (Izquierda) */
+.btn-cancel {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    padding: 0 24px !important;
+    height: 46px !important;
+    /* Un poco más altos para mejor interacción */
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    transition: background-color 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background-color: #dc2626 !important;
+}
+
+/* Botón Registrar Sede (Derecha) */
+.btn-submit {
+    background-color: #00a8cc !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    padding: 0 24px !important;
+    height: 46px !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px;
+    box-shadow: none !important;
+    transition: background-color 0.2s ease;
+}
+
+.btn-submit:hover {
+    background-color: #0093b3 !important;
+}
+
+.btn-submit[disabled] {
+    background-color: #cbd5e1 !important;
+    color: #94a3b8 !important;
+}
+
+.btn-icon {
+    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Redondeado general de la superficie del modal */
+::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
+    border-radius: 24px !important;
+    padding: 0 !important;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+    .dialog-actions-layout {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px;
+    }
+    .dialog-actions-layout button {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+}

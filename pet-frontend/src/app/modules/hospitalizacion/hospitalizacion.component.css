@@ -1,0 +1,32 @@
+.hosp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.hosp-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+/* ── RESPONSIVE: Hospitalización ── */
+@media (max-width: 768px) {
+    .hosp-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .hosp-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .hosp-actions > div {
+        width: 100%;
+    }
+    .btn-nuevo {
+        width: 100%;
+        justify-content: center;
+    }
+}

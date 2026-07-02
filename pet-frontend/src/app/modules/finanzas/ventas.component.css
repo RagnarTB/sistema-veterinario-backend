@@ -1,0 +1,20 @@
+.row-anulada {
+  opacity: 0.55;
+  text-decoration: line-through;
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.info-block {
+  padding: 8px 12px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+}
+
+/* ── RESPONSIVE ── */
+.overflow-x-auto {
+    width: 100%;
+    overflow-x: auto;
+}
+.tabla-container table {
+    min-width: 800px;
+}

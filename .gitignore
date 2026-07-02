@@ -1,0 +1,100 @@
+# ============================================================
+# AGENTES Y GRAPHIFY - nunca subir a GitHub
+# ============================================================
+.agents/
+graphify-out/
+
+# ============================================================
+# BACKEND - Spring Boot / Java / Maven
+# ============================================================
+pet/target/
+pet/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+.mvn/timing.properties
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# ============================================================
+# FRONTEND - Angular / Node
+# ============================================================
+pet-frontend/node_modules/
+pet-frontend/dist/
+pet-frontend/.angular/cache/
+pet-frontend/.angular/
+pet-frontend/.sass-cache/
+pet-frontend/connect.lock
+pet-frontend/coverage/
+pet-frontend/libpeerconnection.log
+pet-frontend/npm-debug.log*
+pet-frontend/yarn-error.log
+pet-frontend/testem.log
+pet-frontend/.yarn-integrity
+pet-frontend/.env
+
+# ============================================================
+# ENTORNOS Y SECRETOS - nunca subir
+# ============================================================
+*.env
+.env
+.env.*
+application-local.properties
+application-local.yml
+application-secret*.properties
+secrets.properties
+
+# ============================================================
+# SO Y EDITORES
+# ============================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/*.code-workspace
+
+# ============================================================
+# LOGS Y TEMPORALES
+# ============================================================
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.orig

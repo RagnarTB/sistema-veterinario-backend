@@ -1,0 +1,519 @@
+/* ==========================================================================
+   Ajustes y Variables Base del Diálogo
+   ========================================================================== */
+.dialog-container {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    font-family: inherit;
+    position: relative;
+    /* Asegura un contexto para elementos absolutos si se requiere */
+}
+
+/* Cabecera controlada por Flexbox para alinear el título y el botón en los extremos */
+.dialog-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dialog-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-icon {
+    color: #475569;
+    font-size: 24px;
+}
+
+.dialog-content {
+    padding: 0 !important;
+    max-height: 78vh;
+    overflow-y: auto;
+    background-color: #f8fafc;
+}
+
+/* ==========================================================================
+   Botón de Cierre Estricto (Evita desplazamientos raros)
+   ========================================================================== */
+.btn-close {
+    background-color: #f1f5f9;
+    /* Fondo sutil gris como el de tu primera captura */
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    border-radius: 6px;
+    /* Bordes ligeramente cuadrados con radio suave */
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+.btn-close .material-icons-round {
+    font-size: 20px;
+}
+
+/* ==========================================================================
+   Tabs Estilizados (Angular Material Global Deep Overrides)
+   ========================================================================== */
+:host ::ng-deep .custom-tab-group .mat-mdc-tab-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+:host ::ng-deep .custom-tab-group .mdc-tab__text-label {
+    font-weight: 500;
+    color: #64748b;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+}
+
+:host ::ng-deep .custom-tab-group .mdc-tab--active .mdc-tab__text-label {
+    color: #2563eb !important;
+    font-weight: 600;
+}
+
+:host ::ng-deep .custom-tab-group .mat-mdc-tab-ink-bar {
+    background-color: #2563eb !important;
+    height: 3px !important;
+}
+
+.tab-body {
+    padding: 1.5rem;
+}
+
+/* ==========================================================================
+   Elementos de Formulario e Inputs
+   ========================================================================== */
+.form-control {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.9rem;
+    color: #334155;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.readonly-input {
+    background-color: #f1f5f9;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.table-input {
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    height: auto;
+}
+
+/* ==========================================================================
+   Botones de Acción Global
+   ========================================================================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-add {
+    background-color: #a5f3fc !important;
+    /* Celeste pastel de la UI */
+    color: #0369a1 !important;
+    padding: 0.5rem 1.25rem;
+}
+
+.btn-add:hover:not(:disabled) {
+    background-color: #67e8f9 !important;
+}
+
+.btn-add:disabled {
+    background-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed;
+}
+
+.action-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    background-color: #ffffff;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+/* ==========================================================================
+   Tablas Estilizadas Premium
+   ========================================================================== */
+.table-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.custom-table th {
+    background-color: #f8fafc;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.custom-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+.custom-table tr:last-child td {
+    border-bottom: none;
+}
+
+.table-disabled-mode tbody tr {
+    background-color: #fafafa;
+}
+
+.table-disabled-mode td {
+    opacity: 0.65;
+}
+
+/* ==========================================================================
+   Títulos de Sección e Indicadores de Estado
+   ========================================================================== */
+.section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.6rem;
+    margin-top: 1.25rem;
+}
+
+.text-active {
+    color: #0d9488;
+}
+
+.text-inactive {
+    color: #f43f5e;
+}
+
+.text-empty {
+    padding: 1.5rem !important;
+    color: #94a3b8;
+    font-style: italic;
+    text-align: center;
+}
+
+/* ==========================================================================
+   Acciones dentro de Tablas
+   ========================================================================== */
+.actions-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-table-action {
+    background: none;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-table-action .material-icons-round {
+    font-size: 18px;
+}
+
+.action-edit {
+    color: #3b82f6;
+    border-color: #bfdbfe;
+}
+
+.action-edit:hover {
+    background-color: #eff6ff;
+}
+
+.action-disable {
+    color: #ef4444;
+    border-color: #fecaca;
+}
+
+.action-disable:hover {
+    background-color: #fff5f5;
+}
+
+.action-save {
+    color: #10b981;
+    border-color: #a7f3d0;
+}
+
+.action-save:hover {
+    background-color: #ecfdf5;
+}
+
+.action-cancel {
+    color: #64748b;
+    border-color: #cbd5e1;
+}
+
+.action-cancel:hover {
+    background-color: #f8fafc;
+}
+
+.action-restore {
+    color: #10b981;
+    border-color: #a7f3d0;
+}
+
+.action-restore:hover {
+    background-color: #ecfdf5;
+}
+
+.action-delete {
+    color: #b91c1c;
+    border-color: #fca5a5;
+}
+
+.action-delete:hover {
+    background-color: #fef2f2;
+}
+
+/* ==========================================================================
+   Sección Proveedores: Formulario e Inputs
+   ========================================================================== */
+.form-card-box {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-card-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.input-with-btn {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-inline-search {
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    width: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.btn-inline-search:hover:not(:disabled) {
+    background-color: #1d4ed8;
+}
+
+.btn-inline-search:disabled {
+    background-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.size-ruc {
+    width: 180px;
+}
+
+.size-phone {
+    width: 140px;
+}
+
+/* ==========================================================================
+   Badges y Extras Utilitarios
+   ========================================================================== */
+.badge-neutral {
+    background-color: #f1f5f9;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.custom-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #475569;
+    cursor: pointer;
+    user-select: none;
+    margin-top: auto;
+    margin-bottom: 8px;
+}
+
+.custom-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.text-mono {
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+.text-primary {
+    color: #1e293b;
+}
+
+.text-muted {
+    color: #64748b;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.text-sm {
+    font-size: 0.8rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.items-end {
+    align-items: flex-end;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+.mb-3 {
+    margin-bottom: 0.75rem;
+}
+
+.mb-5 {
+    margin-bottom: 1.25rem;
+}
+
+.h-10 {
+    height: 38px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .size-ruc, .size-phone {
+        width: 100%;
+    }
+    .action-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .action-bar .btn-add {
+        width: 100%;
+    }
+    .table-container {
+        overflow-x: auto;
+        width: 100%;
+    }
+    .custom-table {
+        min-width: 500px;
+    }
+}

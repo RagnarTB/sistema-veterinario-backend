@@ -1,0 +1,265 @@
+@if (paso() === 'formulario') {
+<h2 mat-dialog-title class="dialog-title">
+    <mat-icon class="title-icon text-primary">
+        {{ isEdit() ? 'edit' : 'badge' }}
+    </mat-icon>
+    <span>{{ isEdit() ? 'Editar Empleado' : 'Nuevo Empleado' }}</span>
+</h2>
+
+<mat-dialog-content class="dialog-content-scroll">
+    <mat-tab-group *ngIf="isEdit() && esVeterinarioGuardado(); else normalForm" class="modern-tabs">
+        <mat-tab label="Datos Personales">
+            <ng-container *ngTemplateOutlet="formTemplate"></ng-container>
+        </mat-tab>
+        <mat-tab label="Horarios">
+            <div class="tab-padding">
+                <app-horarios-veterinario [veterinarioId]="data.empleado?.id || 0" [sedes]="sedesAsignadas()">
+                </app-horarios-veterinario>
+            </div>
+        </mat-tab>
+        <mat-tab label="Días Bloqueados">
+            <div class="tab-padding">
+                <app-dias-bloqueados [veterinarioId]="data.empleado?.id || 0">
+                </app-dias-bloqueados>
+            </div>
+        </mat-tab>
+    </mat-tab-group>
+
+    <ng-template #normalForm>
+        <ng-container *ngTemplateOutlet="formTemplate"></ng-container>
+    </ng-template>
+
+    <ng-template #formTemplate>
+        @if (dniEsCliente()) {
+        <div class="ascenso-banner animate-fade-in">
+            <mat-icon class="banner-icon">info</mat-icon>
+            <div class="banner-text">
+                <strong>Este DNI ya pertenece a un cliente registrado.</strong>
+                <p>Los datos personales se reutilizarán. Solo complete los datos laborales y asigne roles.</p>
+            </div>
+        </div>
+        }
+
+        <form [formGroup]="form" class="form-grid">
+
+            <div class="dni-search-container col-span-2">
+                <mat-form-field appearance="outline" class="dni-field">
+                    <mat-label>DNI</mat-label>
+                    <mat-icon matPrefix>badge</mat-icon>
+                    <input matInput formControlName="dni" [readonly]="isEdit()" placeholder="Ej. 12345678" maxlength="8"
+                        (input)="form.get('dni')?.markAsTouched()" required (keydown)="soloNumeros($event)" />
+                    <mat-error *ngIf="form.get('dni')?.hasError('required')">El DNI es obligatorio</mat-error>
+                    <mat-error *ngIf="form.get('dni')?.hasError('dni')">Debe tener 8 dígitos</mat-error>
+                </mat-form-field>
+
+                <button mat-flat-button color="primary" type="button" class="btn-search-dni" (click)="buscarDni()"
+                    [disabled]="form.get('dni')?.invalid || (form.get('dni')?.value || '').toString().trim().length !== 8 || buscandoDni || isEdit()">
+                    <mat-icon *ngIf="!buscandoDni">search</mat-icon>
+                    <mat-spinner diameter="20" *ngIf="buscandoDni"></mat-spinner>
+                    <span>{{ buscandoDni ? 'Buscando...' : 'Buscar Reniec' }}</span>
+                </button>
+            </div>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Nombre</mat-label>
+                <mat-icon matPrefix>person</mat-icon>
+                <input matInput formControlName="nombre" [readonly]="dniEsCliente() || isEdit()"
+                    (keydown)="soloLetras($event)" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Apellido</mat-label>
+                <mat-icon matPrefix>person_outline</mat-icon>
+                <input matInput formControlName="apellido" [readonly]="dniEsCliente() || isEdit()"
+                    (keydown)="soloLetras($event)" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full col-span-2">
+                <mat-label>Correo Electrónico</mat-label>
+                <mat-icon matPrefix>mail_outline</mat-icon>
+                <input matInput type="email" formControlName="email" [readonly]="dniEsCliente() || isEdit()"
+                    placeholder="correo@ejemplo.com" />
+                @if (!isEdit() && !dniEsCliente()) {
+                <mat-hint>Se enviará un correo para establecer su contraseña.</mat-hint>
+                }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Teléfono</mat-label>
+                <mat-icon matPrefix>phone</mat-icon>
+                <input matInput formControlName="telefono" maxlength="9" (input)="form.get('telefono')?.markAsTouched()"
+                    required (keydown)="soloNumeros($event)" placeholder="987654321" />
+                <mat-error *ngIf="form.get('telefono')?.hasError('telefono')">Debe tener exactamente 9
+                    dígitos</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Sueldo Base (Opcional)</mat-label>
+                <mat-icon matPrefix>payments</mat-icon>
+                <input matInput type="number" formControlName="sueldoBase" placeholder="0.00" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Especialidad (Opcional)</mat-label>
+                <mat-icon matPrefix>work_outline</mat-icon>
+                <input matInput formControlName="especialidad" style="text-transform: uppercase;"
+                    (keydown)="soloLetras($event)" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Sedes Asignadas</mat-label>
+                <mat-icon matPrefix>storefront</mat-icon>
+                <mat-select formControlName="sedeIds" multiple>
+                    @for (sede of sedes(); track sede.id) {
+                    <mat-option [value]="sede.id">{{ sede.nombre }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full col-span-2">
+                <mat-label>Roles Asignados</mat-label>
+                <mat-icon matPrefix>shield</mat-icon>
+                <mat-select formControlName="roles" multiple (selectionChange)="onRolesChange()">
+                    @for (rol of roles(); track rol.id) {
+                    <mat-option [value]="rol.nombre">{{ rol.nombre.replace('ROLE_', '') }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+
+            @if (esVeterinario()) {
+            <div class="col-span-2 vet-section animate-fade-in">
+                <div class="vet-section-title">
+                    <mat-icon>medical_services</mat-icon>
+                    <span>Datos de Veterinario</span>
+                </div>
+
+                <div class="vet-fields">
+                    <mat-form-field appearance="outline" class="colegiatura-field">
+                        <mat-label>Número de Colegiatura</mat-label>
+                        <mat-icon matPrefix>verified</mat-icon>
+                        <input matInput formControlName="numeroColegiatura" placeholder="Ej. 12345" />
+                    </mat-form-field>
+
+                    <button mat-flat-button type="button" class="btn-validar-colegiatura"
+                        [disabled]="!form.get('numeroColegiatura')?.value || validandoColegiatura()"
+                        (click)="validarColegiatura()">
+                        <mat-spinner diameter="18" *ngIf="validandoColegiatura()"></mat-spinner>
+                        <mat-icon *ngIf="!validandoColegiatura()">verified_user</mat-icon>
+                        <span>{{ validandoColegiatura() ? 'Validando...' : 'Validar' }}</span>
+                    </button>
+                </div>
+
+                @if (colegiaturaResultado()) {
+                <div class="colegiatura-resultado" [class.valido]="colegiaturaResultado()?.habilitado"
+                    [class.invalido]="!colegiaturaResultado()?.habilitado">
+                    <mat-icon>{{ colegiaturaResultado()?.habilitado ? 'check_circle' : 'cancel' }}</mat-icon>
+                    <div>
+                        @if (colegiaturaResultado()?.habilitado) {
+                        <strong>HABILITADO</strong>
+                        <p>{{ colegiaturaResultado()?.nombreCompleto }}</p>
+                        } @else {
+                        <strong>{{ colegiaturaResultado()?.error || 'NO HABILITADO' }}</strong>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </form>
+    </ng-template>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions-padding">
+    <button mat-stroked-button mat-dialog-close class="btn-large">Cancelar</button>
+    <button mat-flat-button color="primary" class="btn-large" [disabled]="form.invalid || loading()"
+        (click)="mostrarConfirmacion()">
+        <mat-icon>preview</mat-icon> Revisar y Confirmar
+    </button>
+</mat-dialog-actions>
+}
+
+@if (paso() === 'confirmacion') {
+<h2 mat-dialog-title class="dialog-title">
+    <mat-icon class="title-icon text-primary">fact_check</mat-icon>
+    <span>Confirmar Registro</span>
+</h2>
+
+<mat-dialog-content class="dialog-content-scroll">
+    <div class="resumen-container">
+
+        <div class="resumen-seccion">
+            <h3><mat-icon>person</mat-icon> Datos Personales</h3>
+            <div class="resumen-grid">
+                <div class="resumen-item"><span class="label">DNI</span><span class="value">{{ form.getRawValue().dni
+                        }}</span></div>
+                <div class="resumen-item"><span class="label">Nombre Completo</span><span class="value">{{
+                        form.getRawValue().nombre }} {{ form.getRawValue().apellido }}</span></div>
+                <div class="resumen-item"><span class="label">Email</span><span class="value">{{
+                        form.getRawValue().email }}</span></div>
+                <div class="resumen-item"><span class="label">Teléfono</span><span class="value">{{
+                        form.getRawValue().telefono }}</span></div>
+            </div>
+        </div>
+
+        <div class="resumen-seccion">
+            <h3><mat-icon>work</mat-icon> Información Laboral</h3>
+            <div class="resumen-grid">
+                <div class="resumen-item"><span class="label">Especialidad</span><span class="value">{{
+                        form.getRawValue().especialidad || 'N/A' }}</span></div>
+                <div class="resumen-item"><span class="label">Sueldo Base</span><span class="value">{{
+                        form.getRawValue().sueldoBase ? 'S/ ' + form.getRawValue().sueldoBase : 'N/A' }}</span></div>
+                <div class="resumen-item col-span-2"><span class="label">Sedes Asignadas</span><span class="value">{{
+                        getSedesNombres() }}</span></div>
+            </div>
+        </div>
+
+        <div class="resumen-seccion">
+            <h3><mat-icon>shield</mat-icon> Roles Asignados</h3>
+            <div class="roles-chips">
+                @for (rol of form.getRawValue().roles; track rol) {
+                <span class="rol-chip">{{ rol.replace('ROLE_', '') }}</span>
+                }
+            </div>
+        </div>
+
+        @if (esVeterinario() && form.getRawValue().numeroColegiatura) {
+        <div class="resumen-seccion">
+            <h3><mat-icon>verified</mat-icon> Colegiatura Médica</h3>
+            <div class="resumen-grid">
+                <div class="resumen-item"><span class="label">Número</span><span class="value">{{
+                        form.getRawValue().numeroColegiatura }}</span></div>
+                <div class="resumen-item">
+                    <span class="label">Estado</span>
+                    <span class="value status-badge" [class.bg-green]="colegiaturaResultado()?.habilitado"
+                        [class.bg-red]="colegiaturaResultado() && !colegiaturaResultado()?.habilitado">
+                        {{ colegiaturaResultado()?.habilitado ? 'HABILITADO' : (colegiaturaResultado()?.error || 'Sin
+                        validar') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        }
+
+        @if (dniEsCliente()) {
+        <div class="ascenso-banner confirmacion-banner">
+            <mat-icon class="banner-icon">upgrade</mat-icon>
+            <div class="banner-text">
+                <strong>Este registro ascenderá un cliente existente a empleado.</strong>
+                <p>Se reutilizarán los datos personales del cliente y se asignarán los nuevos roles laborales.</p>
+            </div>
+        </div>
+        }
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions-padding">
+    <button mat-stroked-button class="btn-large" (click)="paso.set('formulario')">
+        <mat-icon>arrow_back</mat-icon> Volver
+    </button>
+    <button mat-flat-button color="primary" class="btn-large" [disabled]="loading()" (click)="guardar()">
+        <mat-spinner diameter="18" *ngIf="loading()"></mat-spinner>
+        <mat-icon *ngIf="!loading()">save</mat-icon>
+        <span>{{ isEdit() ? 'Guardar Cambios' : 'Registrar Empleado' }}</span>
+    </button>
+</mat-dialog-actions>
+}

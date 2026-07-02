@@ -1,0 +1,149 @@
+<h2 mat-dialog-title class="dialog-title">
+    <mat-icon>{{ isEdit ? 'pets' : 'add_circle' }}</mat-icon>
+    {{ isEdit ? 'Editar Paciente' : 'Registrar Nuevo Paciente' }}
+</h2>
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+    <mat-dialog-content class="dialog-content-scroll">
+        <p class="dialog-subtitle">
+            Completa los datos de la mascota y asociala con su dueño (cliente).
+        </p>
+
+        <div class="form-grid" *ngIf="!mostrarResumen()">
+
+            <!-- ── Nombre de la mascota ── -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Nombre de la mascota*</mat-label>
+                <mat-icon matPrefix class="prefix-icon">pets</mat-icon>
+                <input matInput formControlName="nombre" placeholder="Ej. Firulais" (keydown)="soloLetras($event)" />
+                <mat-error *ngIf="form.get('nombre')?.hasError('required')">
+                    El nombre es requerido
+                </mat-error>
+            </mat-form-field>
+
+            <!-- ── Dueño (Cliente) — Autocomplete ── -->
+            <mat-form-field appearance="outline" class="w-full mb-4">
+                <mat-label>Dueño / Cliente</mat-label>
+                <input type="text" placeholder="Buscar por DNI, nombre o apellido..." matInput [formControl]="clienteSearchCtrl"
+                [matAutocomplete]="auto">
+                <mat-icon matPrefix class="text-gray-400 mr-2">person_search</mat-icon>
+
+                @if (searchingClientes()) {
+                <button matSuffix mat-icon-button aria-label="Buscando...">
+                <mat-spinner diameter="20"></mat-spinner>
+                </button>
+                }
+
+                <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayCliente">
+                @for (cliente of clientesOptions; track cliente.id) {
+                <mat-option [value]="cliente">
+                    <div class="flex flex-col">
+                    <span class="font-medium text-gray-800">{{cliente.nombre}} {{cliente.apellido}}</span>
+                    <span class="text-xs text-gray-500">DNI: {{cliente.dni}}</span>
+                    </div>
+                </mat-option>
+                }
+                </mat-autocomplete>
+                <mat-error *ngIf="form.get('clienteId')?.hasError('required')">El dueño es obligatorio</mat-error>
+            </mat-form-field>
+
+            <!-- ── Especie (modo crear) ── -->
+            <mat-form-field appearance="outline" class="full-width" *ngIf="!isEdit">
+                <mat-label>Especie*</mat-label>
+                <mat-icon matPrefix class="prefix-icon">category</mat-icon>
+                <mat-select formControlName="especieId">
+                    <mat-option *ngFor="let esp of especiesOptions" [value]="esp.id">
+                        {{ esp.nombre }}
+                    </mat-option>
+                </mat-select>
+                <mat-error *ngIf="form.get('especieId')?.hasError('required')">
+                    La especie es requerida
+                </mat-error>
+            </mat-form-field>
+
+            <!-- ── Especie (modo editar — solo lectura) ── -->
+            <mat-form-field appearance="outline" class="full-width" *ngIf="isEdit">
+                <mat-label>Especie</mat-label>
+                <mat-icon matPrefix class="prefix-icon">category</mat-icon>
+                <input matInput [value]="data?.especieNombre" disabled />
+            </mat-form-field>
+
+            <!-- ── Raza (Opcional) ── -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Raza (Opcional)</mat-label>
+                <mat-icon matPrefix class="prefix-icon">style</mat-icon>
+                <input matInput formControlName="raza" placeholder="Ej. Bulldog, Persa..."
+                    (keydown)="soloLetras($event)" />
+            </mat-form-field>
+
+            <!-- ── Sexo ── -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Sexo*</mat-label>
+                <mat-icon matPrefix class="prefix-icon">transgender</mat-icon>
+                <mat-select formControlName="sexo">
+                    <mat-option value="MACHO">Macho</mat-option>
+                    <mat-option value="HEMBRA">Hembra</mat-option>
+                </mat-select>
+                <mat-error *ngIf="form.get('sexo')?.hasError('required')">
+                    El sexo es requerido
+                </mat-error>
+            </mat-form-field>
+
+            <!-- ── Fecha de Nacimiento ── -->
+            <mat-form-field appearance="outline" class="full-width col-span-2">
+                <mat-label>Fecha de Nacimiento*</mat-label>
+                <mat-icon matPrefix class="prefix-icon" style="cursor: pointer;"
+                    (click)="picker.open()">event</mat-icon>
+                <input matInput readonly style="cursor: pointer;" placeholder="YYYY-MM-DD"
+                    formControlName="fechaNacimiento" [matDatepicker]="picker" [max]="today" (click)="picker.open()" />
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+                <mat-error *ngIf="form.get('fechaNacimiento')?.hasError('required')">
+                    La fecha es requerida
+                </mat-error>
+            </mat-form-field>
+
+        </div>
+
+        <!-- ── Resumen (Paso 2) ── -->
+        <div *ngIf="mostrarResumen()" class="resumen-container p-4 bg-gray-50 rounded-lg border border-gray-200 mt-2">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">Resumen de Registro</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><span class="font-medium text-gray-600">Nombre:</span> <span class="uppercase">{{ resumenDatos.nombre }}</span></div>
+                <div><span class="font-medium text-gray-600">Dueño:</span> {{ resumenDatos.dueno }}</div>
+                <div><span class="font-medium text-gray-600">Especie:</span> {{ resumenDatos.especie }}</div>
+                <div><span class="font-medium text-gray-600">Raza:</span> <span class="uppercase">{{ resumenDatos.raza }}</span></div>
+                <div><span class="font-medium text-gray-600">Sexo:</span> {{ resumenDatos.sexo }}</div>
+                <div><span class="font-medium text-gray-600">F. Nacimiento:</span> {{ resumenDatos.fechaNacimiento }}</div>
+            </div>
+
+            <div class="mt-4 p-3 bg-amber-50 border-l-4 border-amber-500 rounded text-amber-800 text-sm flex items-start">
+                <mat-icon class="mr-2 text-amber-600">warning</mat-icon>
+                <span><strong>¡Atención!</strong> Una vez guardado el paciente, el Dueño, la Especie y la Fecha de Nacimiento <strong>no podrán ser modificados</strong>.</span>
+            </div>
+        </div>
+
+    </mat-dialog-content>
+
+    <!-- Botones Formularios -->
+    <mat-dialog-actions class="dialog-actions" *ngIf="!mostrarResumen()">
+        <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">
+            Cancelar
+        </button>
+        <button mat-flat-button color="primary" type="button" (click)="irAResumen()" [disabled]="form.invalid || isSubmitting">
+            {{ isEdit ? 'Guardar Cambios' : 'Continuar a Resumen' }}
+        </button>
+    </mat-dialog-actions>
+
+    <!-- Botones Resumen -->
+    <mat-dialog-actions class="dialog-actions" *ngIf="mostrarResumen()">
+        <button mat-stroked-button type="button" class="btn-cancel" (click)="volverAFormulario()">
+            Volver a Editar
+        </button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting">
+            Registrar Paciente
+        </button>
+    </mat-dialog-actions>
+
+</form>

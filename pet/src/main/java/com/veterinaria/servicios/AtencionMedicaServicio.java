@@ -1,0 +1,246 @@
+package com.veterinaria.servicios;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+// IMPORTANTE: Importamos el Contexto de Seguridad
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.veterinaria.dtos.AtencionMedicaRequestDTO;
+import com.veterinaria.dtos.AtencionMedicaResponseDTO;
+import com.veterinaria.modelos.AtencionMedica;
+import com.veterinaria.modelos.Cita;
+import com.veterinaria.modelos.Empleado;
+import com.veterinaria.modelos.Paciente;
+import com.veterinaria.modelos.Enums.EstadoCita;
+import com.veterinaria.respositorios.AtencionMedicaRepositorio;
+import com.veterinaria.respositorios.CitaRepositorio;
+import com.veterinaria.respositorios.EmpleadoRepositorio;
+import com.veterinaria.respositorios.VentaRepositorio;
+import com.veterinaria.respositorios.PacienteRepositorio;
+import com.veterinaria.modelos.Venta;
+import com.veterinaria.modelos.DetalleVenta;
+import com.veterinaria.modelos.Cliente;
+import com.veterinaria.excepciones.BusinessLogicException;
+import java.math.BigDecimal;
+import java.math.BigDecimal;
+
+@Service
+public class AtencionMedicaServicio {
+
+    private final AtencionMedicaRepositorio atencionMedicaRepositorio;
+    private final CitaRepositorio citaRepositorio;
+    private final EmpleadoRepositorio empleadoRepositorio;
+    private final VentaRepositorio ventaRepositorio;
+    private final PacienteRepositorio pacienteRepositorio;
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
+
+    public AtencionMedicaServicio(AtencionMedicaRepositorio atencionMedicaRepositorio,
+            CitaRepositorio citaRepositorio, EmpleadoRepositorio empleadoRepositorio,
+            VentaRepositorio ventaRepositorio, PacienteRepositorio pacienteRepositorio,
+            UsuarioAutenticadoService usuarioAutenticadoService) {
+        this.atencionMedicaRepositorio = atencionMedicaRepositorio;
+        this.citaRepositorio = citaRepositorio;
+        this.empleadoRepositorio = empleadoRepositorio;
+        this.ventaRepositorio = ventaRepositorio;
+        this.pacienteRepositorio = pacienteRepositorio;
+        this.usuarioAutenticadoService = usuarioAutenticadoService;
+    }
+
+    // CREATE
+    @Transactional
+    public AtencionMedicaResponseDTO guardar(AtencionMedicaRequestDTO dto) {
+        Cita cita = citaRepositorio.findById(dto.getCitaId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No se puede crear la atencion medica, cita no encontrada: " + dto.getCitaId()));
+
+        if (cita.getEstado() == EstadoCita.CANCELADA || cita.getEstado() == EstadoCita.NO_ASISTIO) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "No se puede atender a un paciente cuya cita fue cancelada o no asistió.");
+        }
+
+        // NUEVA VALIDACIÓN: Asegurar que este paciente en específico no tenga ya una
+        // historia en esta cita
+        if (atencionMedicaRepositorio.existsByCitaIdAndPacienteId(dto.getCitaId(), dto.getPacienteId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Este paciente ya tiene una historia clínica registrada en esta cita.");
+        }
+
+        // Obtenemos el email del doctor directamente del Token JWT que
+        // usó para entrar
+        String emailDoctorAutenticado = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // Buscamos al empleado conectado, buscando por el email de su usuario asociado
+        Empleado doctor = empleadoRepositorio.findByUsuarioEmail(emailDoctorAutenticado)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no válido"));
+
+        if (!cita.getVeterinario().getId().equals(doctor.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "No puedes registrar la atención médica de un paciente asignado a otro veterinario.");
+        }
+
+        Paciente pacienteAtendido = cita.getPacientes().stream()
+                .filter(p -> p.getId().equals(dto.getPacienteId()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El paciente indicado no pertenece a esta cita."));
+
+        AtencionMedica atencionMedica = new AtencionMedica();
+
+        // CORRECCIÓN 1: Pasamos el objeto, no el ID
+        atencionMedica.setCita(cita);
+        atencionMedica.setPaciente(pacienteAtendido);
+        atencionMedica.setVeterinario(doctor);
+        atencionMedica.setDiagnostico(dto.getDiagnostico());
+        atencionMedica.setFrecuenciaCardiaca(dto.getFrecuenciaCardiaca());
+        atencionMedica.setPeso(dto.getPeso());
+        atencionMedica.setSintomas(dto.getSintomas());
+        atencionMedica.setTemperatura(dto.getTemperatura());
+        atencionMedica.setTratamiento(dto.getTratamiento());
+
+        // REGLA DE NEGOCIO: La cita ya fue atendida, cambia su estado
+        // SOLO si todos los pacientes de la cita fueron atendidos
+        int atencionesPrevias = atencionMedicaRepositorio.countByCitaId(cita.getId());
+        if (atencionesPrevias + 1 == cita.getPacientes().size()) {
+            cita.setEstado(EstadoCita.COMPLETADA);
+            citaRepositorio.save(cita);
+
+            // Generar automáticamente la venta de servicios médicos
+            Venta ventaServicio = new Venta();
+            ventaServicio.setCita(cita);
+            // Obtener el cliente (primer paciente o validación de dueños)
+            Cliente cliente = null;
+            if (cita.getPacientes() != null && !cita.getPacientes().isEmpty()) {
+                cliente = cita.getPacientes().get(0).getCliente();
+            }
+            ventaServicio.setCliente(cliente);
+            ventaServicio.setFechaHora(java.time.LocalDateTime.now());
+            ventaServicio.setEstado(com.veterinaria.modelos.Enums.EstadoVenta.ACTIVA);
+            ventaServicio.setTipoComprobante(com.veterinaria.modelos.Enums.TipoComprobante.BOLETA);
+
+            BigDecimal precioServicio = (cita.getServicio() != null) ? cita.getServicio().getPrecio() : BigDecimal.ZERO;
+            BigDecimal cantidadPacientes = BigDecimal.valueOf(cita.getPacientes().size());
+            BigDecimal totalVenta = precioServicio.multiply(cantidadPacientes);
+
+            ventaServicio.setTotal(totalVenta);
+            ventaServicio.setMontoPagado(BigDecimal.ZERO);
+            ventaServicio.setSaldoPendiente(totalVenta);
+
+            DetalleVenta detalle = new DetalleVenta();
+            detalle.setServicio(cita.getServicio());
+            detalle.setCantidad(cantidadPacientes);
+            detalle.setPrecioUnitario(precioServicio);
+            detalle.setSubtotal(totalVenta);
+
+            ventaServicio.agregarDetalle(detalle);
+            ventaRepositorio.save(ventaServicio);
+        }
+
+        AtencionMedica atencionGuardada = atencionMedicaRepositorio.save(atencionMedica);
+
+        return mapearADTO(atencionGuardada); // Uso un método privado para no repetir código
+    }
+
+    // READ (Listar Todos)
+    public Page<AtencionMedicaResponseDTO> listarTodos(Pageable pageable) {
+        return atencionMedicaRepositorio.findAll(pageable)
+                .map(this::mapearADTO);
+    }
+
+    public Page<AtencionMedicaResponseDTO> listarPorPaciente(Long pacienteId, Pageable pageable) {
+        Paciente paciente = pacienteRepositorio.findById(pacienteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paciente no encontrado"));
+
+        if (usuarioAutenticadoService.esCliente()) {
+            Long clienteActualId = usuarioAutenticadoService.obtenerClienteActual().getId();
+            if (paciente.getCliente() == null || !paciente.getCliente().getId().equals(clienteActualId)) {
+                throw new BusinessLogicException("No puedes ver el historial de mascotas que no te pertenecen.");
+            }
+        }
+        return atencionMedicaRepositorio.findByPacienteIdOrderByFechaCreacionDesc(pacienteId, pageable)
+                .map(this::mapearADTO);
+    }
+
+    // READ (Buscar por ID)
+    public AtencionMedicaResponseDTO buscarPorId(Long id) {
+        return atencionMedicaRepositorio.findById(id)
+                .map(this::mapearADTO)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Atención médica no encontrada con ID: " + id));
+    }
+
+    // READ (Buscar por Cita y Paciente)
+    public AtencionMedicaResponseDTO buscarPorCitaYPaciente(Long citaId, Long pacienteId) {
+        return atencionMedicaRepositorio.findByCitaIdAndPacienteId(citaId, pacienteId)
+                .map(this::mapearADTO)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No se encontró atención médica registrada para esta cita y paciente."));
+    }
+
+    // UPDATE
+    public AtencionMedicaResponseDTO actualizar(Long id, AtencionMedicaRequestDTO dto) {
+        AtencionMedica atencionDb = atencionMedicaRepositorio.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Atención médica no encontrada con ID: " + id));
+
+        if (atencionDb.getFechaCreacion() != null &&
+            java.time.temporal.ChronoUnit.HOURS.between(atencionDb.getFechaCreacion(), java.time.LocalDateTime.now()) > 24) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "No se puede modificar una historia clínica pasadas las 24 horas de su creación por motivos legales.");
+        }
+
+        // Actualizamos solo los datos médicos (generalmente la Cita ID no cambia una
+        // vez atendida)
+        // No actualizamos al doctor, porque el que creó la primera vez es el
+        // responsable
+        atencionDb.setDiagnostico(dto.getDiagnostico());
+        atencionDb.setFrecuenciaCardiaca(dto.getFrecuenciaCardiaca());
+        atencionDb.setPeso(dto.getPeso());
+        atencionDb.setSintomas(dto.getSintomas());
+        atencionDb.setTemperatura(dto.getTemperatura());
+        atencionDb.setTratamiento(dto.getTratamiento());
+
+        AtencionMedica atencionGuardada = atencionMedicaRepositorio.save(atencionDb);
+        return mapearADTO(atencionGuardada);
+    }
+
+    // DELETE
+    @Transactional
+    public void eliminar(Long id) {
+        AtencionMedica atencionDb = atencionMedicaRepositorio.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Atención médica no encontrada con ID: " + id));
+        atencionDb.setActivo(false);
+        atencionMedicaRepositorio.save(atencionDb);
+    }
+
+    // Método Auxiliar (DRY - Don't Repeat Yourself) para transformar Entidad a DTO
+    private AtencionMedicaResponseDTO mapearADTO(AtencionMedica entidad) {
+        AtencionMedicaResponseDTO dto = new AtencionMedicaResponseDTO();
+        dto.setId(entidad.getId());
+        dto.setDiagnostico(entidad.getDiagnostico());
+        dto.setFrecuenciaCardiaca(entidad.getFrecuenciaCardiaca());
+        dto.setPeso(entidad.getPeso());
+        dto.setSintomas(entidad.getSintomas());
+        dto.setTemperatura(entidad.getTemperatura());
+        dto.setTratamiento(entidad.getTratamiento());
+        dto.setResumenIaCliente(entidad.getResumenIaCliente());
+        // CORRECCIÓN 2: Incluimos el ID de la cita en la respuesta si existe
+        if (entidad.getCita() != null) {
+            dto.setCitaId(entidad.getCita().getId());
+        }
+        dto.setActivo(entidad.getActivo());
+        // AQUI: Enviamos el ID del doctor al Frontend
+        if (entidad.getVeterinario() != null) {
+            dto.setVeterinarioId(entidad.getVeterinario().getId());
+            if (entidad.getVeterinario().getUsuario() != null) {
+                dto.setVeterinarioNombre(entidad.getVeterinario().getUsuario().getNombre() + " " + entidad.getVeterinario().getUsuario().getApellido());
+            }
+        }
+        dto.setFechaCreacion(entidad.getFechaCreacion());
+        return dto;
+    }
+}

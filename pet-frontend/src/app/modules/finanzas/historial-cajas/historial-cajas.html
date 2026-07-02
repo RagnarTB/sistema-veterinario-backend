@@ -1,0 +1,85 @@
+<div class="historial-container fade-in-up">
+    <div class="header-section">
+        <div>
+            <h2 class="title-gradient">Historial de Cajas</h2>
+            <p class="subtitle text-muted">Auditoría y revisión de cajas cerradas por jornada</p>
+        </div>
+    </div>
+
+    @if (loading()) {
+    <div class="loading-state">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Cargando historial de cajas...</p>
+    </div>
+    } @else {
+    <mat-card class="premium-card list-card">
+        <div class="table-container">
+            <table mat-table [dataSource]="cajas()">
+                <!-- ID Column -->
+                <ng-container matColumnDef="id">
+                    <th mat-header-cell *matHeaderCellDef> # </th>
+                    <td mat-cell *matCellDef="let caja"> {{ caja.id }} </td>
+                </ng-container>
+
+                <!-- Apertura Column -->
+                <ng-container matColumnDef="fechaApertura">
+                    <th mat-header-cell *matHeaderCellDef> Apertura </th>
+                    <td mat-cell *matCellDef="let caja"> {{ caja.fechaApertura | date:'dd/MM/yyyy HH:mm' }} </td>
+                </ng-container>
+
+                <!-- Cierre Column -->
+                <ng-container matColumnDef="fechaCierre">
+                    <th mat-header-cell *matHeaderCellDef> Cierre </th>
+                    <td mat-cell *matCellDef="let caja"> {{ caja.fechaCierre | date:'dd/MM/yyyy HH:mm' }} </td>
+                </ng-container>
+
+                <!-- Empleado Column -->
+                <ng-container matColumnDef="empleadoNombre">
+                    <th mat-header-cell *matHeaderCellDef> Empleado </th>
+                    <td mat-cell *matCellDef="let caja">
+                        <div class="user-cell">
+                            <mat-icon class="text-primary" style="font-size: 18px; width: 18px; height: 18px;">person</mat-icon>
+                            <span>{{ caja.empleadoNombre }}</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Saldo Inicial Column -->
+                <ng-container matColumnDef="saldoInicial">
+                    <th mat-header-cell *matHeaderCellDef> Saldo Inicial </th>
+                    <td mat-cell *matCellDef="let caja"> {{ caja.saldoInicial | currency }} </td>
+                </ng-container>
+
+                <!-- Saldo Final Column -->
+                <ng-container matColumnDef="saldoFinal">
+                    <th mat-header-cell *matHeaderCellDef> Saldo Arqueado </th>
+                    <td mat-cell *matCellDef="let caja" class="font-bold text-primary"> {{ caja.saldoFinal | currency }} </td>
+                </ng-container>
+
+                <!-- Acciones Column -->
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef class="text-center"> Acciones </th>
+                    <td mat-cell *matCellDef="let caja" class="text-center">
+                        <button mat-icon-button color="primary" (click)="verDetalles(caja)" matTooltip="Ver Detalles (Kardex)">
+                            <mat-icon>receipt_long</mat-icon>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover-row"></tr>
+
+                <!-- No Data -->
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell empty-cell" [attr.colspan]="displayedColumns.length">
+                        No hay cajas cerradas en el historial.
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <mat-paginator [length]="totalElements()" [pageSize]="pageSize()" [pageIndex]="pageIndex()"
+            [pageSizeOptions]="[5, 10, 25, 100]" (page)="onPageChange($event)">
+        </mat-paginator>
+    </mat-card>
+    }
+</div>

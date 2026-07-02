@@ -1,0 +1,37 @@
+<h2 mat-dialog-title>
+    Modificar Permisos: {{ data.rol.nombre.replace('ROLE_', '') }}
+</h2>
+
+<mat-dialog-content>
+    <div class="permisos-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+        @if (loading()) {
+            <div class="loading-state" style="grid-column: span 2; display: flex; justify-content: center; padding: 2rem;">
+                <mat-spinner diameter="40"></mat-spinner>
+            </div>
+        } @else {
+            @for (permiso of permisosDisponibles(); track permiso.nombre) {
+                <mat-checkbox
+                    [checked]="permisosSeleccionados.has(permiso.nombre)"
+                    (change)="togglePermiso(permiso.nombre, $event.checked)"
+                    color="primary">
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-weight: 500;">{{ permiso.nombre.replace(/_/g, ' ') }}</span>
+                        <small style="color: #666; font-size: 0.8em; white-space: normal; line-height: 1.2;">{{ permiso.descripcion }}</small>
+                    </div>
+                </mat-checkbox>
+            }
+            @if (permisosDisponibles().length === 0) {
+                <div style="grid-column: span 2; text-align: center; color: #666; padding: 2rem;">
+                    No hay permisos disponibles en el sistema.
+                </div>
+            }
+        }
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancelar</button>
+    <button mat-flat-button color="primary" (click)="guardar()" [disabled]="loading()">
+        Guardar Cambios
+    </button>
+</mat-dialog-actions>

@@ -1,0 +1,16 @@
+package com.veterinaria.dtos;
+
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RolResponseDTO {
+    private Long id;
+    private String nombre;
+    private Boolean activo;
+    private List<PermisoDTO> permisos;
+}

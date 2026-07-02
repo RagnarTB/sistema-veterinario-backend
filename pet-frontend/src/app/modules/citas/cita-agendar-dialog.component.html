@@ -1,0 +1,486 @@
+<div class="flex flex-col h-full bg-white">
+    <!-- Dialog Header -->
+    <div class="flex justify-between items-center p-5 border-bottom">
+        <div class="flex items-center gap-sm">
+            <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary">
+                <span class="material-icons-round">{{ data.cita ? 'edit_calendar' : 'add_circle' }}</span>
+            </div>
+            <div>
+                <h2 class="font-bold text-lg m-0" style="color: var(--text-primary);">{{ data.cita ? 'Reprogramar Cita'
+                    : 'Agendar Nueva Cita' }}</h2>
+                <p class="text-xs text-muted m-0">Complete los pasos para {{ data.cita ? 'reprogramar' : 'agendar' }}
+                </p>
+            </div>
+        </div>
+        <button class="btn-icon" (click)="dialogRef.close()"><span class="material-icons-round">close</span></button>
+    </div>
+
+    <mat-dialog-content class="p-0 custom-scrollbar" style="max-height: 65vh;">
+        <mat-stepper [linear]="!data.cita" #stepper class="cita-stepper" [selectedIndex]="stepIndex">
+
+            <!-- PASO 1: Cliente y Pacientes -->
+            <mat-step [completed]="pacientesSeleccionados().length > 0" label="Dueño y Pacientes">
+                <div class="p-6">
+                    <div class="mb-6">
+                        <h3 class="font-bold text-sm mb-3 flex items-center gap-xs"
+                            style="color: var(--text-secondary);">
+                            <span class="material-icons-round text-muted" style="font-size: 18px;">person_search</span>
+                            Seleccionar Dueño (Cliente)
+                        </h3>
+
+                        @if (!clienteSeleccionado()) {
+                        @if (!authService.hasRole('ROLE_CLIENTE')) {
+                        <div class="form-group mb-4" style="position: relative;">
+                            <span class="material-icons-round text-muted"
+                                style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);">search</span>
+                            <input type="text" class="form-control" style="padding-left: 40px; height: 48px;"
+                                placeholder="Buscar por DNI o Nombre del cliente..." [matAutocomplete]="autoCliente"
+                                [ngModel]="clienteQuery" (ngModelChange)="onClienteSearch($event)">
+                            <mat-autocomplete #autoCliente="matAutocomplete"
+                                (optionSelected)="onClienteSelected($event.option.value)">
+                                @for (c of clientesFiltrados(); track c.id) {
+                                <mat-option [value]="c" class="py-2" style="height: auto;">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-primary font-bold text-xs border">
+                                            {{ c.nombre.charAt(0) }}{{ c.apellido.charAt(0) }}
+                                        </div>
+                                        <div>
+                                            <p class="font-bold text-sm m-0 leading-tight"
+                                                style="color: var(--text-primary);">{{ c.nombre }} {{ c.apellido }}</p>
+                                            <p class="text-xs text-muted m-0">DNI: {{ c.dni }}</p>
+                                        </div>
+                                    </div>
+                                </mat-option>
+                                }
+                            </mat-autocomplete>
+                        </div>
+
+                        <div class="flex items-center gap-3 my-4">
+                            <div class="flex-1 border-bottom"></div>
+                            <span class="text-xs font-bold text-muted uppercase">¿Cliente nuevo?</span>
+                            <div class="flex-1 border-bottom"></div>
+                        </div>
+                        } @else {
+                        <div class="flex flex-col justify-center items-center py-6 text-muted">
+                            <mat-spinner diameter="30" class="mb-3"></mat-spinner>
+                            <p>Cargando tu perfil...</p>
+                        </div>
+                        }
+
+                        @if (!modoClienteRapido() && !authService.hasRole('ROLE_CLIENTE')) {
+                        <button class="btn btn-secondary w-full justify-center"
+                            style="border: 1px dashed var(--border-color); height: 48px;" (click)="activarModoRapido()">
+                            <span class="material-icons-round">person_add</span> Registrar Cliente Rápido (sin cuenta
+                            web)
+                        </button>
+                        } @else {
+                        <div class="card p-4"
+                            style="background: var(--bg-surface); border: 1px solid var(--border-color);">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-bold text-xs text-primary uppercase m-0 flex items-center gap-xs">
+                                    <span class="material-icons-round" style="font-size: 16px;">bolt</span> Registro
+                                    Rápido
+                                </h4>
+                                <button class="btn-icon text-muted hover:text-danger"
+                                    (click)="cancelarModoRapido()"><span class="material-icons-round"
+                                        style="font-size: 18px;">close</span></button>
+                            </div>
+
+                            <div class="flex gap-sm mb-3">
+                                <div class="form-group mb-0 flex-1">
+                                    <label class="form-label text-xs">DNI <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" [(ngModel)]="rapidoDni"
+                                        (ngModelChange)="onRapidoDniChange()" maxlength="8"
+                                        placeholder="8 dígitos">
+                                </div>
+                                <div class="flex items-end">
+                                    <button class="btn btn-primary"
+                                        [disabled]="rapidoDni.length !== 8 || buscandoReniec()"
+                                        (click)="buscarEnReniec()">
+                                        @if (buscandoReniec()) { <mat-spinner diameter="16"></mat-spinner> }
+                                        @else { <span class="material-icons-round"
+                                            style="font-size: 16px;">search</span> RENIEC }
+                                    </button>
+                                </div>
+                            </div>
+
+                            @if (reniecConsultado()) {
+                            <div class="grid grid-cols-2 gap-sm mb-3">
+                                <div class="form-group mb-0">
+                                    <label class="form-label text-xs">Nombre <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" [(ngModel)]="rapidoNombre" [disabled]="reniecConsultado()">
+                                </div>
+                                <div class="form-group mb-0">
+                                    <label class="form-label text-xs">Apellido <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" [(ngModel)]="rapidoApellido" [disabled]="reniecConsultado()">
+                                </div>
+                            </div>
+                            <div class="form-group mb-4">
+                                <label class="form-label text-xs">Teléfono (opcional)</label>
+                                <input type="text" class="form-control" [(ngModel)]="rapidoTelefono"
+                                    placeholder="Opcional">
+                            </div>
+
+                            <h4 class="font-bold text-xs text-secondary uppercase mb-2 flex items-center gap-xs">
+                                <span class="material-icons-round" style="font-size: 16px;">pets</span> Mascotas
+                            </h4>
+                            @for (m of rapidoMascotas; track $index; let i = $index) {
+                            <div class="card p-3 mb-2 relative" style="background: white;">
+                                @if (rapidoMascotas.length > 1) {
+                                <button class="btn-icon absolute top-2 right-2 text-danger"
+                                    (click)="quitarMascotaRapida(i)"><span class="material-icons-round"
+                                        style="font-size: 16px;">close</span></button>
+                                }
+                                <div class="grid grid-cols-2 gap-sm">
+                                    <div class="form-group mb-0">
+                                        <label class="form-label text-xs">Nombre mascota <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" [(ngModel)]="m.nombre"
+                                            placeholder="Ej: Luna">
+                                    </div>
+                                    <div class="form-group mb-0">
+                                        <label class="form-label text-xs">Especie <span
+                                                class="text-danger">*</span></label>
+                                        <select class="form-control" [(ngModel)]="m.especieId">
+                                            <option [ngValue]="0" disabled>Seleccione...</option>
+                                            @for (e of especiesDisponibles(); track e.id) { <option [ngValue]="e.id">{{
+                                                e.nombre }}</option> }
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-0">
+                                        <label class="form-label text-xs">Raza (opcional)</label>
+                                        <input type="text" class="form-control" [(ngModel)]="m.raza"
+                                            placeholder="Ej: Labrador">
+                                    </div>
+                                    <div class="form-group mb-0">
+                                        <label class="form-label text-xs">Sexo <span class="text-danger">*</span></label>
+                                        <select class="form-control" [(ngModel)]="m.sexo">
+                                            <option value="MACHO">Macho</option>
+                                            <option value="HEMBRA">Hembra</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-0">
+                                        <label class="form-label text-xs">Fecha Nacimiento <span
+                                                class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" [(ngModel)]="m.fechaNacimiento"
+                                            [max]="hoy">
+                                    </div>
+                                </div>
+                            </div>
+                            }
+                            <button class="btn btn-secondary btn-sm w-full mb-4 justify-center"
+                                style="border: 1px dashed var(--border-color);" (click)="agregarMascotaRapida()">
+                                <span class="material-icons-round" style="font-size: 16px;">add</span> Agregar otra
+                                mascota
+                            </button>
+
+                            <button class="btn btn-primary w-full justify-center"
+                                [disabled]="!puedeRegistrarRapido() || registrandoRapido()"
+                                (click)="registrarClienteRapido()">
+                                @if (registrandoRapido()) { <mat-spinner diameter="18"></mat-spinner> }
+                                @else { <span class="material-icons-round">check_circle</span> Guardar Cliente y
+                                Continuar }
+                            </button>
+                            }
+                        </div>
+                        }
+                        } @else {
+                        <div class="card p-4 flex items-center gap-md border-primary-300"
+                            style="background: var(--bg-surface);">
+                            <div
+                                class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg">
+                                {{ clienteSeleccionado()!.nombre.charAt(0) }}{{
+                                clienteSeleccionado()!.apellido.charAt(0) }}
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-md m-0" style="color: var(--text-primary);">{{
+                                    clienteSeleccionado()!.nombre }} {{ clienteSeleccionado()!.apellido }}</h4>
+                                <div class="flex gap-sm items-center mt-1">
+                                    <span class="badge badge-confirmada text-xs">DNI: {{ clienteSeleccionado()!.dni
+                                        }}</span>
+                                    <span class="text-xs text-muted flex items-center gap-xs"><span
+                                            class="material-icons-round text-sm">phone</span> {{
+                                        clienteSeleccionado()!.telefono || 'Sin teléfono' }}</span>
+                                </div>
+                            </div>
+                            @if (!authService.hasRole('ROLE_CLIENTE')) {
+                            <button class="btn btn-danger btn-sm" (click)="limpiarCliente()" title="Cambiar cliente">
+                                <span class="material-icons-round">person_remove</span>
+                            </button>
+                            }
+                        </div>
+                        }
+                    </div>
+
+                    @if (clienteSeleccionado()) {
+                    <div>
+                        <h3 class="font-bold text-sm mb-3 flex items-center gap-xs"
+                            style="color: var(--text-secondary);">
+                            <span class="material-icons-round text-muted" style="font-size: 18px;">pets</span>
+                            Seleccionar Mascotas
+                        </h3>
+
+                        @if (loadingPacientes()) {
+                        <div class="text-center py-6"><mat-spinner diameter="30" class="mx-auto"></mat-spinner></div>
+                        } @else if (pacientesDisponibles().length === 0) {
+                        <div class="card p-8 text-center text-muted"
+                            style="border: 1px dashed var(--border-color); background: transparent;">
+                            <span class="material-icons-round text-4xl mb-2">pets_off</span>
+                            <p class="text-sm font-bold uppercase mb-1">Sin mascotas registradas</p>
+                            <p class="text-xs">Debe registrar al menos una mascota en el módulo de Pacientes.</p>
+                        </div>
+                        } @else {
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-sm">
+                            @for (p of pacientesDisponibles(); track p.id) {
+                            <div class="card p-3 paciente-card-v3 flex items-center gap-sm cursor-pointer transition-all"
+                                [class.selected]="isPacienteSelected(p.id)" (click)="togglePaciente(p)">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-surface flex items-center justify-center border paciente-avatar">
+                                    <span class="material-icons-round text-muted">pets</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-sm m-0 leading-tight" style="color: var(--text-primary);">
+                                        {{ p.nombre }}</p>
+                                    <p class="text-xs text-muted m-0">{{ p.especieNombre }} • {{ p.raza || 'Sin raza' }}
+                                    </p>
+                                </div>
+                                <div class="selection-indicator">
+                                    <span class="material-icons-round">{{ isPacienteSelected(p.id) ? 'check_circle' :
+                                        'radio_button_unchecked' }}</span>
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        }
+
+                        @if (pacientesSeleccionados().length > 0) {
+                        <div
+                            class="mt-4 badge badge-agendada flex items-center gap-xs text-xs font-bold w-full justify-center py-2">
+                            <span class="material-icons-round" style="font-size: 16px;">verified</span>
+                            {{ pacientesSeleccionados().length }} {{ pacientesSeleccionados().length === 1 ? 'mascota
+                            seleccionada' : 'mascotas seleccionadas' }}
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+            </mat-step>
+
+            <!-- PASO 2: Servicio y Veterinario -->
+            <mat-step [completed]="!!servicioId && !!veterinarioId && !!motivo" label="Servicio y Veterinario">
+                <div class="p-6">
+                    <div class="form-group mb-4">
+                        <label class="form-label">Servicio Médico <span class="text-danger">*</span></label>
+                        <select class="form-control" [(ngModel)]="servicioId" (ngModelChange)="onServicioChange()">
+                            <option [ngValue]="null" disabled>Seleccione servicio...</option>
+                            @for (s of servicios(); track s.id) {
+                            <option [ngValue]="s.id">{{ s.nombre }} — S/ {{ s.precio }} ({{ s.duracionMinutos }}min + {{
+                                s.bufferMinutos }}min buffer)</option>
+                            }
+                        </select>
+                        @if (servicioId) {
+                        <p class="text-xs text-secondary mt-2 badge bg-surface w-full block">
+                            <span class="font-bold">Total estimado:</span> {{ getDuracionTotal() *
+                            pacientesSeleccionados().length }} min ({{ getDuracionTotal() }} min por paciente)
+                        </p>
+                        }
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="form-label">Veterinario <span class="text-danger">*</span></label>
+                        <select class="form-control" [(ngModel)]="veterinarioId">
+                            <option [ngValue]="null" disabled>Seleccione veterinario...</option>
+                            @for (v of veterinarios(); track v.id) {
+                            <option [ngValue]="v.id">Dr(a). {{ v.nombre }} {{ v.apellido }} — {{ v.especialidad ||
+                                'General' }}</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="form-label">Motivo de la Consulta <span class="text-danger">*</span></label>
+                        <textarea class="form-control" rows="3" [(ngModel)]="motivo" maxlength="255"
+                            placeholder="Describa brevemente el motivo..."></textarea>
+                        <p class="text-xs text-muted text-right mt-1">{{ motivo.length }}/255</p>
+                    </div>
+                </div>
+            </mat-step>
+
+            <!-- PASO 3: Fecha y Horario -->
+            <mat-step [completed]="!!horaSeleccionada" label="Fecha y Horario">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-md mb-6">
+                        <div class="form-group mb-0">
+                            <label class="form-label">Fecha de la Cita <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" style="height: 48px; font-weight: 600;"
+                                [(ngModel)]="fechaCita" [min]="hoy">
+                        </div>
+                        <div class="flex items-end">
+                            <button class="btn btn-primary w-full justify-center" style="height: 48px;"
+                                (click)="buscarSlots()"
+                                [disabled]="!fechaCita || !veterinarioId || !servicioId || loadingSlots()">
+                                <span class="material-icons-round text-lg">search</span> Consultar Disponibilidad
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (loadingSlots()) {
+                    <div class="text-center py-10"><mat-spinner diameter="40" class="mx-auto"></mat-spinner></div>
+                    }
+
+                    @if (slotsBuscados() && !loadingSlots()) {
+                    <div class="fade-in-up">
+                        @if (slots().length === 0) {
+                        <div class="slot-empty-state">
+                            <span class="material-icons-round slot-empty-icon">event_busy</span>
+                            <p class="slot-empty-title">Sin horarios disponibles</p>
+                            <p class="slot-empty-sub">El veterinario no tiene turnos o la agenda está llena para este día.</p>
+                        </div>
+                        } @else {
+                        <div class="slot-picker-header">
+                            <div class="slot-picker-title">
+                                <span class="material-icons-round" style="font-size:16px; color: var(--color-primary-500);">schedule</span>
+                                Horarios Disponibles
+                            </div>
+                            <span class="slot-picker-count">{{ slots().length }} bloques disponibles</span>
+                        </div>
+
+                        <!-- Mañana (< 12:00) -->
+                        @if (getSlotsByPeriod('morning').length > 0) {
+                        <div class="slot-period-section">
+                            <div class="slot-period-label">
+                                <span class="material-icons-round" style="font-size: 14px;">wb_sunny</span>
+                                Mañana
+                            </div>
+                            <div class="slot-grid">
+                                @for (slot of getSlotsByPeriod('morning'); track slot.horaInicio) {
+                                <button class="slot-card" [class.slot-card--selected]="horaSeleccionada === slot.horaInicio"
+                                    [class.slot-card--past]="isSlotPast(slot)" [disabled]="isSlotPast(slot)"
+                                    (click)="horaSeleccionada = slot.horaInicio" type="button">
+                                    <div class="slot-card-time">{{ slot.horaInicio.substring(0,5) }}</div>
+                                    <div class="slot-card-range">→ {{ slot.horaFin.substring(0,5) }}</div>
+                                    <div class="slot-card-period">AM</div>
+                                    @if (horaSeleccionada === slot.horaInicio) {
+                                    <div class="slot-card-check"><span class="material-icons-round" style="font-size:14px;">check_circle</span></div>
+                                    }
+                                </button>
+                                }
+                            </div>
+                        </div>
+                        }
+
+                        <!-- Tarde (12:00 - 18:00) -->
+                        @if (getSlotsByPeriod('afternoon').length > 0) {
+                        <div class="slot-period-section">
+                            <div class="slot-period-label">
+                                <span class="material-icons-round" style="font-size: 14px;">light_mode</span>
+                                Tarde
+                            </div>
+                            <div class="slot-grid">
+                                @for (slot of getSlotsByPeriod('afternoon'); track slot.horaInicio) {
+                                <button class="slot-card" [class.slot-card--selected]="horaSeleccionada === slot.horaInicio"
+                                    [class.slot-card--past]="isSlotPast(slot)" [disabled]="isSlotPast(slot)"
+                                    (click)="horaSeleccionada = slot.horaInicio" type="button">
+                                    <div class="slot-card-time">{{ slot.horaInicio.substring(0,5) }}</div>
+                                    <div class="slot-card-range">→ {{ slot.horaFin.substring(0,5) }}</div>
+                                    <div class="slot-card-period">PM</div>
+                                    @if (horaSeleccionada === slot.horaInicio) {
+                                    <div class="slot-card-check"><span class="material-icons-round" style="font-size:14px;">check_circle</span></div>
+                                    }
+                                </button>
+                                }
+                            </div>
+                        </div>
+                        }
+
+                        <!-- Noche (> 18:00) -->
+                        @if (getSlotsByPeriod('evening').length > 0) {
+                        <div class="slot-period-section">
+                            <div class="slot-period-label">
+                                <span class="material-icons-round" style="font-size: 14px;">nights_stay</span>
+                                Noche
+                            </div>
+                            <div class="slot-grid">
+                                @for (slot of getSlotsByPeriod('evening'); track slot.horaInicio) {
+                                <button class="slot-card" [class.slot-card--selected]="horaSeleccionada === slot.horaInicio"
+                                    [class.slot-card--past]="isSlotPast(slot)" [disabled]="isSlotPast(slot)"
+                                    (click)="horaSeleccionada = slot.horaInicio" type="button">
+                                    <div class="slot-card-time">{{ slot.horaInicio.substring(0,5) }}</div>
+                                    <div class="slot-card-range">→ {{ slot.horaFin.substring(0,5) }}</div>
+                                    <div class="slot-card-period">PM</div>
+                                    @if (horaSeleccionada === slot.horaInicio) {
+                                    <div class="slot-card-check"><span class="material-icons-round" style="font-size:14px;">check_circle</span></div>
+                                    }
+                                </button>
+                                }
+                            </div>
+                        </div>
+                        }
+
+                        }
+                    </div>
+                    }
+                </div>
+            </mat-step>
+
+            <!-- PASO 4: Resumen -->
+            <mat-step label="Confirmación">
+                <div class="p-6">
+                    <h3 class="font-bold text-sm mb-3" style="color: var(--text-secondary);">Resumen de la Cita</h3>
+                    <div class="card p-4 bg-surface" style="border: 1px solid var(--border-color);">
+                        <div class="flex justify-between border-bottom pb-2 mb-2"><span
+                                class="text-xs text-muted font-bold uppercase">Servicio</span><span
+                                class="font-bold text-sm">{{ getServicio()?.nombre }}</span></div>
+                        <div class="flex justify-between border-bottom pb-2 mb-2"><span
+                                class="text-xs text-muted font-bold uppercase">Veterinario</span><span
+                                class="font-bold text-sm">Dr(a). {{ getVet()?.nombre }} {{ getVet()?.apellido }}</span>
+                        </div>
+                        <div class="flex justify-between border-bottom pb-2 mb-2"><span
+                                class="text-xs text-muted font-bold uppercase">Fecha</span><span
+                                class="font-bold text-sm">{{ fechaCita }}</span></div>
+                        <div class="flex justify-between border-bottom pb-2 mb-2"><span
+                                class="text-xs text-muted font-bold uppercase">Horario</span><span
+                                class="font-bold text-sm">{{ horaSeleccionada?.substring(0,5) }}</span></div>
+                        <div class="flex justify-between border-bottom pb-2 mb-2"><span
+                                class="text-xs text-muted font-bold uppercase">Cliente</span><span
+                                class="font-bold text-sm">{{ clienteSeleccionado()?.nombre }} {{
+                                clienteSeleccionado()?.apellido }}</span></div>
+                        <div class="border-bottom pb-2 mb-2">
+                            <span class="text-xs text-muted font-bold uppercase block mb-1">Pacientes</span>
+                            <div class="flex flex-wrap gap-xs">
+                                @for (p of pacientesSeleccionados(); track p.id) {
+                                <span class="badge bg-white text-primary border text-xs">{{ p.nombre }}</span>
+                                }
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-xs text-muted font-bold uppercase block mb-1">Motivo</span>
+                            <p class="text-sm m-0">{{ motivo }}</p>
+                        </div>
+                    </div>
+                </div>
+            </mat-step>
+        </mat-stepper>
+    </mat-dialog-content>
+
+    <div class="p-4 border-top flex justify-between bg-surface mt-auto">
+        <button class="btn btn-secondary" (click)="dialogRef.close()">Cancelar</button>
+        <div class="flex gap-sm">
+            @if (stepIndex > 0) {
+            <button class="btn btn-secondary" (click)="prevStep()"><span class="material-icons-round"
+                    style="font-size:16px">arrow_back</span> Anterior</button>
+            }
+            @if (stepIndex < 3) { <button class="btn btn-primary" (click)="nextStep()" [disabled]="!canAdvance()">
+                Siguiente <span class="material-icons-round" style="font-size:16px">arrow_forward</span></button>
+                } @else {
+                <button class="btn btn-primary" (click)="confirmar()" [disabled]="submitting() || !isFormValid()">
+                    @if (submitting()) { <mat-spinner diameter="18" class="mr-2"></mat-spinner> }
+                    <span class="material-icons-round">check_circle</span> {{ data.cita ? 'Guardar Cambios' : 'Confirmar
+                    Cita' }}
+                </button>
+                }
+        </div>
+    </div>
+</div>

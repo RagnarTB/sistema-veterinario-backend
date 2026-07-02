@@ -1,0 +1,267 @@
+/* ==========================================================================
+   1. CONTENEDOR DEL DIÁLOGO (ANGULAR MATERIAL)
+   ========================================================================== */
+.dialog-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    padding: 24px 24px 16px;
+}
+
+.dialog-title .material-icons-round {
+    color: #00b4d8;
+    font-size: 28px;
+}
+
+.dialog-content-scroll {
+    max-height: 65vh;
+    padding: 0 24px 24px !important;
+    overflow-y: auto;
+}
+
+.dialog-actions {
+    padding: 16px 24px 24px !important;
+}
+
+/* BOTÓN CERRAR PANEL (ROJO SÓLIDO, LETRA NORMAL) */
+.btn-cancel {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    font-weight: 500 !important;
+    font-size: 0.95rem;
+    letter-spacing: 0.3px;
+    padding: 0 20px !important;
+    height: 40px !important;
+    border-radius: 6px !important;
+    border: none !important;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.btn-cancel:hover {
+    background-color: #dc2626 !important;
+}
+
+/* ==========================================================================
+   2. FORMULARIO SUPERIOR (SOLUCIÓN ABSOLUTA PARA "NUEVA ESPECIE")
+   ========================================================================== */
+.add-container {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+    /* Espacio extra arriba para que la etiqueta tenga espacio libre */
+    margin-bottom: 24px;
+    align-items: center;
+}
+
+.add-input {
+    flex: 1;
+}
+
+/* --- FIX DEFINITIVO PARA LA ETIQUETA FLOTANTE --- */
+.add-input ::ng-deep .mat-mdc-form-field-wrapper {
+    overflow: visible !important;
+}
+
+.add-input ::ng-deep .mat-mdc-form-field-flex {
+    height: 56px !important;
+    align-items: center !important;
+    overflow: visible !important;
+}
+
+/* Forzar visualización hacia afuera en todas las capas de la estructura outline */
+.add-input ::ng-deep .mdc-notched-outline,
+.add-input ::ng-deep .mdc-notched-outline__notch,
+.add-input ::ng-deep .mdc-notched-outline__leading,
+.add-input ::ng-deep .mdc-notched-outline__trailing {
+    overflow: visible !important;
+}
+
+/* Posicionamiento absoluto forzado para sacar el texto de la zona de corte */
+.add-input ::ng-deep .mat-mdc-form-field-flex .mdc-notched-outline__label {
+    position: absolute !important;
+    top: -6px !important;
+    /* Lo saca completamente hacia arriba del borde */
+    left: 12px !important;
+    overflow: visible !important;
+    max-width: none !important;
+    display: inline-block !important;
+    background-color: #ffffff !important;
+    /* Tapa el borde gris de fondo */
+    padding: 0 6px !important;
+    font-size: 0.85rem !important;
+    transform: none !important;
+    /* Desactiva la transformación nativa que la corta */
+    color: #00b4d8 !important;
+    /* Turquesa nítido */
+    z-index: 5 !important;
+}
+
+/* Desactivar animación nativa al enfocar para evitar saltos locos del texto */
+.add-input ::ng-deep .mat-mdc-form-field-label-floating .mdc-notched-outline__label {
+    transform: none !important;
+}
+
+.add-input ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none !important;
+}
+
+/* BOTÓN GUARDAR (TURQUESA SÓLIDO, LETRA NORMAL) */
+.btn-add {
+    height: 56px !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px;
+    padding: 0 24px !important;
+    background-color: #00b4d8 !important;
+    color: #ffffff !important;
+    border: none !important;
+    transition: background-color 0.2s, opacity 0.2s;
+    cursor: pointer;
+}
+
+.btn-add:hover:not([disabled]) {
+    background-color: #0096c7 !important;
+}
+
+/* Botón Guardar deshabilitado visible */
+.btn-add[disabled] {
+    background-color: #e2e8f0 !important;
+    color: #475569 !important;
+    opacity: 0.9 !important;
+    cursor: not-allowed;
+}
+
+.btn-add[disabled] mat-icon {
+    color: #475569 !important;
+}
+
+/* ==========================================================================
+   3. TABLA PREMIUM (ESTILOS COMPATIBLES CON MAT-TABLE)
+   ========================================================================== */
+.table-container {
+    position: relative;
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.custom-table {
+    width: 100%;
+    background: transparent !important;
+    min-width: 300px;
+}
+
+.custom-table .mat-mdc-header-row {
+    border-bottom: 2px solid #e2e8f0 !important;
+    min-height: 48px;
+}
+
+.custom-table .mat-mdc-row {
+    border-bottom: 1px solid #f1f5f9 !important;
+    min-height: 56px;
+}
+
+.custom-table .mat-mdc-header-cell {
+    font-size: 0.75rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #64748b !important;
+    font-weight: 700 !important;
+    border-bottom: none !important;
+    padding: 0 8px !important;
+}
+
+.custom-table .mat-mdc-cell {
+    padding: 0 8px !important;
+    border-bottom: none !important;
+}
+
+.row-disabled {
+    background-color: rgba(248, 250, 252, 0.6) !important;
+}
+
+.row-disabled .cell-nombre {
+    color: #94a3b8 !important;
+}
+
+/* ==========================================================================
+   4. COMPONENTES INTERNOS (BADGES Y ICONOS)
+   ========================================================================== */
+.cell-nombre {
+    font-weight: 600;
+    color: #1e293b;
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-badge {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.status-active {
+    background-color: #ecfdf5 !important;
+    color: #10b981 !important;
+}
+
+.status-inactive {
+    background-color: #fef2f2 !important;
+    color: #ef4444 !important;
+}
+
+/* ==========================================================================
+   5. ESTADOS DE CARGA Y TABLA VACÍA
+   ========================================================================== */
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(1px);
+}
+
+.empty-cell {
+    padding: 40px !important;
+    text-align: center;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: #94a3b8;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+    .add-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .btn-add {
+        width: 100%;
+    }
+    .cell-nombre {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}

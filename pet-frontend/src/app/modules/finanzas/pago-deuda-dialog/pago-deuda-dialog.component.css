@@ -1,0 +1,5 @@
+.dialog-title {
+    margin: 0;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--color-border);
+}

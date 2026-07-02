@@ -1,0 +1,143 @@
+<div class="layout-wrapper" [class.sidebar-collapsed]="isCollapsed()">
+
+    <!-- ─────────────────────────────────────────────────
+       SIDEBAR
+  ───────────────────────────────────────────────── -->
+    <aside class="sidebar" [class.collapsed]="isCollapsed()" [class.mobile-open]="isMobileOpen()">
+
+        <!-- Logo -->
+        <div class="sidebar-logo" (click)="toggleSidebar()">
+            <div class="logo-icon">
+                <span class="material-icons-round">pets</span>
+            </div>
+            @if (!isCollapsed()) {
+            <div class="logo-text">
+                <span class="logo-name">VetCare</span>
+                <span class="logo-sub">Gestión Veterinaria</span>
+            </div>
+            }
+            <button class="collapse-btn" [matTooltip]="isCollapsed() ? 'Expandir' : 'Colapsar'">
+                <span class="material-icons-round">
+                    {{ isCollapsed() ? 'chevron_right' : 'chevron_left' }}
+                </span>
+            </button>
+        </div>
+
+        <!-- Navegación Acordeón -->
+        <nav class="sidebar-nav">
+            @for (group of visibleNavGroups(); track group.label) {
+            <div class="nav-group">
+                <button class="nav-group-header" [class.active]="group.expanded && !isCollapsed()"
+                    (click)="toggleGroup(group)" [matTooltip]="isCollapsed() ? group.label : ''"
+                    matTooltipPosition="right">
+                    <span class="material-icons-round nav-icon">{{ group.icon }}</span>
+                    @if (!isCollapsed()) {
+                    <span class="nav-label">{{ group.label }}</span>
+                    <span class="material-icons-round chevron" [class.rotated]="group.expanded">expand_more</span>
+                    }
+                </button>
+
+                <div class="nav-group-children" [class.open]="group.expanded && !isCollapsed()">
+                    @for (child of group.children; track child.route) {
+                    <a [routerLink]="child.route" routerLinkActive="active" class="nav-item child-item" (click)="closeMobileSidebar()">
+                        <span class="material-icons-round nav-icon child-icon">{{ child.icon }}</span>
+                        <span class="nav-label">{{ child.label }}</span>
+                    </a>
+                    }
+                </div>
+            </div>
+            }
+        </nav>
+
+        <!-- Perfil en la base del sidebar -->
+        <div class="sidebar-profile">
+            <div class="profile-avatar">
+                <span class="material-icons-round">person</span>
+            </div>
+            @if (!isCollapsed()) {
+            <div class="profile-info">
+                <span class="profile-email">{{ authService.currentEmail() }}</span>
+                <span class="profile-role">{{ getRolLabel() }}</span>
+            </div>
+            }
+        </div>
+    </aside>
+
+    <!-- ─────────────────────────────────────────────────
+       CONTENIDO PRINCIPAL
+  ───────────────────────────────────────────────── -->
+    <div class="main-area">
+
+        <!-- Header top -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" (click)="toggleSidebar()">
+                    <span class="material-icons-round">menu</span>
+                </button>
+            </div>
+
+            <div class="header-right">
+                <button class="icon-btn" matTooltip="Notificaciones Hospitalización" (click)="clearAlerts()">
+                    <span class="material-icons-round" [matBadge]="unreadAlertsCount()" matBadgeColor="warn"
+                        [matBadgeHidden]="unreadAlertsCount() === 0">notifications_none</span>
+                </button>
+
+                <button class="user-menu-btn" [matMenuTriggerFor]="userMenu">
+                    <div class="user-avatar">
+                        <span class="material-icons-round">person</span>
+                    </div>
+                    <span class="user-email">{{ authService.currentEmail() }}</span>
+                    <span class="material-icons-round">expand_more</span>
+                </button>
+
+                <mat-menu #userMenu="matMenu" class="user-dropdown">
+                    @if (authService.activeRole() === 'ROLE_VETERINARIO') {
+                    <button mat-menu-item routerLink="/app/citas">
+                        <span class="material-icons-round">calendar_month</span>
+                        <span>Mis Citas</span>
+                    </button>
+                    }
+                    <button mat-menu-item (click)="abrirDialogoPassword()">
+                        <span class="material-icons-round">lock</span>
+                        <span>Cambiar contraseña</span>
+                    </button>
+
+                    @if (rolesParaCambiar.length > 1) {
+                    <mat-menu #roleMenu="matMenu">
+                        @for (rol of rolesParaCambiar; track rol) {
+                        <button mat-menu-item (click)="cambiarRol(rol)" [disabled]="rol === authService.activeRole()">
+                            <span class="material-icons-round"
+                                [style.color]="rol === authService.activeRole() ? '#10b981' : ''">
+                                {{ rol === authService.activeRole() ? 'check_circle' : 'radio_button_unchecked' }}
+                            </span>
+                            <span>{{ getRoleName(rol) }}</span>
+                        </button>
+                        }
+                    </mat-menu>
+
+                    <button mat-menu-item [matMenuTriggerFor]="roleMenu">
+                        <span class="material-icons-round">swap_horiz</span>
+                        <span>Cambiar de Rol</span>
+                    </button>
+                    }
+
+                    <mat-divider />
+                    <button mat-menu-item (click)="logout()" class="logout-item">
+                        <span class="material-icons-round">logout</span>
+                        <span>Cerrar sesión</span>
+                    </button>
+                </mat-menu>
+            </div>
+        </header>
+
+        <!-- Router Outlet -->
+        <main class="content-area">
+            <router-outlet />
+        </main>
+    </div>
+</div>
+
+<!-- Overlay para móvil -->
+@if (showMobileOverlay()) {
+<div class="mobile-overlay" (click)="closeMobileSidebar()"></div>
+}

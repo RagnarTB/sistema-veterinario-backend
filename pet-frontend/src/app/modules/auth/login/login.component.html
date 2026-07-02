@@ -1,0 +1,117 @@
+<div class="login-container fade-in-up">
+    <div class="card-inner">
+        <div class="logo-row">
+            <div class="login-logo">
+                <span class="material-icons-round">pets</span>
+            </div>
+            <h2 class="login-title">Bienvenido de nuevo</h2>
+        </div>
+
+        <p class="login-sub">{{ step() === 3 ? 'Comienza tu registro en VetCare' : 'Inicia sesión en tu cuenta' }}</p>
+
+        <!-- Roles selection -->
+        @if (step() === 2) {
+        <div class="roles-container">
+            <p class="muted">Tienes múltiples roles asignados. Selecciona uno para continuar:</p>
+            <div class="role-options">
+                @for (rol of availableRoles(); track rol) {
+                <button class="role-btn" (click)="selectRole(rol)">
+                    <span class="material-icons-round">{{ getRoleIcon(rol) }}</span>
+                    <span>{{ getRoleName(rol) }}</span>
+                </button>
+                }
+            </div>
+        </div>
+        }
+
+        <!-- Forms -->
+        <div class="forms-wrap">
+            <!-- Login form -->
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="login-form"
+                [style.display]="step() === 1 ? 'block' : 'none'">
+                <div class="form-group">
+                    <label for="email" class="form-label">Correo electrónico</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-icons-round">mail_outline</span>
+                        <input id="email" type="email" formControlName="email" class="form-control"
+                            placeholder="veterinario@clinica.com" autocomplete="email" />
+                    </div>
+                    @if (f['email'].touched && f['email'].errors?.['required']) { <div class="form-error">El email es
+                        obligatorio</div> }
+                    @if (f['email'].touched && f['email'].errors?.['email']) { <div class="form-error">Formato de email
+                        inválido</div> }
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-icons-round">lock_outline</span>
+                        <input id="password" [type]="showPass() ? 'text' : 'password'" formControlName="password"
+                            class="form-control" placeholder="••••••••" autocomplete="current-password" />
+                        <button type="button" class="input-action" (click)="showPass.update(v => !v)"
+                            [attr.aria-label]="showPass() ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                            <span class="material-icons-round">{{ showPass() ? 'visibility_off' : 'visibility' }}</span>
+                        </button>
+                    </div>
+                    @if (f['password'].touched && f['password'].errors?.['required']) { <div class="form-error">La
+                        contraseña es obligatoria</div> }
+                </div>
+
+                @if (errorMsg()) {
+                <div class="alert-error"><span class="material-icons-round">error_outline</span> {{ errorMsg() }}</div>
+                }
+
+                <div class="actions-row">
+                    <label class="remember"><input type="checkbox" /> Recordarme</label>
+                    <a class="forgot" href="javascript:void(0)" (click)="setStep(4)">¿Olvidaste tu contraseña?</a>
+                </div>
+
+                <button type="submit" class="primary-btn" [disabled]="loading()">
+                    @if (loading()) { <mat-spinner diameter="20" color="accent"></mat-spinner> } @else { <span
+                        class="material-icons-round">login</span> Iniciar sesión }
+                </button>
+            </form>
+
+            <div class="register-step" [style.display]="step() === 3 ? 'block' : 'none'">
+                <p class="muted">Ingresa tu correo para enviarte un enlace de registro:</p>
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon material-icons-round">mail_outline</span>
+                        <input type="email" #regEmail class="form-control" placeholder="tu@correo.com" />
+                    </div>
+                </div>
+                <div class="stack">
+                    <button class="primary-btn" (click)="solicitarRegistro(regEmail.value)" [disabled]="loading()">@if
+                        (loading()) { <mat-spinner diameter="20" color="accent"></mat-spinner> } @else { Enviar Enlace
+                        }</button>
+                    <button class="outline-btn" (click)="setStep(1)">Volver al Login</button>
+                </div>
+            </div>
+
+            <!-- Forgot Password step -->
+            <div class="forgot-step" [style.display]="step() === 4 ? 'block' : 'none'">
+                <p class="muted">Ingresa tu correo para enviarte un enlace de recuperación de contraseña:</p>
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon material-icons-round">mail_outline</span>
+                        <input type="email" #forgotEmail class="form-control" placeholder="tu@correo.com" />
+                    </div>
+                </div>
+                <div class="stack">
+                    <button class="primary-btn" (click)="solicitarRecuperacion(forgotEmail.value)" [disabled]="loading()">@if
+                        (loading()) { <mat-spinner diameter="20" color="accent"></mat-spinner> } @else { Enviar Enlace
+                        }</button>
+                    <button class="outline-btn" (click)="setStep(1)">Volver al Login</button>
+                </div>
+            </div>
+
+            <div class="divider">o continúa con</div>
+            <div class="google-btn-container">
+                <div id="googleButton"></div>
+            </div>
+
+            <p class="login-footer">¿No tienes cuenta? <a href="javascript:void(0)" (click)="setStep(3)"
+                    class="link-primary">Regístrate gratis</a></p>
+        </div>
+    </div>
+</div>

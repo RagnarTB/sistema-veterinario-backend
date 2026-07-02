@@ -1,0 +1,85 @@
+<h2 mat-dialog-title class="dialog-title">
+    <span class="material-icons-round">receipt</span>
+    Detalle Venta #{{ data.id }}
+</h2>
+
+<mat-dialog-content class="dialog-content-scroll">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <div class="info-block">
+            <div class="text-xxs text-muted uppercase">Fecha</div>
+            <div class="font-bold text-sm">{{ data.fechaHora | date:'dd/MM/yyyy HH:mm' }}</div>
+        </div>
+        <div class="info-block">
+            <div class="text-xxs text-muted uppercase">Estado</div>
+            <span class="badge" [ngClass]="getEstadoBadgeClass(data.estado)">{{ data.estado | titlecase }}</span>
+        </div>
+        <div class="info-block">
+            <div class="text-xxs text-muted uppercase">Cliente</div>
+            <div class="font-bold text-sm">{{ data.clienteNombre || 'Venta General' }}</div>
+        </div>
+        <div class="info-block">
+            <div class="text-xxs text-muted uppercase">Comprobante</div>
+            <div class="font-bold text-sm">{{ data.tipoComprobante }}</div>
+        </div>
+        @if (data.tipoComprobante === 'FACTURA' && data.ruc) {
+            <div class="info-block col-span-2">
+                <div class="text-xxs text-muted uppercase">Datos de Facturación</div>
+                <div class="font-bold text-sm">RUC: {{ data.ruc }}</div>
+                <div class="text-sm">Razón Social: {{ data.razonSocial }}</div>
+                <div class="text-sm">Dirección: {{ data.direccionFacturacion || 'N/A' }}</div>
+            </div>
+        }
+    </div>
+
+    <!-- Detalle de artículos -->
+    <div class="text-xxs font-bold text-muted uppercase mb-2">Artículos</div>
+    <table style="font-size: 0.75rem; margin-bottom: 16px; width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 1px solid var(--color-border); text-align: left;">
+                <th style="padding-bottom: 8px;">Ítem</th>
+                <th class="text-right" style="padding-bottom: 8px;">Cant.</th>
+                <th class="text-right" style="padding-bottom: 8px;">Precio</th>
+                <th class="text-right" style="padding-bottom: 8px;">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (d of data.detalles; track $index) {
+            <tr style="border-bottom: 1px dashed var(--color-border);">
+                <td style="padding: 8px 0;">{{ d.nombreItem }}</td>
+                <td class="text-right" style="padding: 8px 0;">{{ d.cantidad }}</td>
+                <td class="text-right" style="padding: 8px 0;">S/ {{ d.precioUnitario | number:'1.2-2' }}</td>
+                <td class="text-right font-bold" style="padding: 8px 0;">S/ {{ d.subtotal | number:'1.2-2' }}</td>
+            </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Resumen de totales -->
+    <div style="border-top: 1px solid var(--color-border); padding-top: 12px; display: flex; flex-direction: column; gap: 6px;">
+        <div class="flex justify-between text-sm"><span class="text-muted">Total Venta:</span><span class="font-bold">S/ {{ data.total | number:'1.2-2' }}</span></div>
+        <div class="flex justify-between text-sm"><span class="text-muted">Monto Cobrado:</span><span class="font-bold text-success">S/ {{ data.montoPagado | number:'1.2-2' }}</span></div>
+        <div class="flex justify-between text-sm"><span class="text-muted">Saldo Pendiente:</span><span class="font-bold" [class.text-danger]="data.saldoPendiente > 0">S/ {{ data.saldoPendiente | number:'1.2-2' }}</span></div>
+    </div>
+
+    <!-- Historial de pagos -->
+    @if (data.pagos && data.pagos.length > 0) {
+    <div class="mt-4">
+        <div class="text-xxs font-bold text-muted uppercase mb-2">Historial de Pagos</div>
+        @for (p of data.pagos; track p.id) {
+        <div class="flex justify-between items-center text-xs p-2" style="border-radius: 6px; background: var(--color-surface); margin-bottom: 4px;">
+            <div>
+                <span class="badge badge-muted mr-1">{{ p.metodoPago }}</span>
+                {{ p.fechaPago | date:'dd/MM/yyyy HH:mm' }}
+            </div>
+            <span class="font-bold text-success">S/ {{ p.monto | number:'1.2-2' }}</span>
+        </div>
+        }
+    </div>
+    }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-flat-button color="primary" type="button" (click)="onClose()">
+        <mat-icon style="margin-right: 4px;">check</mat-icon> Entendido
+    </button>
+</mat-dialog-actions>

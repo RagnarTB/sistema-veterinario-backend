@@ -1,0 +1,754 @@
+// =============================================
+// ENUMS
+// =============================================
+export type EstadoCita =
+  | 'AGENDADA'
+  | 'CONFIRMADA'
+  | 'EN_SALA_ESPERA'
+  | 'EN_CONSULTORIO'
+  | 'COMPLETADA'
+  | 'CANCELADA'
+  | 'NO_ASISTIO';
+
+export type EstadoVenta = 'ACTIVA' | 'PAGADA_PARCIAL' | 'PAGADA' | 'ANULADA';
+export type MetodoPago = 'EFECTIVO' | 'YAPE' | 'PLIN';
+export type TipoMovimiento = 'INGRESO' | 'EGRESO';
+export type TipoComprobante = 'BOLETA' | 'FACTURA';
+
+export type RolNombre =
+  | 'ROLE_ADMIN'
+  | 'ROLE_VETERINARIO'
+  | 'ROLE_RECEPCIONISTA'
+  | 'ROLE_CLIENTE'
+  | 'ROLE_PRE_AUTH';
+
+// =============================================
+// AUTH
+// =============================================
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  refreshToken: string;
+  email: string;
+  roles: string[];
+  sedeIds?: number[];
+  requiresRoleSelection: boolean;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface CambiarPasswordRequest {
+  passwordActual: string;
+  passwordNueva: string;
+  confirmarPassword: string;
+}
+
+export interface RegistroClienteDTO {
+  email: string;
+  password: string;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  telefono: string;
+  direccion?: string;
+}
+
+export interface MensajeResponse {
+  mensaje: string;
+}
+
+// =============================================
+// SEDE
+// =============================================
+export interface SedeRequest {
+  nombre: string;
+  direccion: string;
+  telefono: string;
+}
+
+export interface SedeResponse {
+  id: number;
+  nombre: string;
+  direccion: string;
+  telefono: string;
+  activo: boolean;
+}
+
+// =============================================
+// ESPECIE
+// =============================================
+export interface EspecieRequest {
+  nombre: string;
+}
+
+export interface EspecieResponse {
+  id: number;
+  nombre: string;
+  activo: boolean;
+}
+
+// =============================================
+// CLIENTE
+// =============================================
+export interface ClienteRequest {
+  nombre: string;
+  apellido: string;
+  dni: string;
+  telefono: string;
+  email: string;
+  direccion?: string;
+}
+
+export interface ClienteResponse {
+  id: number;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  telefono: string;
+  email: string;
+  activo: boolean;
+  verificado: boolean;
+  esInvitado?: boolean;
+  deudaAcumulada?: number;
+  limiteCredito?: number;
+  direccion?: string;
+}
+
+// =============================================
+// CLIENTE RÁPIDO (sin registro web)
+// =============================================
+export interface MascotaRapidaRequest {
+  nombre: string;
+  especieId: number;
+  raza?: string;
+  sexo?: string;
+  fechaNacimiento: string;
+}
+
+export interface ClienteRapidoRequest {
+  dni: string;
+  nombre: string;
+  apellido: string;
+  telefono?: string;
+  email?: string; // Para futura vinculación con cuenta formal
+  direccion?: string;
+  mascotas: MascotaRapidaRequest[];
+}
+
+export interface ClienteRapidoResponse {
+  clienteId: number;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  telefono?: string;
+  esInvitado: boolean;
+  pacientes: { id: number; nombre: string; especieNombre: string; clienteId: number; clienteNombre: string }[];
+}
+
+// =============================================
+// PACIENTE
+// =============================================
+export interface PacienteRequest {
+  nombre: string;
+  especieId: number;
+  raza?: string;
+  fechaNacimiento?: string;
+  sexo?: string;
+  color?: string;
+  clienteId: number;
+}
+
+export interface PacienteResponse {
+  id: number;
+  nombre: string;
+  especieNombre: string;
+  raza?: string;
+  fechaNacimiento?: string;
+  sexo?: string;
+  color?: string;
+  clienteId?: number;
+  clienteNombre: string;
+  activo: boolean;
+}
+
+// =============================================
+// ROL
+// =============================================
+export interface RolRequest {
+  nombre: string;
+}
+
+export interface RolResponse {
+  id: number;
+  nombre: RolNombre | string;
+  activo: boolean;
+  permisos?: { nombre: string; descripcion: string }[];
+}
+
+// =============================================
+// EMPLEADO
+// =============================================
+export interface EmpleadoRequest {
+  email: string;
+  roles: string[];
+  nombre: string;
+  apellido: string;
+  dni: string;
+  telefono: string;
+  especialidad?: string;
+  numeroColegiatura?: string;
+  sueldoBase?: number;
+  sedeIds: number[];
+}
+
+export interface EmpleadoResponse {
+  id: number;
+  usuarioId: number;
+  email: string;
+  nombresRoles: string[];
+  nombre: string;
+  apellido: string;
+  dni: string;
+  telefono: string;
+  especialidad?: string;
+  numeroColegiatura?: string;
+  sueldoBase?: number;
+  activo: boolean;
+  verificado: boolean;
+  sedeIds: number[];
+  sedeNombres: string[];
+}
+
+// =============================================
+// VALIDACION COLEGIATURA
+// =============================================
+export interface ColegiaturaValidacion {
+  numeroColegiatura: string;
+  nombreCompleto?: string;
+  estado?: string;
+  habilitado: boolean;
+  fechaValidacion?: string;
+  error?: string;
+}
+
+// =============================================
+// SERVICIO MÉDICO
+// =============================================
+export type TipoServicio = 'CONSULTA' | 'VACUNACION' | 'CIRUGIA' | 'HOSPITALIZACION' | 'ESTETICA' | 'EXAMEN' | 'OTRO';
+
+export interface ServicioMedicoRequest {
+  nombre: string;
+  descripcion?: string;
+  duracionMinutos: number;
+  bufferMinutos: number;
+  precio: number;
+  tipoServicio?: TipoServicio;
+  activo?: boolean;
+}
+
+export interface ServicioMedicoResponse {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  duracionMinutos: number;
+  bufferMinutos: number;
+  precio: number;
+  tipoServicio?: TipoServicio;
+  activo: boolean;
+}
+
+export interface ServicioMedicoInsumoRequest {
+  productoId: number;
+  cantidadEstimada: number;
+  notas?: string;
+}
+
+export interface ServicioMedicoInsumoResponse {
+  id: number;
+  servicioId: number;
+  productoId: number;
+  productoNombre: string;
+  unidadVentaNombre: string;
+  permiteDecimales: boolean;
+  cantidadEstimada: number;
+  notas?: string;
+  activo: boolean;
+}
+
+// =============================================
+// HORARIO VETERINARIO
+// =============================================
+export interface HorarioVeterinarioRequest {
+  veterinarioId: number;
+  diaSemana: string;
+  horaInicio: string;
+  horaFin: string;
+  sedeId: number;
+}
+
+export interface HorarioVeterinarioResponse {
+  id: number;
+  veterinarioNombre: string;
+  diaSemana: string;
+  horaInicio: string;
+  horaFin: string;
+  sedeNombre: string;
+}
+
+// =============================================
+// DÍA BLOQUEADO
+// =============================================
+export interface DiaBloqueadoRequest {
+  veterinarioId: number;
+  fecha: string;
+  fechaFin?: string;
+  tipo: string;
+  motivo?: string;
+}
+
+export interface DiaBloqueadoResponse {
+  id: number;
+  fecha: string;
+  fechaFin?: string;
+  tipo: string;
+  motivo?: string;
+  veterinarioId?: number;
+}
+
+// =============================================
+// CITA
+// =============================================
+export interface CitaRequest {
+  fecha: string;
+  horaInicio: string;
+  servicioId: number;
+  veterinarioId: number;
+  motivo: string;
+  pacienteIds: number[];
+  sedeId: number;
+}
+
+export interface CitaResponse {
+  id: number;
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  estado: EstadoCita;
+  motivo: string;
+  servicioNombre: string;
+  servicioId: number;
+  veterinarioId: number;
+  veterinarioNombre: string;
+  veterinarioEmail?: string;
+  sedeId: number;
+  sedeNombre: string;
+  pacienteIds: number[];
+  pacientes: PacienteResumen[];
+  badgeCompletada?: boolean;
+}
+
+export interface PacienteResumen {
+  id: number;
+  nombre: string;
+  especieNombre?: string;
+  clienteId?: number;
+  clienteNombre?: string;
+}
+
+export interface SlotDisponibilidad {
+  horaInicio: string;
+  horaFin: string;
+}
+
+// =============================================
+// ATENCIÓN MÉDICA
+// =============================================
+export interface AtencionMedicaRequest {
+  citaId: number;
+  diagnostico: string;
+  tratamiento: string;
+  observaciones?: string;
+  examenesIds?: number[];
+}
+
+export interface AtencionMedicaResponse {
+  id: number;
+  citaId: number;
+  diagnostico: string;
+  tratamiento: string;
+  observaciones?: string;
+  fecha: string;
+}
+
+// =============================================
+// EXAMEN MÉDICO
+// =============================================
+export interface ExamenMedicoRequest {
+  pacienteId: number;
+  tipo: string;
+  resultado?: string;
+  fecha: string;
+}
+
+export interface ExamenMedicoResponse {
+  id: number;
+  pacienteNombre: string;
+  tipo: string;
+  resultado?: string;
+  fecha: string;
+}
+
+// =============================================
+// RECETA
+// =============================================
+export interface DetalleRecetaRequest {
+  productoId: number;
+  cantidad: number;
+  indicaciones: string;
+}
+
+export interface DetalleRecetaResponse {
+  id?: number;
+  medicamento?: string;
+  dosis?: string;
+  frecuencia?: string;
+  duracionDias?: number;
+  productoId?: number;
+  productoNombre?: string;
+  cantidad?: number;
+  indicaciones?: string;
+}
+
+export interface RecetaRequest {
+  atencionId: number;
+  detalles: DetalleRecetaRequest[];
+}
+
+export interface RecetaResponse {
+  id: number;
+  atencionId: number;
+  detalles: DetalleRecetaResponse[];
+}
+
+
+// =============================================
+// CIRUGÍA
+// =============================================
+export interface CirugiaRequest {
+  pacienteId: number;
+  tipoCirugia: string;
+  veterinarioId: number;
+  fecha: string;
+  descripcion?: string;
+  resultado?: string;
+}
+
+export interface CirugiaResponse {
+  id: number;
+  pacienteNombre: string;
+  tipoCirugia: string;
+  veterinarioNombre: string;
+  fecha: string;
+  descripcion?: string;
+  resultado?: string;
+}
+
+// =============================================
+// CONSENTIMIENTO INFORMADO
+// =============================================
+export interface ConsentimientoRequest {
+  citaId: number;
+  clienteId: number;
+}
+
+export interface ConsentimientoResponse {
+  id: number;
+  citaId: number;
+  clienteNombre: string;
+  fechaGeneracion: string;
+}
+
+// =============================================
+// HOSPITALIZACIÓN
+// =============================================
+export interface HospitalizacionRequest {
+  pacienteId: number;
+  jaulaId: number;
+  motivoIngreso: string;
+  veterinarioId: number;
+}
+
+export interface HospitalizacionResponse {
+  id: number;
+  pacienteNombre: string;
+  jaulaNombre: string;
+  motivoIngreso: string;
+  veterinarioNombre: string;
+  fechaIngreso: string;
+  fechaAlta?: string;
+  estado: string;
+}
+
+export interface TrasladoHospitalizacionDTO {
+  nuevaJaulaId: number;
+}
+
+// =============================================
+// JAULA
+// =============================================
+export interface JaulaRequest {
+  nombre: string;
+  descripcion?: string;
+  sedeId: number;
+}
+
+export interface JaulaResponse {
+  id: number;
+  nombre: string;
+  disponible: boolean;
+}
+
+// =============================================
+// MONITOREO HOSPITALIZACIÓN
+// =============================================
+export interface MonitoreoHospitalizacionRequest {
+  hospitalizacionId: number;
+  temperatura?: number;
+  frecuenciaCardiaca?: number;
+  frecuenciaRespiratoria?: number;
+  observaciones?: string;
+}
+
+export interface MonitoreoHospitalizacionResponse {
+  id: number;
+  fecha: string;
+  temperatura?: number;
+  frecuenciaCardiaca?: number;
+  frecuenciaRespiratoria?: number;
+  observaciones?: string;
+}
+
+// =============================================
+// PRODUCTO
+// =============================================
+export interface ProductoRequest {
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  stockMinimo: number;
+  activo?: boolean;
+}
+
+export interface ProductoResponse {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  stockMinimo: number;
+  activo: boolean;
+}
+
+// =============================================
+// INVENTARIO
+// =============================================
+export interface InventarioRequest {
+  productoId: number;
+  sedeId: number;
+  cantidad: number;
+}
+
+// =============================================
+// VENTA
+// =============================================
+export interface DetalleVentaRequest {
+  productoId?: number;
+  servicioId?: number;
+  cantidad: number;
+}
+
+export interface DetalleVentaResponse {
+  productoId?: number;
+  servicioId?: number;
+  nombreItem: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+}
+
+export interface PagoRequest {
+  monto: number;
+  metodoPago: MetodoPago;
+  referencia?: string;
+  sedeId: number;
+}
+
+export interface PagoResponse {
+  id: number;
+  monto: number;
+  metodoPago: MetodoPago;
+  fechaPago: string;
+  referencia?: string;
+  cajaId?: number;
+}
+
+export interface VentaRequest {
+  clienteId?: number;
+  sedeId: number;
+  metodoPago?: MetodoPago;
+  tipoComprobante?: TipoComprobante;
+  ruc?: string;
+  razonSocial?: string;
+  direccionFacturacion?: string;
+  citaId?: number;
+  pagos?: PagoRequest[];
+  detalles: DetalleVentaRequest[];
+}
+
+export interface VentaResponse {
+  id: number;
+  clienteId?: number;
+  clienteNombre?: string;
+  fechaHora: string;
+  total: number;
+  montoPagado: number;
+  saldoPendiente: number;
+  estado: EstadoVenta;
+  metodoPago?: MetodoPago;
+  tipoComprobante?: TipoComprobante;
+  ruc?: string;
+  razonSocial?: string;
+  direccionFacturacion?: string;
+  citaId?: number;
+  hospitalizacionId?: number;
+  estadoHospitalizacion?: string;
+  cajaId?: number; // ID de la caja activa al momento de la venta
+  detalles: DetalleVentaResponse[];
+  pagos?: PagoResponse[];
+}
+
+// =============================================
+// CAJA
+// =============================================
+export interface CajaRequest {
+  sedeId: number;
+  saldoInicial: number;
+}
+
+export interface CajaHistorialResponse {
+  id: number;
+  fechaApertura: string;
+  fechaCierre: string;
+  saldoInicial: number;
+  saldoFinal: number;
+  empleadoNombre: string;
+}
+
+export interface MovimientoCajaResponse {
+  id: number;
+  concepto: string;
+  monto: number;
+  tipoMovimiento: 'INGRESO' | 'EGRESO';
+  fechaHora: string;
+  metodoPago: MetodoPago;
+}
+
+export interface CierreCajaResponse {
+  totalVentas: number;
+  totalEfectivo: number;
+  totalTarjeta: number;
+  totalTransferencia: number;
+}
+
+// =============================================
+// REPORTES / DASHBOARD
+// =============================================
+export interface DashboardResumen {
+  flujoNetoMes: number;
+  totalClientesActivos: number;
+}
+
+export interface TopProducto {
+  nombreProducto: string;
+  cantidadVendida: number;
+}
+
+export interface CitasVeterinario {
+  emailVeterinario: string;
+  totalCitas: number;
+}
+
+// =============================================
+// PAGINACIÓN (estructura de Page<T> de Spring)
+// =============================================
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;     // página actual (0-indexed)
+  size: number;
+  first: boolean;
+  last: boolean;
+}
+
+// =============================================
+// ERROR RESPONSE
+// =============================================
+export interface ErrorResponse {
+  mensaje: string;
+  errores?: Record<string, string>;
+  timestamp?: string;
+  status?: number;
+}
+
+// =============================================
+// HISTORIAL MÉDICO (PREVENTIVO)
+// =============================================
+export interface VacunaRequest {
+  nombreVacuna: string;
+  fechaAplicacion: string; // ISO yyyy-MM-dd
+  fechaProximaDosis?: string; // ISO yyyy-MM-dd
+  observaciones?: string;
+  pacienteId: number;
+}
+
+export interface VacunaResponse {
+  id: number;
+  nombreVacuna: string;
+  fechaAplicacion: string;
+  fechaProximaDosis?: string;
+  observaciones?: string;
+  pacienteId: number;
+  pacienteNombre: string;
+  empleadoId: number;
+  empleadoNombre: string;
+}
+
+export interface DesparasitacionRequest {
+  tipo: string; // "INTERNA" o "EXTERNA"
+  productoUtilizado: string;
+  pesoAlMomento?: number;
+  fechaAplicacion: string;
+  fechaProximaDosis?: string;
+  observaciones?: string;
+  pacienteId: number;
+}
+
+export interface DesparasitacionResponse {
+  id: number;
+  tipo: string;
+  productoUtilizado: string;
+  pesoAlMomento?: number;
+  fechaAplicacion: string;
+  fechaProximaDosis?: string;
+  observaciones?: string;
+  pacienteId: number;
+  pacienteNombre: string;
+  empleadoId: number;
+  empleadoNombre: string;
+}
