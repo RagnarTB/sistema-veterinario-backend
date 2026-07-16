@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: vet_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-VetCare}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # Opcional: solo si quieres acceder a la BD desde fuera del servidor
+
+  redis:
+    image: redis:7-alpine
+    container_name: vet_redis
+    restart: always
+    ports:
+      - "6379:6379" # Opcional: acceso externo
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./pet
+      dockerfile: Dockerfile
+    container_name: vet_backend
+    restart: always
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-VetCare}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    # No es necesario exponer el 8080 hacia afuera si el frontend hace de proxy, 
+    # pero puede ser útil para pruebas directas a la API o Swagger.
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./pet-frontend
+      dockerfile: Dockerfile
+    container_name: vet_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
+  redis_data:
