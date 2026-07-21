@@ -140,7 +140,7 @@ export class CompletarRegistroComponent implements OnInit {
       next: (res) => {
         this.loading.set(false);
         this.snack.open('Registro exitoso. ¡Bienvenido!', 'Cerrar', { duration: 3000 });
-        this.router.navigate(['/app/pacientes']);
+        this.router.navigate(['/app']);
       },
       error: (err) => {
         this.loading.set(false);

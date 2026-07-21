@@ -59,6 +59,15 @@ services:
     ports:
       - "80:80"
 
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    container_name: duckdns
+    environment:
+      - SUBDOMAINS=ragnarvet
+      - TOKEN=${DUCKDNS_TOKEN}
+      - TZ=America/Lima
+    restart: always
+
 volumes:
   postgres_data:
   redis_data:
