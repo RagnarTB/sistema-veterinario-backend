@@ -43,6 +43,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - TZ=America/Lima
     # No es necesario exponer el 8080 hacia afuera si el frontend hace de proxy, 
     # pero puede ser útil para pruebas directas a la API o Swagger.
     ports:
