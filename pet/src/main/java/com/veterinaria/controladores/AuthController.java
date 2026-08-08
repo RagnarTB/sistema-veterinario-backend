@@ -26,7 +26,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth") // AQUI: Ruta base corregida
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = { "${app.frontend.url}" })
 public class AuthController {
 
     @Autowired
@@ -56,12 +56,13 @@ public class AuthController {
         if (respuesta instanceof AuthResponseDTO) {
             return ResponseEntity.ok(respuesta);
         } else {
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(respuesta); 
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(respuesta);
         }
     }
 
     @PostMapping("/solicitar-registro-correo")
-    public ResponseEntity<MensajeResponseDTO> solicitarRegistroCorreo(@Valid @RequestBody SolicitarRegistroCorreoDTO dto) {
+    public ResponseEntity<MensajeResponseDTO> solicitarRegistroCorreo(
+            @Valid @RequestBody SolicitarRegistroCorreoDTO dto) {
         MensajeResponseDTO respuesta = authRegistroServicio.solicitarRegistroCorreo(dto);
         return ResponseEntity.ok(respuesta);
     }
@@ -92,7 +93,8 @@ public class AuthController {
     }
 
     @PostMapping("/confirmar-token")
-    public ResponseEntity<MensajeResponseDTO> confirmarToken(@Valid @RequestBody com.veterinaria.dtos.ConfirmarTokenRequestDTO dto) {
+    public ResponseEntity<MensajeResponseDTO> confirmarToken(
+            @Valid @RequestBody com.veterinaria.dtos.ConfirmarTokenRequestDTO dto) {
         MensajeResponseDTO respuesta = authRegistroServicio.confirmarToken(dto.getToken(), dto.getPassword());
         return ResponseEntity.ok(respuesta);
     }
@@ -106,7 +108,8 @@ public class AuthController {
     }
 
     @PostMapping("/solicitar-reset-password")
-    public ResponseEntity<MensajeResponseDTO> solicitarResetPassword(@Valid @RequestBody SolicitarRecuperacionPasswordDTO dto) {
+    public ResponseEntity<MensajeResponseDTO> solicitarResetPassword(
+            @Valid @RequestBody SolicitarRecuperacionPasswordDTO dto) {
         MensajeResponseDTO respuesta = authRegistroServicio.solicitarResetPassword(dto);
         return ResponseEntity.ok(respuesta);
     }

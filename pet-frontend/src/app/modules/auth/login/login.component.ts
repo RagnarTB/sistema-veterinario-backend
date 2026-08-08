@@ -67,6 +67,11 @@ export class LoginComponent implements OnInit {
       return;
     }
 
+    const state = history.state;
+    if (state && state.email) {
+      this.form.patchValue({ email: state.email });
+    }
+
     if (typeof google === 'undefined' || !google.accounts) {
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';

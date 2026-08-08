@@ -185,7 +185,7 @@ export class AuthService {
     }
   }
 
-  private limpiarSesion(): void {
+  limpiarSesion(redirect: boolean = true): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(EMAIL_KEY);
@@ -198,7 +198,9 @@ export class AuthService {
     this._roles.set([]);
     this._activeRole.set(null);
     this._sedeIds.set([]);
-    this.router.navigate(['/login']);
+    if (redirect) {
+      this.router.navigate(['/login']);
+    }
   }
 
   private loadRolesFromStorage(): RolNombre[] {

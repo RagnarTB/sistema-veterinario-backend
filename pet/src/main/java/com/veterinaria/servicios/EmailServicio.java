@@ -1,13 +1,18 @@
 package com.veterinaria.servicios;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class EmailServicio {
 
     private final JavaMailSender mailSender;
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     public EmailServicio(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -20,7 +25,7 @@ public class EmailServicio {
             message.setTo(toEmail);
             message.setSubject("Activa tu cuenta de Cliente - VetCare");
 
-            String urlConfirmacion = "http://localhost:4200/confirmar?token=" + token;
+            String urlConfirmacion = frontendUrl + "/confirmar?token=" + token;
 
             message.setText("Hola,\n\n"
                     + "Tu registro en nuestra clínica ha comenzado. "
@@ -31,7 +36,6 @@ public class EmailServicio {
             mailSender.send(message);
         } catch (Exception e) {
             System.err.println("Error enviando el correo SMTP: " + e.getMessage());
-            // No bloqueamos todo si el smtp falla, pero en prod deberíamos lanzar una excepcion
         }
     }
 
@@ -42,7 +46,8 @@ public class EmailServicio {
             message.setTo(toEmail);
             message.setSubject("Completa tu registro - VetCare");
 
-            String urlConfirmacion = "http://localhost:4200/completar-registro?token=" + token + "&email=" + java.net.URLEncoder.encode(toEmail, "UTF-8");
+            String urlConfirmacion = frontendUrl + "/completar-registro?token=" + token
+                    + "&email=" + URLEncoder.encode(toEmail, StandardCharsets.UTF_8);
 
             message.setText("Hola,\n\n"
                     + "Para terminar de configurar tu cuenta, haz clic en el siguiente enlace y completa tus datos:\n\n"
@@ -62,7 +67,7 @@ public class EmailServicio {
             message.setTo(toEmail);
             message.setSubject("Recuperación de Contraseña - VetCare");
 
-            String urlConfirmacion = "http://localhost:4200/confirmar?token=" + token + "&action=reset";
+            String urlConfirmacion = frontendUrl + "/confirmar?token=" + token + "&action=reset";
 
             message.setText("Hola,\n\n"
                     + "Hemos recibido una solicitud para restablecer tu contraseña.\n"

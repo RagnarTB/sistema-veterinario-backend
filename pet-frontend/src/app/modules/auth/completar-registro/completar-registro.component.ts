@@ -139,8 +139,15 @@ export class CompletarRegistroComponent implements OnInit {
     this.authService.completarRegistro(dto).subscribe({
       next: (res) => {
         this.loading.set(false);
-        this.snack.open('Registro exitoso. ¡Bienvenido!', 'Cerrar', { duration: 3000 });
-        this.router.navigate(['/app']);
+        if (this.isGoogleFlow()) {
+          this.snack.open('Registro exitoso. ¡Bienvenido!', 'Cerrar', { duration: 3000 });
+          this.router.navigate(['/app']);
+        } else {
+          const email = this.form.get('email')?.value;
+          this.snack.open('Registro exitoso. Por favor, inicia sesión con tu nueva contraseña.', 'Cerrar', { duration: 5000 });
+          this.authService.limpiarSesion(false);
+          this.router.navigate(['/login'], { state: { email } });
+        }
       },
       error: (err) => {
         this.loading.set(false);
