@@ -143,7 +143,7 @@ public class AuthGoogleServicio {
             nuevoUsuario.setActivo(false);
             nuevoUsuario.setNombre((String) payload.get("given_name"));
             nuevoUsuario.setApellido((String) payload.get("family_name"));
-            nuevoUsuario.setDni("");
+            nuevoUsuario.setDni(generarDniTemporal());
             nuevoUsuario.setTelefono("");
             nuevoUsuario.getRoles().add(rolCliente);
             usuarioRepositorio.save(nuevoUsuario);
@@ -162,5 +162,13 @@ public class AuthGoogleServicio {
             registroRequerido.put("googleToken", dto.getIdToken());
             return registroRequerido;
         }
+    }
+
+    private String generarDniTemporal() {
+        String tempDni;
+        do {
+            tempDni = "T" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 7);
+        } while (usuarioRepositorio.existsByDni(tempDni));
+        return tempDni;
     }
 }

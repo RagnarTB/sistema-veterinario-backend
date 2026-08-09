@@ -42,7 +42,9 @@ services:
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_USERNAME=${MAIL_USERNAME:-ldtb2001@gmail.com}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:4200}
       - TZ=America/Lima
     # No es necesario exponer el 8080 hacia afuera si el frontend hace de proxy, 
     # pero puede ser útil para pruebas directas a la API o Swagger.

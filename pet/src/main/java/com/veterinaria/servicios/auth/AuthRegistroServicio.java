@@ -120,7 +120,7 @@ public class AuthRegistroServicio {
             nuevoUsuario.setActivo(false);
             nuevoUsuario.setNombre("");
             nuevoUsuario.setApellido("");
-            nuevoUsuario.setDni("");
+            nuevoUsuario.setDni(generarDniTemporal());
             nuevoUsuario.setTelefono("");
             nuevoUsuario.getRoles().add(rolCliente);
             Usuario usuarioGuardado = usuarioRepositorio.save(nuevoUsuario);
@@ -268,7 +268,7 @@ public class AuthRegistroServicio {
                 usuario = new Usuario();
                 usuario.setNombre("");
                 usuario.setApellido("");
-                usuario.setDni("");
+                usuario.setDni(generarDniTemporal());
                 usuario.setTelefono("");
                 Rol rolCliente = rolRespositorio.findByNombre("ROLE_CLIENTE")
                         .orElseThrow(() -> new ResourceNotFoundException("El rol ROLE_CLIENTE no existe en la BD"));
@@ -353,5 +353,13 @@ public class AuthRegistroServicio {
         tokenRepositorio.delete(token);
 
         return new MensajeResponseDTO("Contraseña actualizada correctamente. Ya puedes iniciar sesión.");
+    }
+
+    private String generarDniTemporal() {
+        String tempDni;
+        do {
+            tempDni = "T" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 7);
+        } while (usuarioRepositorio.existsByDni(tempDni));
+        return tempDni;
     }
 }
